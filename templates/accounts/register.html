@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ثبت‌نام{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'azmon.css' %}">{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+  <div class="container">
+    <div class="login-box">
+      <div class="tabs">
+        <a href="/accounts/login/" class="tab">ورود</a>
+        <a href="/accounts/register/" class="tab active">ثبت نام</a>
+      </div>
+
+      <div class="avatar">
+        <div class="avatar-circle">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
+            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+          </svg>
+        </div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        {{ form.first_name }}
+        {% for error in form.first_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+
+        {{ form.last_name }}
+        {% for error in form.last_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+
+        {{ form.email }}
+        {% for error in form.email.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+
+        {{ form.phone }}
+        {% for error in form.phone.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+
+        {{ form.password1 }}
+        {% for error in form.password1.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+
+        {{ form.password2 }}
+        {% for error in form.password2.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+
+        {% for error in form.non_field_errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+        <button type="submit" class="login-btn">ثبت نام</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
