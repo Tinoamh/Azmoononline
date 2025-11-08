@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}پروفایل{% endblock %}
+{% block content %}
+<section>
+  <h1>پروفایل</h1>
+  <p>نام کاربری: {{ user.username }}</p>
+  <p>ایمیل: {{ user.email }}</p>
+  {% if profile %}
+    <p>شماره تماس: {{ profile.phone }}</p>
+    <p>بیو: {{ profile.bio }}</p>
+  {% else %}
+    <p>پروفایل هنوز کامل نشده است.</p>
+  {% endif %}
+</section>
+{% endblock %}
