@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, TemplateView
 from .forms import RegisterForm, EmailAuthenticationForm
+from .forms import ExamProfileForm
 from .models import Role
+from .models import Profile
 from .forms import RecoveryCodeResetForm
 from .models import RecoveryCode
 
@@ -13,7 +15,7 @@ from .models import RecoveryCode
 class RegisterView(FormView):
     template_name = "accounts/register.html"
     form_class = RegisterForm
-    success_url = reverse_lazy("dashboard")
+    success_url = reverse_lazy("exam_profile")
 
     def form_valid(self, form):
         user = form.save()
@@ -50,12 +52,19 @@ class ProfileView(TemplateView):
 class EmailLoginView(FormView):
     template_name = "accounts/login.html"
     form_class = EmailAuthenticationForm
-    success_url = reverse_lazy("dashboard")
+    success_url = reverse_lazy("exam_profile")
 
     def form_valid(self, form):
         user = form.cleaned_data['user']
         login(self.request, user)
         return super().form_valid(form)
+
+    def get_success_url(self):
+        # Respect ?next= if present (e.g., came from a protected page)
+        next_url = self.request.GET.get('next') or self.request.POST.get('next')
+        if next_url:
+            return next_url
+        return super().get_success_url()
 
 
 def seed_roles(request):
@@ -85,5 +94,26 @@ class RecoveryCodeResetView(FormView):
             rc.used = True
             rc.save()
         return super().form_valid(form)
+
+
+@method_decorator(login_required, name="dispatch")
+class ExamProfileView(FormView):
+    template_name = "accounts/exam_profile.html"
+    form_class = ExamProfileForm
+    success_url = reverse_lazy("exam_profile")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save(self.request.user)
+        return super().form_valid(form)
+
+def logout_to_home(request):
+    # Explicitly log out and redirect to home page
+    logout(request)
+    return redirect('home')
 
 # Create your views here.

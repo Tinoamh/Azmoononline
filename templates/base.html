@@ -12,9 +12,8 @@
   {% block header %}
   <header>
     <nav>
-      <a href="/accounts/dashboard/">داشبورد</a>
+      <a href="/">صفحه اصلی</a>
       {% if user.is_authenticated %}
-        <a href="/accounts/profile/">پروفایل</a>
         <a href="/accounts/logout/">خروج</a>
       {% else %}
         <a href="/accounts/login/">ورود</a>
@@ -34,9 +33,7 @@
     {% block content %}{% endblock %}
   </main>
   {% block footer %}
-  <footer>
-    <small>سامانه آزمون آنلاین - اسپرینت ۱</small>
-  </footer>
+  <footer></footer>
   {% endblock %}
 </body>
 </html>

@@ -160,7 +160,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@sam-azmon.lo
 
 # Auth redirects
 LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/accounts/dashboard/'
+LOGIN_REDIRECT_URL = '/accounts/exam-profile/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # Email-based authentication backend

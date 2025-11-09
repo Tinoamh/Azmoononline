@@ -1,12 +1,12 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView
+from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView, ExamProfileView, logout_to_home
 from .forms import AzmonPasswordResetForm
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', EmailLoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('logout/', logout_to_home, name='logout'),
 
     # Password reset flow using built-in views with custom form and templates
     path(
@@ -28,4 +28,5 @@ urlpatterns = [
     # Authenticated pages
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('exam-profile/', ExamProfileView.as_view(), name='exam_profile'),
 ]

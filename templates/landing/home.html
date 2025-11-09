@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}صفحه اصلی | سامانه آزمون‌یار{% endblock %}
+{% block body_class %}landing{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Landing page hero styles aligned to the provided mock */
+  body.landing { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
+
+  .landing-header { display:flex; justify-content:space-between; align-items:center; padding: 20px 24px; }
+  .landing-brand { font-weight: 800; color: #3A6CF4; }
+  .landing-actions { display:flex; gap:10px; }
+  .pill { display:inline-block; padding:8px 16px; border-radius:999px; background:#e6f0ff; color:#2d3a6b; font-weight:700; border:1px solid #cfe3ff; text-decoration:none; }
+
+  .hero { display:grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; align-items:center; max-width: 980px; margin: 0 auto; padding: 24px; }
+  .hero-card { background: rgba(255,255,255,0.9); border-radius: 16px; box-shadow: 0 30px 60px rgba(58,108,244,0.15); padding: 32px; }
+  .hero-title { color:#3A6CF4; font-size: 56px; font-weight: 800; margin: 0 0 20px 0; text-align:center; line-height: 1.15; }
+  .hero-sub { color:#000; font-size: 26px; font-weight: 800; text-align:center; margin-bottom: 12px; }
+  .hero-sub .blue { color:#3A6CF4; }
+  .hero-desc { color:#667; font-size: 13px; text-align:center; }
+  .hero-cta { display:flex; justify-content:center; margin-top: 18px; }
+  .btn-primary { display:inline-block; padding:10px 18px; border-radius:10px; background:#3A6CF4; color:#fff; text-decoration:none; font-weight:700; }
+  .btn-primary:hover { background:#2E56D0; }
+
+  .hero-illustration { border-radius: 18px; background: radial-gradient(120px 20px at 60% 80%, rgba(58,108,244,0.25), transparent), linear-gradient(180deg, #f7fbff 0%, #eaf2ff 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.08); min-height: 280px; display:flex; align-items:center; justify-content:center; }
+  .hero-illustration svg { opacity:0.9; }
+
+  @media (max-width: 900px){ .hero { grid-template-columns: 1fr; } .hero-title{ font-size:40px; } }
+</style>
+{% endblock %}
+
+{% block header %}
+<header class="landing-header">
+  <div class="landing-actions">
+    {% if user.is_authenticated %}
+      <a class="pill" href="/accounts/exam-profile/">{{ user.get_full_name|default:user.username }}</a>
+    {% else %}
+      <a class="pill" href="/accounts/register/">ثبت‌نام</a>
+      <a class="pill" href="/accounts/login/">ورود</a>
+    {% endif %}
+  </div>
+  <div class="landing-brand">samsamian</div>
+  </header>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-card">
+    <h1 class="hero-title">سامانه آنلاین آزمون‌یار صممصامیان</h1>
+    <h2 class="hero-sub">خدمات سامانه آزمون آنلاین</h2>
+    <h2 class="hero-sub"><span class="blue">ویژه مدارس و موسسات</span></h2>
+    <p class="hero-desc">ارائهٔ سازوکار سنجش، تقلب‌یابی و گزارش‌های تحلیلی برای آزمون‌های حضوری و آنلاین</p>
+    <div class="hero-cta">
+      <a href="/accounts/login/" class="btn-primary">آزمون آنلاین بساز</a>
+    </div>
+  </div>
+  <div class="hero-illustration">
+    <!-- Simple inline illustration placeholder -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" width="200" height="160" fill="#3A6CF4">
+      <rect x="60" y="30" width="100" height="80" rx="8" fill="#9ecbff" />
+      <rect x="70" y="40" width="80" height="10" rx="4" fill="#3A6CF4" />
+      <rect x="70" y="56" width="80" height="10" rx="4" fill="#3A6CF4" opacity="0.8"/>
+      <rect x="70" y="72" width="80" height="10" rx="4" fill="#3A6CF4" opacity="0.6"/>
+      <circle cx="40" cy="70" r="22" fill="#3A6CF4" />
+      <rect x="20" y="95" width="40" height="10" rx="5" fill="#3A6CF4" opacity="0.8" />
+    </svg>
+  </div>
+</section>
+{% endblock %}
