@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Vazirmatn", sans-serif;
+}
+
+/* محدودسازی استایل صفحه احراز هویت تا به سایر صفحات آسیب نزند */
+.auth-body {
+  background: linear-gradient(135deg, #007BFF, #00BFFF);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-box {
+  background: white;
+  width: 340px;
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.tab {
+  border: none;
+  outline: none;
+  background: #eee;
+  padding: 8px 25px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #555;
+  border-radius: 10px 10px 0 0;
+  text-decoration: none;
+}
+
+.tab.active {
+  background: #3A6CF4;
+  color: white;
+}
+
+.avatar {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+.avatar-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #3A6CF4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: right;
+}
+
+.login-btn {
+  background: #3A6CF4;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 10px;
+  transition: background 0.3s ease;
+}
+
+.login-btn:hover {
+  background: #2E56D0;
+}
+
+.forgot {
+  display: block;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #555;
+  text-decoration: none;
+}
+
+.forgot:hover {
+  color: #3A6CF4;
+}
+
+/* پیام‌های خطا زیر فیلدها در صفحات احراز هویت */
+.error-text {
+  color: #4DA3FF; /* آبی کم‌رنگ */
+  font-size: 12px;
+  text-align: right;
+  margin-top: 4px;
+  opacity: 0.85;
+}
