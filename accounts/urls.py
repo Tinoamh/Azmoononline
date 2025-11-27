@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView, ExamProfileView, logout_to_home
+from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView, ExamProfileView, logout_to_home, UsersListView, StudentsListView, user_update_role, user_delete
 from .forms import AzmonPasswordResetForm
 
 urlpatterns = [
@@ -29,4 +29,8 @@ urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('profile/', ProfileView.as_view(), name='profile'),
     path('exam-profile/', ExamProfileView.as_view(), name='exam_profile'),
+    path('users/', UsersListView.as_view(), name='users'),
+    path('students/', StudentsListView.as_view(), name='students'),
+    path('users/<int:pk>/role/', user_update_role, name='user_update_role'),
+    path('users/<int:pk>/delete/', user_delete, name='user_delete'),
 ]

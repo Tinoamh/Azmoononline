@@ -72,7 +72,7 @@ class RegisterForm(UserCreationForm):
                 candidate = f"{base}{suffix}"
             user.username = candidate
         # تعیین نقش بر اساس ایمیل ادمین، در غیر این‌صورت دانشجو
-        admin_email = 'shatinaabbasi@gmail.com'
+        admin_email = 'tinahmohammadi82@gmail.com'
         if user.email and user.email.lower() == admin_email:
             admin_role = Role.objects.filter(code='admin').first()
             if admin_role:

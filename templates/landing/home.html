@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}صفحه اصلی | سامانه آزمون‌یار{% endblock %}
-{% block body_class %}landing{% endblock %}
+{% block body_class %}{% if user.is_authenticated and user.role and user.role.code == 'student' %}landing student{% else %}landing{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -46,7 +46,7 @@
   @media (max-width: 900px){ .hero { grid-template-columns: 1fr; } .hero-title{ font-size:40px; } }
 
   /* Admin hamburger menu */
-  .hamburger { position:fixed; top:14px; right:14px; width:40px; height:32px; display:flex; flex-direction:column; justify-content:center; gap:6px; cursor:pointer; z-index:1100; }
+  .hamburger { position:fixed; top:22px; right:22px; width:40px; height:32px; display:flex; flex-direction:column; justify-content:center; gap:6px; cursor:pointer; z-index:1100; }
   .hamburger .bar { height:3px; background:#3A6CF4; border-radius:3px; }
   .drawer-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.25); backdrop-filter:saturate(120%); display:none; z-index:1090; }
   .drawer-backdrop.open { display:block; }
@@ -59,10 +59,32 @@
   .admin-drawer-list { list-style:none; margin:8px 0 0 0; padding:0; }
   .admin-drawer-list li { margin:0; border-top:1px solid rgba(255,255,255,0.2); }
   .admin-drawer-list a { display:flex; align-items:center; justify-content:flex-start; gap:12px; padding:12px 18px; border-radius:0; color:#fff; text-decoration:none; white-space: nowrap; }
-  .admin-drawer-list a:hover { background:rgba(255,255,255,0.12); }
+  .admin-drawer-list a:hover { background:rgba(255,255,255,0.18); }
   .admin-drawer-list .label { font-weight:600; }
   .admin-drawer-list .ico { width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; opacity:0.95; }
   .admin-drawer-list a:hover { background:rgba(255,255,255,0.18); }
+  .admin-drawer-header a { color:#fff; text-decoration:none; display:block; }
+  .admin-drawer-header a:hover { opacity:0.9; }
+  body.landing.student { background: linear-gradient(to right, #5465FF 0%, #899EFF 35%, #97ACFF 58%, #A4BBFF 75%, #BFD7FF 93%); }
+  body.landing.student .landing-brand, body.landing.student .landing-actions { display:none; }
+  body.landing.student .hero, body.landing.student .info-section { display:none; }
+  body.landing.student .container { width:100%; max-width:1200px; margin:auto; padding:40px; }
+  body.landing.student h1.student-heading { font-size:36px; color:#4253d8; text-align:center; margin-bottom:40px; }
+  body.landing.student .content-box { background:rgba(255,255,255,0.4); padding:30px; border-radius:20px; width:350px; backdrop-filter:blur(10px); }
+  body.landing.student .flex { display:flex; align-items:center; justify-content:space-between; gap:40px; }
+  body.landing.student .hero-img { width:350px; border-radius:20px; overflow:hidden; }
+  body.landing.student .student-stage { position:relative; }
+  body.landing.student .sam-title { font-size:56px; font-weight:800; color:#fff; text-align:center; margin:0 0 24px 0; }
+  body.landing.student .student-grid { display:grid; grid-template-columns: 1.2fr 0.8fr; gap:24px; align-items:end; max-width:980px; margin:0 auto; direction:ltr; }
+  body.landing.student .tile { background:linear-gradient(180deg, rgba(84,101,255,0.30) 0%, rgba(141,191,251,0.24) 100%); border-radius:20px; padding:20px; box-shadow:0 30px 60px rgba(58,108,244,0.25); min-height:300px; display:flex; flex-direction:column; justify-content:center; }
+  body.landing.student .tile-title { font-size:36px; font-weight:800; color:#fff; }
+  body.landing.student .tile-chip { display:inline-block; font-size:12px; color:#2d3a6b; background:#e6f0ff; border:1px solid #cfe3ff; border-radius:999px; padding:4px 10px; margin-bottom:12px; }
+  body.landing.student .image-card { border-radius:20px; background:linear-gradient(180deg, rgba(84,101,255,0.30) 0%, rgba(141,191,251,0.24) 100%); box-shadow:0 30px 60px rgba(58,108,244,0.25); min-height:300px; display:flex; align-items:center; justify-content:center; padding:0; overflow:hidden; }
+  body.landing.student .image-card img { width:100%; height:100%; object-fit:cover; object-position:bottom; border-radius:18px; }
+  body.landing.student .bubble { position:absolute; border-radius:50%; filter:drop-shadow(0 20px 30px rgba(0,0,0,0.15)); }
+  body.landing.student .bubble.left { left:-40px; top:160px; width:160px; height:160px; background:radial-gradient(circle at 30% 30%, #6ce0c7, #8dbffb); opacity:0.7; }
+  body.landing.student .bubble.right { right:40px; top:120px; width:120px; height:120px; background:radial-gradient(circle at 30% 30%, #8dbffb, #b0d5ff); opacity:0.8; }
+  body.landing.student .bubble.right.small { right:20px; top:220px; width:80px; height:80px; background:radial-gradient(circle at 30% 30%, #8dbffb, #c6e1ff); opacity:0.85; }
 </style>
 {% endblock %}
 
@@ -75,7 +97,7 @@
   </div>
   <div class="landing-brand">samsamian</div>
   {% if user.is_authenticated %}
-    {% if user.email == 'shatinaabbasi@gmail.com' or user.role and user.role.code == 'admin' %}
+    {% if user.role and user.role.code == 'admin' %}
       <div id="adminHamburger" class="hamburger" aria-label="Admin menu" title="Admin menu">
         <span class="bar"></span>
         <span class="bar"></span>
@@ -83,17 +105,25 @@
       </div>
       <div id="adminDrawerBackdrop" class="drawer-backdrop"></div>
       <nav id="adminDrawer" class="admin-drawer" aria-label="Admin menu">
-        <div class="admin-drawer-header">{{ user.get_full_name|default:user.email }}</div>
+        <div class="admin-drawer-header"><a href="/accounts/profile/">{{ user.get_full_name|default:user.email }}</a></div>
         <div class="admin-drawer-gap" style="height:24px"></div>
-        <ul class="admin-drawer-list">
-          <li>
-            <a href="/admin/auth/user/">
-              <span class="ico">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0zm-6 5a6 6 0 00-6 6h16a6 6 0 00-6-6H10z"/></svg>
-              </span>
-              <span class="label">لیست کاربران</span>
-            </a>
-          </li>
+      <ul class="admin-drawer-list">
+        <li>
+          <a href="/">
+            <span class="ico">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3l9 8h-3v8H6v-8H3l9-8z"/></svg>
+            </span>
+            <span class="label">صفحه اصلی</span>
+          </a>
+        </li>
+        <li>
+          <a href="/accounts/users/">
+            <span class="ico">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0zm-6 5a6 6 0 00-6 6h16a6 6 0 00-6-6H10z"/></svg>
+            </span>
+            <span class="label">لیست کاربران</span>
+          </a>
+        </li>
           <li>
             <a href="/accounts/dashboard/">
               <span class="ico">
@@ -125,27 +155,177 @@
           }
         })();
       </script>
+    {% elif user.role and user.role.code == 'student' %}
+      <div id="studentHamburger" class="hamburger" aria-label="Student menu" title="Student menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+      <div id="studentDrawerBackdrop" class="drawer-backdrop"></div>
+      <nav id="studentDrawer" class="admin-drawer" aria-label="Student menu">
+        <div class="admin-drawer-header"><a href="/accounts/profile/">{{ user.get_full_name|default:user.email }}</a></div>
+        <div class="admin-drawer-gap" style="height:24px"></div>
+        <ul class="admin-drawer-list">
+          <li>
+            <a href="/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3l9 8h-3v8H6v-8H3l9-8z"/></svg>
+              </span>
+              <span class="label">صفحه اصلی</span>
+            </a>
+          </li>
+          <li>
+            <a href="/accounts/dashboard/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 5h16v2H4V5zm0 6h16v2H4v-2zm0 6h16v2H4v-2z"/></svg>
+              </span>
+              <span class="label">لیست آزمون‌ها</span>
+            </a>
+          </li>
+          <li>
+            <a href="/accounts/exam-profile/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 4h14v16H5V4zm2 2v12h10V6H7zm1 1h8v2H8V7zm0 3h8v2H8v-2zm0 3h8v2H8v-2z"/></svg>
+              </span>
+              <span class="label">لیست نمرات</span>
+            </a>
+          </li>
+          <li>
+            <a href="/accounts/logout/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M10 3h4v2h-4V3zm1 4h2v10h-2V7zm-6 6h4v2H5v-2zm10 0h4v2h-4v-2z"/></svg>
+              </span>
+              <span class="label">خروج</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <script>
+        (function(){
+          var btn = document.getElementById('studentHamburger');
+          var drawer = document.getElementById('studentDrawer');
+          var backdrop = document.getElementById('studentDrawerBackdrop');
+          if(btn && drawer && backdrop){
+            var toggle = function(){ drawer.classList.toggle('open'); backdrop.classList.toggle('open'); };
+            btn.addEventListener('click', toggle);
+            backdrop.addEventListener('click', toggle);
+            document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && drawer.classList.contains('open')) toggle(); });
+          }
+        })();
+      </script>
+    {% elif user.role and user.role.code == 'instructor' %}
+      <div id="instructorHamburger" class="hamburger" aria-label="Instructor menu" title="Instructor menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+      <div id="instructorDrawerBackdrop" class="drawer-backdrop"></div>
+      <nav id="instructorDrawer" class="admin-drawer" aria-label="Instructor menu">
+        <div class="admin-drawer-header"><a href="/accounts/profile/">{{ user.get_full_name|default:user.email }}</a></div>
+        <div class="admin-drawer-gap" style="height:24px"></div>
+        <ul class="admin-drawer-list">
+          <li>
+            <a href="/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3l9 8h-3v8H6v-8H3l9-8z"/></svg>
+              </span>
+              <span class="label">صفحه اصلی</span>
+            </a>
+          </li>
+          <li>
+            <a href="/accounts/dashboard/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 4h14v16H5V4zm2 2v12h10V6H7zm1 1h8v2H8V7zm0 3h8v2H8v-2zm0 3h8v2H8v-2z"/></svg>
+              </span>
+              <span class="label">بانک سوالات</span>
+            </a>
+          </li>
+          <li>
+            <a href="/accounts/students/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0zm-6 5a6 6 0 00-6 6h16a6 6 0 00-6-6H10z"/></svg>
+              </span>
+              <span class="label">لیست دانشجویان</span>
+            </a>
+          </li>
+          <li>
+            <a href="/accounts/exam-profile/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 2h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2zm3 6h6v2h-6V8zm0 4h6v2h-6v-2z"/></svg>
+              </span>
+              <span class="label">نتایج آزمون</span>
+            </a>
+          </li>
+          <li>
+            <a href="/accounts/dashboard/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 5h16v2H4V5zm0 6h16v2H4v-2zm0 6h16v2H4v-2z"/></svg>
+              </span>
+              <span class="label">تعریف آزمون</span>
+            </a>
+          </li>
+          <li>
+            <a href="/accounts/logout/">
+              <span class="ico">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M10 3h4v2h-4V3zm1 4h2v10h-2V7zm-6 6h4v2H5v-2zm10 0h4v2h-4v-2z"/></svg>
+              </span>
+              <span class="label">خروج</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <script>
+        (function(){
+          var btn = document.getElementById('instructorHamburger');
+          var drawer = document.getElementById('instructorDrawer');
+          var backdrop = document.getElementById('instructorDrawerBackdrop');
+          if(btn && drawer && backdrop){
+            var toggle = function(){ drawer.classList.toggle('open'); backdrop.classList.toggle('open'); };
+            btn.addEventListener('click', toggle);
+            backdrop.addEventListener('click', toggle);
+            document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && drawer.classList.contains('open')) toggle(); });
+          }
+        })();
+      </script>
     {% endif %}
   {% endif %}
   </header>
 {% endblock %}
 
 {% block content %}
-  <section class="hero">
-    <div class="hero-card">
-    
-    <h1 class="hero-title">سامانه آنلاین آزمون‌یار صمصامیان</h1>
-    <h2 class="hero-sub">خدمات سامانه آزمون آنلاین</h2>
-    <h2 class="hero-sub"><span class="blue">ویژه مدارس و موسسات</span></h2>
-    <p class="hero-desc">ارائهٔ سازوکار سنجش، تقلب‌یابی و گزارش‌های تحلیلی برای آزمون‌های حضوری و آنلاین</p>
-    <div class="hero-cta">
-      <a href="/accounts/login/" class="btn-primary">آزمون آنلاین بساز</a>
+  {% if user.is_authenticated and user.role and user.role.code == 'student' %}
+</br>
+   <h1 class="sam-title">سامانه آزمون آنلاین صمصامیان</h1>
+    <div class="container student-stage">
+     
+      <div class="student-grid">
+        
+        <div class="tile">
+          <div class="tile-chip">online Website</div>
+          <div class="tile-title">Sam Exam</div>
+        </div>
+        <div class="image-card"><img class="hero-img" src="{% static 'main image.svg' %}" alt="Main image" /></div>
+      </div>
+   
+      <div class="bubble right"></div>
+      <div class="bubble right small"></div>
     </div>
-  </div>
-  <div class="hero-illustration">
-    <img class="hero-img" src="{% static 'Online test-rafiki.svg' %}" alt="Storyset online test illustration" />
-  </div>
-</section>
+  {% else %}
+    <section class="hero">
+      <div class="hero-card">
+        <h1 class="hero-title">سامانه آنلاین آزمون‌یار صمصامیان</h1>
+        <h2 class="hero-sub">خدمات سامانه آزمون آنلاین</h2>
+        <h2 class="hero-sub"><span class="blue">ویژه مدارس و موسسات</span></h2>
+        <p class="hero-desc">ارائهٔ سازوکار سنجش، تقلب‌یابی و گزارش‌های تحلیلی برای آزمون‌های حضوری و آنلاین</p>
+        <div class="hero-cta">
+          <a href="/accounts/login/" class="btn-primary">آزمون آنلاین بساز</a>
+        </div>
+      </div>
+      <div class="hero-illustration">
+        <img class="hero-img" src="{% static 'Online test-rafiki.svg' %}" alt="Storyset online test illustration" />
+      </div>
+    </section>
+  {% endif %}
 
 <section class="info-section">
   <h3 class="info-title">چرا صمصامیان بهترین آزمون‌ساز آنلاین است؟</h3>

@@ -10,6 +10,8 @@ from .models import Role
 from .models import Profile
 from .forms import RecoveryCodeResetForm
 from .models import RecoveryCode
+from .models import User
+from django.views.decorators.http import require_POST
 
 
 class RegisterView(FormView):
@@ -50,6 +52,8 @@ class ProfileView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         ctx["profile"] = getattr(self.request.user, "profile", None)
         return ctx
+
+    # No inline edit on profile page per latest requirements
 
 
 class EmailLoginView(FormView):
@@ -114,5 +118,75 @@ def logout_to_home(request):
     # Explicitly log out and redirect to home page
     logout(request)
     return redirect('home')
+
+@method_decorator(login_required, name="dispatch")
+class UsersListView(TemplateView):
+    template_name = "accounts/users_list.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+        if not is_admin:
+            return redirect('profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['users'] = User.objects.select_related('role', 'profile').all()
+        ctx['roles'] = list(Role.objects.filter(code__in=['admin','student','instructor']))
+        return ctx
+
+@method_decorator(login_required, name="dispatch")
+class StudentsListView(TemplateView):
+    template_name = "accounts/users_list.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+        is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+        if not (is_admin or is_instructor):
+            return redirect('profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['users'] = User.objects.select_related('role', 'profile').filter(role__code='student')
+        ctx['roles'] = list(Role.objects.filter(code__in=['admin','student','instructor']))
+        ctx['listing_students_only'] = True
+        return ctx
+
+@login_required
+@require_POST
+def user_update_role(request, pk: int):
+    u = request.user
+    is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+    if not is_admin:
+        return redirect('profile')
+    try:
+        target = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return redirect('users')
+    code = request.POST.get('role_code')
+    role = Role.objects.filter(code=code).first()
+    if role:
+        target.role = role
+        target.save()
+    return redirect('users')
+
+@login_required
+@require_POST
+def user_delete(request, pk: int):
+    u = request.user
+    is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+    if not is_admin:
+        return redirect('profile')
+    if u.pk == pk:
+        return redirect('users')
+    try:
+        target = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return redirect('users')
+    target.delete()
+    return redirect('users')
 
 # Create your views here.
