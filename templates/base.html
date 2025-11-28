@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  {% load static %}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}سامانه آزمون آنلاین{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'styles.css' %}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% block header %}
+  <header>
+    <nav>
+      <a href="/accounts/dashboard/">داشبورد</a>
+      {% if user.is_authenticated %}
+        <a href="/accounts/profile/">پروفایل</a>
+        <a href="/accounts/logout/">خروج</a>
+      {% else %}
+        <a href="/accounts/login/">ورود</a>
+        <a href="/accounts/register/">ثبت‌نام</a>
+      {% endif %}
+    </nav>
+  </header>
+  {% endblock %}
+  <main>
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block footer %}
+  <footer>
+    <small>سامانه آزمون آنلاین - اسپرینت ۱</small>
+  </footer>
+  {% endblock %}
+</body>
+</html>

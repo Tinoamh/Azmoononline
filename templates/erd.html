@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}ERD اسپرینت ۱{% endblock %}
+{% block extra_css %}
+<style>
+  .erd-container { max-width: 980px; margin: 24px auto; padding: 16px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .erd-container h1 { font-size: 20px; margin-bottom: 12px; }
+  .erd-note { font-size: 14px; color: #333; margin-top: 8px; }
+  .mermaid { direction: ltr; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erd-container">
+  <h1>نمودار ERD اسپرینت ۱ (اکانت‌ها)</h1>
+  <div class="mermaid">
+erDiagram
+  ROLE {
+    bigint id PK
+    string code "unique"
+    string name
+    text description
+  }
+
+  USER {
+    bigint id PK
+    string username "unique"
+    string email "unique"
+    string password
+    int role_id FK
+  }
+
+  PROFILE {
+    bigint id PK
+    string phone
+    int user_id FK "unique"
+  }
+
+  RECOVERY_CODE {
+    bigint id PK
+    string code_hash
+    boolean used
+    datetime created_at
+    int user_id FK
+  }
+
+  PASSWORD_RESET_ATTEMPT {
+    bigint id PK
+    string email
+    datetime requested_at
+  }
+
+  ROLE ||--o{ USER : assigns
+  USER ||--|| PROFILE : has
+  USER ||--o{ RECOVERY_CODE : has
+  %% PASSWORD_RESET_ATTEMPT has no FK to USER; stored by email only
+  </div>
+
+  <p class="erd-note">
+    توضیحات: جدول <strong>Role</strong> نقش‌ها را نگه‌داری می‌کند و کاربران اختیاری به یک نقش متصل می‌شوند. جدول <strong>Profile</strong> با رابطه یک‌به‌یک به کاربر متصل است. جدول <strong>RecoveryCode</strong> کدهای بازیابی چندگانه برای هر کاربر دارد. جدول <strong>PasswordResetAttempt</strong> برای ثبت تلاش‌های بازنشانی رمز بر اساس ایمیل است و به کاربر کلید خارجی ندارد.
+  </p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+</script>
+{% endblock %}
