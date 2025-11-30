@@ -1,15 +1,129 @@
 {% extends "base.html" %}
 {% block title %}پروفایل{% endblock %}
-{% block content %}
-<section>
-  <h1>پروفایل</h1>
-  <p>نام کاربری: {{ user.username }}</p>
-  <p>ایمیل: {{ user.email }}</p>
-  {% if profile %}
-    <p>شماره تماس: {{ profile.phone }}</p>
-    <p>بیو: {{ profile.bio }}</p>
-  {% else %}
-    <p>پروفایل هنوز کامل نشده است.</p>
-  {% endif %}
-</section>
+{% block body_class %}{% if user.is_authenticated and user.role and user.role.code == 'student' %}profile student{% else %}profile{% endif %}{% endblock %}
+{% block extra_css %}
+<style>
+  body.profile { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
+  body.profile.student { background: linear-gradient(to right, #5465FF 0%, #899EFF 35%, #97ACFF 58%, #A4BBFF 75%, #BFD7FF 93%); }
+  .hamburger { position:fixed; top:22px; right:22px; width:40px; height:32px; display:flex; flex-direction:column; justify-content:center; gap:6px; cursor:pointer; z-index:1100; }
+  .hamburger .bar { height:3px; background:#3A6CF4; border-radius:3px; }
+  .drawer-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.25); backdrop-filter:saturate(120%); display:none; z-index:1090; }
+  .drawer-backdrop.open { display:block; }
+  .admin-drawer { position:fixed; top:0; right:0; height:100vh; width:280px; background:#3A6CF4; color:#fff; box-shadow:-12px 0 28px rgba(0,0,0,0.18); transform:translateX(100%); transition:transform .25s ease; z-index:1110; direction: rtl; display:flex; flex-direction:column; }
+  .admin-drawer.open { transform:translateX(0); }
+  .admin-drawer-header { padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.25); font-weight:800; text-align:right; }
+  .admin-drawer-header a { color:#fff; text-decoration:none; display:block; }
+  .admin-drawer-header a:hover { opacity:0.9; }
+  .admin-drawer-gap { height:24px; }
+  .admin-drawer-list { list-style:none; margin:8px 0 0 0; padding:0; }
+  .admin-drawer-list li { margin:0; border-top:1px solid rgba(255,255,255,0.2); }
+  .admin-drawer-list a { display:flex; align-items:center; justify-content:flex-start; gap:12px; padding:12px 18px; color:#fff; text-decoration:none; white-space: nowrap; }
+  .admin-drawer-list a:hover { background:rgba(255,255,255,0.18); }
+  .admin-drawer-list .label { font-weight:600; }
+  .admin-drawer-list .ico { width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; opacity:0.95; }
+  /* Instructor profile card */
+  .prof-wrap { max-width:1000px; margin:24px auto; padding:24px; background:#e8f4ff; border:1px solid #cfe3ff; border-radius:16px; box-shadow:0 16px 28px rgba(58,108,244,0.15); }
+  .prof-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .prof-title h2 { margin:0; font-size:20px; color:#2d3a6b; font-weight:800; }
+  .prof-inner { background:#f7fcff; border:1px solid #dfe6fb; border-radius:14px; padding:18px; }
+  .prof-grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px 18px; align-items:center; }
+  .prof-item { display:flex; flex-direction:column; gap:6px; }
+  .prof-label { font-size:12px; color:#4b5c9b; }
+  .prof-box { background:rgba(58,108,244,0.10); border:1px solid #cfe3ff; border-radius:12px; padding:10px 12px; color:#2d3a6b; min-height:40px; }
+  .prof-note { grid-column: 1 / -1; }
+  .prof-actions { display:flex; justify-content:center; margin-top:18px; }
+  .prof-btn { padding:10px 18px; background:#3A6CF4; color:#fff; border:none; border-radius:10px; text-decoration:none; }
+  /* inline edit removed */
+</style>
 {% endblock %}
+{% block header %}{{ block.super }}{% endblock %}
+{% block content %}
+{% if user.role and user.role.code == 'instructor' %}
+  <section class="prof-wrap">
+    <div class="prof-title">
+      <h2>پروفایل استاد</h2>
+      <div class="line" style="flex:1; height:1px; background:#cfe3ff; margin-inline-start:16px"></div>
+    </div>
+    <div class="prof-inner">
+      <div class="prof-grid">
+        <div class="prof-item">
+          <div class="prof-label">نام</div>
+          <div class="prof-box">{{ user.first_name }}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">نام خانوادگی</div>
+          <div class="prof-box">{{ user.last_name }}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">ایمیل</div>
+          <div class="prof-box">{{ user.email }}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">موبایل</div>
+          <div class="prof-box">{% if profile %}{{ profile.phone }}{% endif %}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">نقش</div>
+          <div class="prof-box">{% if user.role %}{{ user.role.name }}{% endif %}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">نام کاربری</div>
+          <div class="prof-box">{{ user.username }}</div>
+        </div>
+        <div class="prof-item prof-note">
+          <div class="prof-label">آدرس</div>
+          <div class="prof-box"></div>
+        </div>
+      </div>
+      
+    </div>
+    
+  </section>
+{% else %}
+  <section class="prof-wrap">
+    <div class="prof-title">
+      {% if user.role and user.role.code == 'admin' %}
+        <h2>پروفایل ادمین</h2>
+      {% else %}
+        <h2>پروفایل دانشجو</h2>
+      {% endif %}
+      <div class="line" style="flex:1; height:1px; background:#cfe3ff; margin-inline-start:16px"></div>
+    </div>
+    <div class="prof-inner">
+      <div class="prof-grid">
+        <div class="prof-item">
+          <div class="prof-label">نام</div>
+          <div class="prof-box">{{ user.first_name }}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">نام خانوادگی</div>
+          <div class="prof-box">{{ user.last_name }}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">ایمیل</div>
+          <div class="prof-box">{{ user.email }}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">موبایل</div>
+          <div class="prof-box">{% if profile %}{{ profile.phone }}{% endif %}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">نقش</div>
+          <div class="prof-box">{% if user.role %}{{ user.role.name }}{% endif %}</div>
+        </div>
+        <div class="prof-item">
+          <div class="prof-label">نام کاربری</div>
+          <div class="prof-box">{{ user.username }}</div>
+        </div>
+        <div class="prof-item prof-note">
+          <div class="prof-label">آدرس</div>
+          <div class="prof-box"></div>
+        </div>
+      </div>
+      
+    </div>
+    
+  </section>
+{% endif %}
+{% endblock %}
+{% block footer %}{{ block.super }}{% endblock %}

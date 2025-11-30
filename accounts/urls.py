@@ -1,12 +1,12 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView
+from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView, ExamProfileView, logout_to_home, UsersListView, StudentsListView, ClassroomManageView, classroom_toggle_member, user_update_role, user_delete
 from .forms import AzmonPasswordResetForm
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', EmailLoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('logout/', logout_to_home, name='logout'),
 
     # Password reset flow using built-in views with custom form and templates
     path(
@@ -28,4 +28,11 @@ urlpatterns = [
     # Authenticated pages
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('exam-profile/', ExamProfileView.as_view(), name='exam_profile'),
+    path('users/', UsersListView.as_view(), name='users'),
+    path('students/', StudentsListView.as_view(), name='students'),
+    path('classroom/', ClassroomManageView.as_view(), name='classroom'),
+    path('classroom/toggle-member/', classroom_toggle_member, name='classroom_toggle_member'),
+    path('users/<int:pk>/role/', user_update_role, name='user_update_role'),
+    path('users/<int:pk>/delete/', user_delete, name='user_delete'),
 ]

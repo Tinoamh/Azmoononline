@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}تشکیل کلاس{% endblock %}
+{% block body_class %}classroom{% endblock %}
+{% block extra_css %}
+<style>
+  body.classroom { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
+  .class-wrap { max-width:1000px; margin:24px auto; padding:24px; background:#fff; border:1px solid #dfe6fb; border-radius:16px; box-shadow:0 16px 28px rgba(58,108,244,0.12); }
+  .class-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .class-title h2 { margin:0; color:#3A6CF4; font-weight:800 }
+  .class-form { display:flex; gap:10px; align-items:center; margin-bottom:16px; }
+  .input { padding:10px 12px; border:1px solid #cfe3ff; border-radius:8px; }
+  .btn { padding:10px 14px; background:#3A6CF4; color:#fff; border:none; border-radius:8px; cursor:pointer; }
+  table { width:100%; border-collapse:collapse }
+  th, td { text-align:right; padding:10px; border-bottom:1px solid #f0f4ff }
+  .act { white-space:nowrap }
+  .btn.remove { background:#d9534f }
+</style>
+{% endblock %}
+{% block content %}
+<section class="class-wrap">
+  <div class="class-title">
+    <h2>تشکیل کلاس</h2>
+  </div>
+  <form method="post" class="class-form">
+    {% csrf_token %}
+    <label>نام کلاس</label>
+    <input class="input" type="text" name="class_name" value="{{ classroom.name }}" />
+  </form>
+  <h3 style="margin-top:0;color:#2d3a6b">دانشجویان</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>نام</th>
+        <th>نام خانوادگی</th>
+        <th>ایمیل</th>
+        <th>وضعیت در کلاس</th>
+        <th>اقدام</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.first_name }}</td>
+        <td>{{ s.last_name }}</td>
+        <td>{{ s.email }}</td>
+        <td>{% if s.id in member_ids %}عضو کلاس{% else %}غیرعضو{% endif %}</td>
+        <td class="act">
+          <form method="post" action="/accounts/classroom/toggle-member/" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="student_id" value="{{ s.id }}" />
+            {% if s.id in member_ids %}
+              <button class="btn remove" type="submit">حذف از کلاس</button>
+            {% else %}
+              <button class="btn" type="submit">اضافه کردن</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h3 style="color:#2d3a6b">لیست بانک سوالات</h3>
+  <ul style="background:#f7fcff;border:1px solid #dfe6fb;border-radius:10px;padding:12px;list-style:none;margin:0 0 16px 0">
+    <li style="color:#6b7aa6">بانک سوالات خالی است</li>
+  </ul>
+  <form method="post">
+    {% csrf_token %}
+    <label>تعداد سوالات آزمون</label>
+    <input class="input" type="number" min="0" name="num_questions" value="0" />
+    <button class="btn" type="submit">ثبت</button>
+  </form>
+</section>
+{% endblock %}

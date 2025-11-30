@@ -91,12 +91,40 @@ WSGI_APPLICATION = 'oes.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+# configurable database via environment variables
+# DB_ENGINE: sqlite | postgresql | mysql
+# DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+db_engine = os.environ.get('DB_ENGINE', 'sqlite').lower()
+engine_map = {
+    'sqlite': 'django.db.backends.sqlite3',
+    'postgres': 'django.db.backends.postgresql',
+    'postgresql': 'django.db.backends.postgresql',
+    'psql': 'django.db.backends.postgresql',
+    'mysql': 'django.db.backends.mysql',
 }
+
+if db_engine == 'sqlite':
+    db_name = os.environ.get('DB_NAME')
+    if not db_name:
+        db_name = BASE_DIR / 'db.sqlite3'
+    DATABASES = {
+        'default': {
+            'ENGINE': engine_map['sqlite'],
+            'NAME': db_name,
+        }
+    }
+else:
+    db_default_port = '5432' if 'postgres' in db_engine else '3306'
+    DATABASES = {
+        'default': {
+            'ENGINE': engine_map.get(db_engine, engine_map['sqlite']),
+            'NAME': os.environ.get('DB_NAME', 'azmoon'),
+            'USER': os.environ.get('DB_USER', ''),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', db_default_port),
+        }
+    }
 
 
 # Password validation
@@ -135,7 +163,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 from pathlib import Path
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [BASE_DIR / 'static', BASE_DIR]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -160,7 +188,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@sam-azmon.lo
 
 # Auth redirects
 LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/accounts/dashboard/'
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # Email-based authentication backend

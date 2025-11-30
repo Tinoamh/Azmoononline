@@ -37,6 +37,33 @@ class Profile(models.Model):
     def __str__(self):
         return f"پروفایل {self.user.username}"
 
+class Classroom(models.Model):
+    name = models.CharField(max_length=200)
+    instructor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_classes')
+    students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='classes', blank=True)
+
+    class Meta:
+        verbose_name = "کلاس"
+        verbose_name_plural = "کلاس‌ها"
+
+    def __str__(self):
+        return f"{self.name} - {getattr(self.instructor, 'username', '')}"
+
+class Exam(models.Model):
+    name = models.CharField(max_length=200)
+    classroom = models.ForeignKey('Classroom', on_delete=models.CASCADE, related_name='exams')
+    num_questions = models.PositiveIntegerField(default=0)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_exams')
+    students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='exams', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "آزمون"
+        verbose_name_plural = "آزمون‌ها"
+
+    def __str__(self):
+        return f"آزمون {self.name} ({self.num_questions})"
+
 class RecoveryCode(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recovery_codes')
     code_hash = models.CharField(max_length=128)

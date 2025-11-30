@@ -1,51 +1,63 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>افزودن سوالات</title>
 
+<!-- فونت ایران‌سنس -->
 <style>
-/* فونت */
 @font-face {
     font-family: IranSans;
-    src: url("assets/IranSans.woff2");
+    src: url("assets/IranSans.woff2") format("woff2");
 }
 
 body {
     margin: 0;
     padding: 0;
-    font-family: IranSans;
-    background: linear-gradient(180deg, #eef4ff, #e7ecff);
+    font-family: IranSans, sans-serif;
+    background: linear-gradient(180deg, #eef2ff, #e8ebff);
 }
 
 /* هدر */
 .header {
-    background: rgba(0,0,0,0.05);
+    background: rgba(0,0,0,0.06);
     padding: 15px;
-    text-align: center;
-    font-size: 24px;
-    font-weight: 700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     position: relative;
-    color: #333;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
 }
 
-/* منو */
+.header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #2b2b2b;
+}
+
+/* منوی سه خط */
 .menu-btn {
     position: absolute;
     right: 15px;
-    top: 14px;
-    width: 32px;
-    height: 28px;
+    top: 13px;
+    width: 35px;
+    height: 30px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     cursor: pointer;
+    border: none;
+    background: none;
 }
 
 .menu-btn span {
+    width: 100%;
     height: 4px;
-    background: #3f5fff;
+    background: #315bff;
     border-radius: 5px;
 }
 
@@ -56,28 +68,34 @@ body {
     position: fixed;
     right: -270px;
     top: 0;
-    background: linear-gradient(#446aff, #82a3ff);
+    background: linear-gradient(#315bff, #7ea4ff);
     color: white;
-    padding-top: 70px;
+    padding-top: 80px;
     text-align: center;
     transition: 0.35s;
     z-index: 1000;
-    border-radius: 0 0 0 25px;
 }
 
-.sidebar.open { right: 0; }
+.sidebar.open {
+    right: 0;
+}
 
 .sidebar img {
-    width: 78px;
-    height: 78px;
+    width: 75px;
+    height: 75px;
     border-radius: 50%;
+    object-fit: cover;
+}
+
+.sidebar p {
+    margin-top: 10px;
 }
 
 .menu-links {
     margin-top: 40px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 22px;
 }
 
 .menu-links a {
@@ -102,11 +120,13 @@ body {
     pointer-events: auto;
 }
 
-/* دکمه‌های بالا */
+/* دکمه‌ها */
 .main {
+    height: calc(100vh - 120px);
     display: flex;
     justify-content: center;
-    margin-top: 30px;
+    align-items: center;
+
 }
 
 .btn-row {
@@ -116,114 +136,22 @@ body {
 
 .select-btn {
     width: 180px;
-    padding:  18px;
+    padding: 18px;
     border-radius: 25px;
-    background: linear-gradient(90deg,#3d66ff,#638aff);
+    background: linear-gradient(90deg, #3d66ff, #638aff);
     border: none;
+    font-size: 18px;
     color: white;
-    font-size: 17px;
     cursor: pointer;
-    box-shadow: 0 5px 10px rgba(0,0,0,0.10);
+    box-shadow: 0 7px 15px rgba(0,0,0,0.12);
     transition: 0.2s;
 }
 
-.select-btn:hover { 
-    filter: brightness(0.85);
+.select-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgb(0,0, 0,0.15);
- }
-
-.select-btn.active {
-    background: #506bff;
-    filter: brightness(0.75);
-}
-
-/* فرم‌ها */
-.form-box {
-    width: 85%;
-    margin: 30px auto;
-    background: white;
-    padding: 22px 72px;
-    border-radius: 15px;
-    border: 2px solid #c8d2ff;
-    box-shadow: 0 5px 12px rgba(0,0,0,0.08);
-    display: none;
-}
-
-.form-title {
-    text-align: center;
-    font-size: 22px;
-    font-weight: 700;
-    color: #444;
-    margin-bottom: 20px;
-}
-
-.text-input {
-    width: 100%;
-    height: 120px;
-    padding: 10px;
-    border-radius: 12px;
-    border: 1.8px solid #b7c4ff;
-    font-size: 16px;
-    margin-bottom: 18px;
-    outline: none;
-    box-sizing: border-box;
-}
-
-label {
-    font-weight: 600;
-    margin-bottom: 5px;
-    display: inline-block;
-}
-
-/* تستی */
-.test-options {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 20px;
-}
-
-/* دکمه‌های حذف/افزودن */
-.form-btns {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 10px;
-}
-
-.add-btn, .delete-btn {
-    padding: 9px 25px;
-    font-size: 16px;
-    background: white;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.25s;
-}
-
-.add-btn { border: 2px solid #28a745; color: #28a745; }
-.delete-btn { border: 2px solid #ff4d4f; color: #ff4d4f; }
-
-.add-btn:hover { background: #00ff3c; color: white; }
-.delete-btn:hover { background: #ff0004; color: white; }
-
-/* دکمه ثبت */
-.submit-btn {
-    width: 200px;
-    margin: 25px auto 0;
-    display: block;
-    padding: 12px;
-    background:linear-gradient(90deg,#3d66ff,#638aff);
-    border: none;
-    color: white;
-    font-size: 18px;
-    border-radius: 22px;
-    cursor: pointer;
-}
-.submit-btn:hover {
-    transform: translateY(-3px);
-    filter: brightness(0.85);
     box-shadow: 0 10px 20px rgba(0,0,0,0.15);
 }
+
 </style>
 </head>
 
@@ -231,79 +159,42 @@ label {
 
 <!-- HEADER -->
 <header class="header">
-    <h2 id="page-title">افزودن سوالات</h2>
+    <h2>افزودن سوالات</h2>
 
-    <div id="menu-btn" class="menu-btn">
-        <span></span><span></span><span></span>
-    </div>
+    <button id="menu-btn" class="menu-btn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
 </header>
+
 <!-- SIDEBAR -->
 <aside id="sidebar" class="sidebar">
     <img src="profile.jpg">
-    <p>پروفایل کاربر</p>
+    <p>پروفایل </p>
+    
+
     <div class="menu-links">
         <a href="#">داشبورد</a>
         <a href="#">مدیریت آزمون‌ها</a>
         <a href="#">بانک سوالات</a>
-        <a href="#">نتایج</a>
+        <a href="#">نتایج و گزارش‌ها</a>
         <a href="#">تنظیمات</a>
     </div>
 </aside>
 
+<!-- OVERLAY -->
 <div id="overlay" class="overlay"></div>
 
-<!-- دکمه‌ها -->
+<!-- MAIN CONTENT -->
 <main class="main">
     <div class="btn-row">
-        <button id="btn-des" class="select-btn">تشریحی</button>
-        <button id="btn-test" class="select-btn">تستی</button>
+        <button class="select-btn">تشریحی</button>
+        <button class="select-btn">تستی</button>
     </div>
 </main>
 
-<!-- فرم تشریحی -->
-<div id="form-des" class="form-box">
-    <h2 class="form-title">سوالات تشریحی</h2>
-
-    <label>سوال:</label>
-    <textarea class="text-input"></textarea>
-
-    <label>پاسخ:</label>
-    <textarea class="text-input"></textarea>
-
-    <label>کلمات کلیدی:</label>
-    <textarea class="text-input"></textarea>
-
-    <div class="form-btns">
-        <button class="delete-btn">حذف سوال</button>
-        <button class="add-btn">افزودن سوال</button>
-    </div>
-
-    <button class="submit-btn">ثبت</button>
-</div>
-
-<!-- فرم تستی -->
-<div id="form-test" class="form-box">
-    <h2 class="form-title">سوالات تستی</h2>
-
-    <label>سوال:</label>
-    <textarea class="text-input"></textarea>
-
-    <div class="test-options">
-        <label><input type="radio" name="opt"> گزینه اول</label>
-        <label><input type="radio" name="opt"> گزینه دوم</label>
-        <label><input type="radio" name="opt"> گزینه سوم</label>
-        <label><input type="radio" name="opt"> گزینه چهارم</label>
-    </div>
-
-    <div class="form-btns">
-        <button class="delete-btn">حذف سوال</button>
-        <button class="add-btn">افزودن سوال</button>
-    </div>
-
-    <button class="submit-btn">ثبت</button>
-</div>
-
-<!-- JS -->
+<!-- ALL JS INSIDE HTML -->
 <script>
 const menuBtn = document.getElementById("menu-btn");
 const sidebar = document.getElementById("sidebar");
@@ -318,35 +209,330 @@ overlay.onclick = () => {
     sidebar.classList.remove("open");
     overlay.classList.remove("show");
 };
+=======
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لیست آزمون‌ها</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Vazir', 'IRANSans', sans-serif;
+    background-color: #F7F8FC;
+    color: #222;
+    direction: rtl;
+    transition: all 0.3s;
+  }
 
-/* دکمه‌ها */
-const btnDes = document.getElementById("btn-des");
-const btnTest = document.getElementById("btn-test");
-const formDes = document.getElementById("form-des");
-const formTest = document.getElementById("form-test");
-const pageTitle = document.getElementById("page-title");
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    padding: 15px 30px;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header .logo { font-weight: bold; font-size: 22px; color: #4158CF; }
+  header .title { font-size: 26px; font-weight: 700; }
+  header .profile { font-weight: 600; font-size: 16px; }
 
-btnDes.onclick = () => {
-    btnDes.classList.add("active");
-    btnTest.classList.remove("active");
+  .sidebar {
+    width: 220px;
+    background-color: #fff;
+    padding-top: 20px;
+    border-left: 1px solid #e0e0e0;
+    position: fixed;
+    top: 70px;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.03);
+    transition: width 0.3s;
+    overflow: hidden;
+  }
+  .sidebar.collapsed { width: 60px; }
+  .toggle-btn {
+    cursor: pointer;
+    padding: 10px;
+    text-align: center;
+    font-size: 20px;
+    color: #4158CF;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    transition: 0.3s;
+  }
+  .sidebar a {
+    text-decoration: none;
+    color: #222;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 16px;
+    margin: 5px 12px;
+    transition: 0.3s;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .sidebar a.active {
+    background-color: #4158CF;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(65,88,207,0.3);
+  }
+  .sidebar a:hover { background-color: #f0f0f0; }
+  .sidebar.collapsed a span.text { display: none; }
 
-    formDes.style.display = "block";
-    formTest.style.display = "none";
+  .main {
+    margin-right: 240px;
+    padding: 30px;
+    transition: margin-right 0.3s;
+  }
+  .sidebar.collapsed ~ .main { margin-right: 70px; }
 
-    pageTitle.textContent = "سوالات تشریحی";
-};
+  .search-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+    align-items: center;
+  }
+  .search-filter input[type="text"] {
+    flex: 1;
+    padding: 12px 18px;
+    border-radius: 16px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    transition: 0.3s;
+  }
+  .search-filter input[type="text"]:focus {
+    outline: none;
+    border-color: #4158CF;
+    box-shadow: 0 0 8px rgba(65,88,207,0.2);
+  }
+  .filters { display: flex; gap: 10px; }
+  .filters button {
+    padding: 8px 16px;
+    border-radius: 16px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s;
+  }
+  .filters button.active {
+    background-color: #4158CF;
+    color: #fff;
+    border-color: #4158CF;
+    box-shadow: 0 3px 8px rgba(65,88,207,0.2);
+  }
+  .filters button:hover { background-color: #f0f0f0; }
 
-btnTest.onclick = () => {
-    btnTest.classList.add("active");
-    btnDes.classList.remove("active");
+  .exam-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 22px;
+  }
+  .exam-card {
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transition: 0.3s;
+    border: 2px solid transparent;
+  }
+  .exam-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
 
-    formDes.style.display = "none";
-    formTest.style.display = "block";
+  .exam-card.active { background-color: #E8F7EC; border-color: #4158CF; }
+  .exam-card.completed.participated { background-color: #F0F0F0; border-color: #ccc; color: #555; }
+  .exam-card.completed.done { background-color: #E0E0E0; border-color: #999; color: #333; }
 
-    pageTitle.textContent = "سوالات تستی";
-};
+  .exam-card .exam-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+  .exam-card .exam-date, .exam-card .exam-time, .exam-card .exam-duration, .exam-card .exam-desc {
+    font-size: 14px; color: #666; margin-bottom: 4px;
+  }
+  .exam-card .status {
+    margin-top: 10px; padding: 6px 14px; border-radius: 12px;
+    font-weight: 600; font-size: 14px; display: inline-block;
+  }
+  .status.active { background-color: #4158CF; color: #fff; }
+  .status.participated { background-color: #999; color: #fff; }
+  .status.done { background-color: #666; color: #fff; }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 60px; }
+    .sidebar a span.text { display: none; }
+    .main { margin-right: 70px; padding: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="profile">زهرا</div>
+  <div class="title">لیست آزمون‌ها</div>
+  <div class="logo">samsamian</div>
+</header>
+
+<div class="sidebar" id="sidebar">
+  <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">☰</div>
+  <a href="#"><span>🏠</span> <span class="text">داشبورد</span></a>
+  <a href="#" class="active"><span>📝</span> <span class="text">آزمون‌ها</span></a>
+  <a href="#"><span>📊</span> <span class="text">نتایج</span></a>
+  <a href="#"><span>👤</span> <span class="text">پروفایل</span></a>
+</div>
+
+<div class="main">
+  <div class="search-filter">
+    <input type="text" id="search" placeholder="جست‌وجو در آزمون‌ها...">
+    <div class="filters">
+      <button class="active" onclick="filterExams('all')">همه</button>
+      <button onclick="filterExams('active')">فعال ✅</button>
+      <button onclick="filterExams('participated')">شرکت کرده</button>
+      <button onclick="filterExams('done')">تمام شده</button>
+    </div>
+  </div>
+
+  <div class="exam-list" id="exam-list">
+    <!-- 12 آزمون نمونه با دیتیل بیشتر -->
+    <div class="exam-card active" data-status="active">
+      <div class="exam-name">آزمون ریاضی ۱</div>
+      <div class="exam-date">۱۴ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۰:۰۰</div>
+      <div class="exam-duration">مدت زمان: ۹۰ دقیقه</div>
+      <div class="exam-desc">آزمون شامل مباحث پایه‌ای ریاضی ۱ است.</div>
+      <div class="status active">فعال</div>
+    </div>
+    <div class="exam-card completed participated" data-status="participated">
+      <div class="exam-name">آزمون فیزیک ۱</div>
+      <div class="exam-date">۱۰ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۱:۰۰</div>
+      <div class="exam-duration">مدت زمان: ۶۰ دقیقه</div>
+      <div class="exam-desc">مباحث مکانیک کلاسیک.</div>
+      <div class="status participated">شرکت کرده</div>
+    </div>
+    <div class="exam-card completed done" data-status="done">
+      <div class="exam-name">آزمون شیمی ۱</div>
+      <div class="exam-date">۲۰ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۰۹:۳۰</div>
+      <div class="exam-duration">مدت زمان: ۷۵ دقیقه</div>
+      <div class="exam-desc">شیمی عمومی و واکنش‌ها.</div>
+      <div class="status done">تمام شده</div>
+    </div>
+    <div class="exam-card active" data-status="active">
+      <div class="exam-name">آزمون زیست ۱</div>
+      <div class="exam-date">۵ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۲:۰۰</div>
+      <div class="exam-duration">مدت زمان: ۸۰ دقیقه</div>
+      <div class="exam-desc">مباحث سلولی و ژنتیک.</div>
+      <div class="status active">فعال</div>
+    </div>
+    <div class="exam-card completed participated" data-status="participated">
+      <div class="exam-name">آزمون ریاضی ۲</div>
+      <div class="exam-date">۲۱ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۰:۳۰</div>
+      <div class="exam-duration">مدت زمان: ۹۰ دقیقه</div>
+      <div class="exam-desc">مباحث انتگرال و دیفرانسیل.</div>
+      <div class="status participated">شرکت کرده</div>
+    </div>
+    <div class="exam-card completed done" data-status="done">
+      <div class="exam-name">آزمون فیزیک ۲</div>
+      <div class="exam-date">۱۲ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۳:۰۰</div>
+      <div class="exam-duration">مدت زمان: ۶۵ دقیقه</div>
+      <div class="exam-desc">الکترومغناطیس پایه.</div>
+      <div class="status done">تمام شده</div>
+    </div>
+    <div class="exam-card active" data-status="active">
+      <div class="exam-name">آزمون شیمی ۲</div>
+      <div class="exam-date">۱۵ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۰۸:۳۰</div>
+      <div class="exam-duration">مدت زمان: ۷۰ دقیقه</div>
+      <div class="exam-desc">شیمی آلی مقدماتی.</div>
+      <div class="status active">فعال</div>
+    </div>
+    <div class="exam-card completed participated" data-status="participated">
+      <div class="exam-name">آزمون زیست ۲</div>
+      <div class="exam-date">۲۵ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۴:۰۰</div>
+      <div class="exam-duration">مدت زمان: ۸۰ دقیقه</div>
+      <div class="exam-desc">فیزیولوژی انسان.</div>
+      <div class="status participated">شرکت کرده</div>
+    </div>
+    <div class="exam-card active" data-status="active">
+      <div class="exam-name">آزمون ریاضی ۳</div>
+      <div class="exam-date">۲۷ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۰۹:۰۰</div>
+      <div class="exam-duration">مدت زمان: ۹۰ دقیقه</div>
+      <div class="exam-desc">مباحث احتمال و آمار.</div>
+      <div class="status active">فعال</div>
+    </div>
+    <div class="exam-card completed participated" data-status="participated">
+      <div class="exam-name">آزمون فیزیک ۳</div>
+      <div class="exam-date">۳۰ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۰:۰۰</div>
+      <div class="exam-duration">مدت زمان: ۶۰ دقیقه</div>
+      <div class="exam-desc">مکانیک سیالات.</div>
+      <div class="status participated">شرکت کرده</div>
+    </div>
+    <div class="exam-card completed done" data-status="done">
+      <div class="exam-name">آزمون شیمی ۳</div>
+      <div class="exam-date">۲۸ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۱:۰۰</div>
+      <div class="exam-duration">مدت زمان: ۷۵ دقیقه</div>
+      <div class="exam-desc">ترکیبات معدنی.</div>
+      <div class="status done">تمام شده</div>
+    </div>
+    <div class="exam-card active" data-status="active">
+      <div class="exam-name">آزمون زیست ۳</div>
+      <div class="exam-date">۲۹ آذر ۱۴۰۴</div>
+      <div class="exam-time">ساعت شروع: ۱۲:۳۰</div>
+      <div class="exam-duration">مدت زمان: ۸۵ دقیقه</div>
+      <div class="exam-desc">زیست گیاهی و جانوری.</div>
+      <div class="status active">فعال</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterExams(status) {
+  const buttons = document.querySelectorAll('.filters button');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  if(status === 'all') buttons[0].classList.add('active');
+  else if(status === 'active') buttons[1].classList.add('active');
+  else if(status === 'participated') buttons[2].classList.add('active');
+  else if(status === 'done') buttons[3].classList.add('active');
+
+  const exams = document.querySelectorAll('.exam-card');
+  exams.forEach(card => {
+    if(status === 'all') card.style.display = 'flex';
+    else if(status === 'active' && card.classList.contains('active')) card.style.display = 'flex';
+    else if(status === 'participated' && card.classList.contains('participated')) card.style.display = 'flex';
+    else if(status === 'done' && card.classList.contains('done')) card.style.display = 'flex';
+    else card.style.display = 'none';
+  });
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const btn = document.getElementById('toggleBtn');
+  sidebar.classList.toggle('collapsed');
+  if(sidebar.classList.contains('collapsed')) btn.textContent = '❌';
+  else btn.textContent = '☰';
+}
+>>>>>>> cfeaad15acc7bba137b70fec371e4ac4150b94b7
 </script>
 
 </body>
 </html>
+<<<<<<< HEAD
 
+=======
+>>>>>>> cfeaad15acc7bba137b70fec371e4ac4150b94b7
