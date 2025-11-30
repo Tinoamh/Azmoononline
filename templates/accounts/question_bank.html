@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}بانک سوالات{% endblock %}
+{% block body_class %}question-bank{% endblock %}
+{% block extra_css %}
+<style>
+  :root {
+    --primary: #3d66ff;
+    --primary2: #638aff;
+    --border: #c8d2ff;
+    --bg: #eef4ff;
+    --card-bg: #ffffff;
+    --text: #333;
+    --muted: #777;
+  }
+  * { box-sizing: border-box; }
+  body.question-bank { background: linear-gradient(180deg, var(--bg), #e7ecff); }
+  .hero {
+    background: linear-gradient(90deg, var(--primary), var(--primary2));
+    color: #fff; padding: 22px; border-radius: 0 0 20px 20px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  }
+  .hero .title { font-size: 24px; font-weight: 800; margin: 0; }
+  .hero .stats { margin-top: 10px; display:flex; gap: 12px; flex-wrap: wrap; }
+  .pill { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
+  .container { width: 100%; margin: 20px auto; padding: 0 16px; }
+  .filters { background:#fff; border:1px solid var(--border); border-radius:12px; padding: 12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+  .search { flex:1; }
+  .search input { width:100%; height:40px; border:1.6px solid var(--border); border-radius:10px; padding:0 10px; outline:none; }
+  .select, .radio { display:flex; gap: 10px; align-items:center; }
+  .select select { height:40px; border:1.6px solid var(--border); border-radius:10px; padding:4px 10px; outline:none; }
+  .grid { margin-top:14px; display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .qb-card { border:1.8px solid var(--border); border-radius:12px; background:var(--card-bg); padding: 12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+  .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid var(--border); color: var(--primary); background:#f5f7ff; }
+  .exam { color:#555; font-size:13px; margin-top:6px; }
+  .qtext { color:var(--text); margin-top:8px; font-weight:600; }
+  .meta { display:flex; justify-content:space-between; color:#888; font-size:12px; margin-top:8px; }
+  .options { margin-top:8px; display:none; }
+  .toggle { color: var(--primary); background:#fff; border:1.6px solid var(--primary); border-radius:10px; padding:6px 10px; cursor:pointer; font-size:12px; }
+  .empty { color:#777; text-align:center; padding:20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <div class="title">بانک سوالات</div>
+    <div class="stats">
+      <div class="pill">مجموع: {{ total_questions }}</div>
+      <div class="pill">تشریحی: {{ des_count }}</div>
+      <div class="pill">تستی: {{ mcq_count }}</div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="filters">
+          <div class="search"><input id="searchInput" type="text" placeholder="جست‌وجو در متن سوال"></div>
+          <div class="select">
+            <label for="examFilter">آزمون:</label>
+            <select id="examFilter">
+              <option value="">همه</option>
+              {% for e in exams %}
+              <option value="{{ e.id }}">{{ e.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="radio">
+            <label><input type="radio" name="typeFilter" value="" checked> همه</label>
+            <label><input type="radio" name="typeFilter" value="des"> تشریحی</label>
+            <label><input type="radio" name="typeFilter" value="mcq"> تستی</label>
+          </div>
+    </div>
+
+    {% if questions %}
+    <div id="grid" class="grid">
+      {% for q in questions %}
+      <div class="qb-card" data-exam-id="{{ q.exam.id }}" data-kind="{{ q.kind }}">
+        <div class="badge">{% if q.kind == 'mcq' %}تستی{% else %}تشریحی{% endif %}</div>
+        <div class="exam">آزمون: {{ q.exam.name }}</div>
+        <div class="qtext">{{ q.text }}</div>
+        <div class="meta">
+          <div>{{ q.created_at|date:"Y/m/d H:i" }}</div>
+          {% if q.kind == 'mcq' %}
+          <button class="toggle" type="button">نمایش گزینه‌ها</button>
+          {% endif %}
+        </div>
+        {% if q.kind == 'mcq' %}
+        <div class="options">
+          <ol>
+            {% for opt in q.options %}
+            <li>{% if forloop.counter0 == q.correct_index %}<strong>{{ opt }}</strong> (صحیح){% else %}{{ opt }}{% endif %}</li>
+            {% endfor %}
+          </ol>
+        </div>
+        {% elif q.answer_text %}
+        <div class="options" style="display:block;color:#555;">پاسخ: {{ q.answer_text }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="empty">هنوز سوالی ثبت نکرده‌اید.</div>
+    {% endif %}
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const examFilter = document.getElementById('examFilter');
+    const typeRadios = document.querySelectorAll('input[name="typeFilter"]');
+    const cards = Array.from(document.querySelectorAll('.qb-card'));
+
+    function normalize(s){ return (s||'').toLowerCase(); }
+    function applyFilters(){
+      const q = normalize(searchInput.value);
+      const examId = examFilter.value;
+      const typeVal = Array.from(typeRadios).find(r=>r.checked)?.value || '';
+      cards.forEach(card=>{
+        let ok = true;
+        if(examId && card.dataset.examId !== String(examId)) ok = false;
+        if(typeVal && card.dataset.kind !== typeVal) ok = false;
+        if(q){
+          const text = normalize(card.querySelector('.qtext')?.textContent);
+          if(!text.includes(q)) ok = false;
+        }
+        card.style.display = ok ? '' : 'none';
+      });
+    }
+    searchInput.addEventListener('input', applyFilters);
+    examFilter.addEventListener('change', applyFilters);
+    typeRadios.forEach(r=>r.addEventListener('change', applyFilters));
+    applyFilters();
+
+    document.addEventListener('click', function(e){
+      if(e.target && e.target.classList.contains('toggle')){
+        const card = e.target.closest('.qb-card');
+        const box = card.querySelector('.options');
+        if(!box) return;
+        const show = box.style.display !== 'block';
+        box.style.display = show ? 'block' : 'none';
+        e.target.textContent = show ? 'پنهان کردن گزینه‌ها' : 'نمایش گزینه‌ها';
+      }
+    });
+  </script>
+{% endblock %}

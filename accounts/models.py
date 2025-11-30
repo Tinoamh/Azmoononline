@@ -64,6 +64,31 @@ class Exam(models.Model):
     def __str__(self):
         return f"آزمون {self.name} ({self.num_questions})"
 
+<<<<<<< Updated upstream
+=======
+class Question(models.Model):
+    KIND_CHOICES = (
+        ('des', 'تشریحی'),
+        ('mcq', 'تستی'),
+    )
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
+    kind = models.CharField(max_length=4, choices=KIND_CHOICES)
+    text = models.TextField()
+    # For descriptive
+    answer_text = models.TextField(blank=True)
+    # For MCQ
+    options = models.JSONField(blank=True, null=True)
+    correct_index = models.IntegerField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "سوال"
+        verbose_name_plural = "سوال‌ها"
+
+    def __str__(self):
+        return f"سوال {self.exam.name} - {self.kind}"
+
+>>>>>>> Stashed changes
 class RecoveryCode(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recovery_codes')
     code_hash = models.CharField(max_length=128)

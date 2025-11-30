@@ -8,11 +8,21 @@ from .forms import RegisterForm, EmailAuthenticationForm
 from .forms import ExamProfileForm
 from .models import Role
 from .models import Profile
+<<<<<<< Updated upstream
 from .models import Classroom, Exam
+=======
+from .models import Classroom, Exam, Question
+>>>>>>> Stashed changes
 from .forms import RecoveryCodeResetForm
 from .models import RecoveryCode
 from .models import User
 from django.views.decorators.http import require_POST
+<<<<<<< Updated upstream
+=======
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.middleware.csrf import get_token
+from django.db.models import Count
+>>>>>>> Stashed changes
 
 
 class RegisterView(FormView):
@@ -99,6 +109,33 @@ class RecoveryCodeResetView(FormView):
             rc.save()
         return super().form_valid(form)
 
+<<<<<<< Updated upstream
+=======
+def api_csrf(request):
+    # Ensure CSRF cookie exists and return it
+    token = get_token(request)
+    return JsonResponse({'csrfToken': token})
+
+@login_required
+def question_bank(request):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return redirect('dashboard')
+    qs = Question.objects.select_related('exam').filter(exam__created_by=u).order_by('-created_at')
+    total_questions = qs.count()
+    des_count = qs.filter(kind='des').count()
+    mcq_count = qs.filter(kind='mcq').count()
+    exams = Exam.objects.filter(created_by=u, questions__isnull=False).distinct().values('id','name')
+    return render(request, 'accounts/question_bank.html', {
+        'questions': qs,
+        'exams': list(exams),
+        'total_questions': total_questions,
+        'des_count': des_count,
+        'mcq_count': mcq_count,
+    })
+
+>>>>>>> Stashed changes
 
 @method_decorator(login_required, name="dispatch")
 class ExamProfileView(FormView):
@@ -247,3 +284,178 @@ def user_delete(request, pk: int):
     return redirect('users')
 
 # Create your views here.
+
+@login_required
+@require_POST
+def api_create_exam(request):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    classroom, _ = Classroom.objects.get_or_create(instructor=u, defaults={'name': 'کلاس جدید'})
+    name = request.POST.get('name', '').strip()
+    if not name:
+        return JsonResponse({'error': 'invalid_name'}, status=400)
+    exam = Exam.objects.create(name=name, classroom=classroom, created_by=u)
+    exam.students.set(classroom.students.all())
+    return JsonResponse({'ok': True, 'exam': {'id': exam.id, 'name': exam.name}})
+
+@login_required
+def api_latest_exam(request):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    exam = Exam.objects.filter(created_by=u).order_by('-created_at').first()
+    if not exam:
+        return JsonResponse({'exam': None})
+    return JsonResponse({'exam': {'id': exam.id, 'name': exam.name, 'num_questions': exam.num_questions}})
+
+@login_required
+def api_my_exams(request):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    exams = Exam.objects.filter(created_by=u).order_by('-created_at')
+    data = [
+        {
+            'id': e.id,
+            'name': e.name,
+            'num_questions': e.num_questions,
+            'created_at': e.created_at.isoformat(),
+        }
+        for e in exams
+    ]
+    return JsonResponse({'exams': data})
+
+@login_required
+@require_POST
+def api_add_question(request, exam_id: int):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    try:
+        exam = Exam.objects.get(pk=exam_id, created_by=u)
+    except Exam.DoesNotExist:
+        return JsonResponse({'error': 'exam_not_found'}, status=404)
+    kind = request.POST.get('kind')
+    text = request.POST.get('text', '').strip()
+    if not kind or not text:
+        return JsonResponse({'error': 'invalid_payload'}, status=400)
+    if kind == 'des':
+        answer_text = request.POST.get('answer_text', '').strip()
+        q = exam.questions.create(kind='des', text=text, answer_text=answer_text)
+    elif kind == 'mcq':
+        # options can be provided as JSON string or multiple fields options[]
+        import json
+        options_raw = request.POST.get('options')
+        options_list = None
+        if options_raw:
+            try:
+                options_list = json.loads(options_raw)
+            except Exception:
+                options_list = None
+        if options_list is None:
+            options_list = request.POST.getlist('options[]')
+        try:
+            correct_index = int(request.POST.get('correct_index'))
+        except (TypeError, ValueError):
+            correct_index = None
+        if not options_list or correct_index is None or correct_index < 0 or correct_index >= len(options_list):
+            return JsonResponse({'error': 'invalid_options'}, status=400)
+        q = exam.questions.create(kind='mcq', text=text, options=options_list, correct_index=correct_index)
+    else:
+        return JsonResponse({'error': 'invalid_kind'}, status=400)
+    # increment exam.num_questions
+    exam.num_questions = exam.questions.count()
+    exam.save(update_fields=['num_questions'])
+    return JsonResponse({'ok': True, 'question': {'id': q.id}})
+
+@login_required
+def api_exam_questions(request, exam_id: int):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    try:
+        exam = Exam.objects.get(pk=exam_id, created_by=u)
+    except Exam.DoesNotExist:
+        return JsonResponse({'error': 'exam_not_found'}, status=404)
+    qs = exam.questions.order_by('created_at')
+    data = []
+    for q in qs:
+        data.append({
+            'id': q.id,
+            'kind': q.kind,
+            'text': q.text,
+            'answer_text': q.answer_text,
+            'options': q.options or [],
+            'correct_index': q.correct_index,
+            'created_at': q.created_at.isoformat(),
+        })
+    return JsonResponse({'questions': data})
+
+@login_required
+@require_POST
+def api_question_delete(request, question_id: int):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    try:
+        q = Question.objects.select_related('exam').get(pk=question_id, exam__created_by=u)
+    except Question.DoesNotExist:
+        return JsonResponse({'error': 'question_not_found'}, status=404)
+    exam = q.exam
+    q.delete()
+    exam.num_questions = exam.questions.count()
+    exam.save(update_fields=['num_questions'])
+    return JsonResponse({'ok': True})
+
+@login_required
+@require_POST
+def api_question_update(request, question_id: int):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    try:
+        q = Question.objects.select_related('exam').get(pk=question_id, exam__created_by=u)
+    except Question.DoesNotExist:
+        return JsonResponse({'error': 'question_not_found'}, status=404)
+    text = request.POST.get('text', '').strip()
+    if not text:
+        return JsonResponse({'error': 'invalid_payload'}, status=400)
+    q.text = text
+    if q.kind == 'des':
+        q.answer_text = request.POST.get('answer_text', '').strip()
+    elif q.kind == 'mcq':
+        import json
+        options_raw = request.POST.get('options')
+        options_list = None
+        if options_raw:
+            try:
+                options_list = json.loads(options_raw)
+            except Exception:
+                options_list = None
+        if options_list is None:
+            options_list = request.POST.getlist('options[]')
+        try:
+            correct_index = int(request.POST.get('correct_index'))
+        except (TypeError, ValueError):
+            correct_index = None
+        if not options_list or correct_index is None or correct_index < 0 or correct_index >= len(options_list):
+            return JsonResponse({'error': 'invalid_options'}, status=400)
+        q.options = options_list
+        q.correct_index = correct_index
+    q.save()
+    return JsonResponse({'ok': True, 'question': {
+        'id': q.id,
+        'kind': q.kind,
+        'text': q.text,
+        'answer_text': q.answer_text,
+        'options': q.options or [],
+        'correct_index': q.correct_index,
+    }})
