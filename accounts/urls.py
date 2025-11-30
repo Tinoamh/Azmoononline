@@ -1,10 +1,31 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-<<<<<<< Updated upstream
-from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView, ExamProfileView, logout_to_home, UsersListView, StudentsListView, ClassroomManageView, classroom_toggle_member, user_update_role, user_delete
-=======
-from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView, ExamProfileView, logout_to_home, UsersListView, StudentsListView, ClassroomManageView, classroom_toggle_member, user_update_role, user_delete, api_create_exam, api_latest_exam, api_my_exams, api_csrf, question_bank, api_add_question, api_exam_questions, api_question_delete, api_question_update
->>>>>>> Stashed changes
+from .views import (
+    RegisterView,
+    DashboardView,
+    ProfileView,
+    EmailLoginView,
+    RecoveryCodeResetView,
+    ExamProfileView,
+    logout_to_home,
+    UsersListView,
+    StudentsListView,
+    ClassroomManageView,
+    ClassesListView,
+    classroom_toggle_member,
+    user_update_role,
+    user_delete,
+    api_create_exam,
+    api_latest_exam,
+    api_my_exams,
+    api_csrf,
+    question_bank,
+    question_bank_new,
+    api_add_question,
+    api_exam_questions,
+    api_question_delete,
+    api_question_update,
+)
 from .forms import AzmonPasswordResetForm
 
 urlpatterns = [
@@ -36,11 +57,10 @@ urlpatterns = [
     path('users/', UsersListView.as_view(), name='users'),
     path('students/', StudentsListView.as_view(), name='students'),
     path('classroom/', ClassroomManageView.as_view(), name='classroom'),
+    path('classes/', ClassesListView.as_view(), name='classes_list'),
     path('classroom/toggle-member/', classroom_toggle_member, name='classroom_toggle_member'),
     path('users/<int:pk>/role/', user_update_role, name='user_update_role'),
     path('users/<int:pk>/delete/', user_delete, name='user_delete'),
-<<<<<<< Updated upstream
-=======
     # API endpoints for exam and questions
     path('api/create-exam/', api_create_exam, name='api_create_exam'),
     path('api/latest-exam/', api_latest_exam, name='api_latest_exam'),
@@ -51,5 +71,5 @@ urlpatterns = [
     path('api/questions/<int:question_id>/delete/', api_question_delete, name='api_question_delete'),
     path('api/questions/<int:question_id>/update/', api_question_update, name='api_question_update'),
     path('question-bank/', question_bank, name='question_bank'),
->>>>>>> Stashed changes
+    path('question-bank/new/', question_bank_new, name='question_bank_new'),
 ]

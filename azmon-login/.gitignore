@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+
+# Environment variables
+.env
+
+# OS junk
+.DS_Store
+
+# Django database
+db.sqlite3
+*.sqlite3
+
+# Media uploads
+media/
+
+# Trae/IDE temp files
+.trae/

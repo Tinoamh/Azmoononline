@@ -8,21 +8,14 @@ from .forms import RegisterForm, EmailAuthenticationForm
 from .forms import ExamProfileForm
 from .models import Role
 from .models import Profile
-<<<<<<< Updated upstream
-from .models import Classroom, Exam
-=======
-from .models import Classroom, Exam, Question
->>>>>>> Stashed changes
+from .models import Classroom, Exam, Question, ExamAssignment
 from .forms import RecoveryCodeResetForm
 from .models import RecoveryCode
 from .models import User
 from django.views.decorators.http import require_POST
-<<<<<<< Updated upstream
-=======
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.middleware.csrf import get_token
 from django.db.models import Count
->>>>>>> Stashed changes
 
 
 class RegisterView(FormView):
@@ -109,8 +102,6 @@ class RecoveryCodeResetView(FormView):
             rc.save()
         return super().form_valid(form)
 
-<<<<<<< Updated upstream
-=======
 def api_csrf(request):
     # Ensure CSRF cookie exists and return it
     token = get_token(request)
@@ -135,7 +126,14 @@ def question_bank(request):
         'mcq_count': mcq_count,
     })
 
->>>>>>> Stashed changes
+@login_required
+def question_bank_new(request):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return redirect('dashboard')
+    return render(request, 'accounts/question_bank_new.html')
+
 
 @method_decorator(login_required, name="dispatch")
 class ExamProfileView(FormView):
@@ -207,7 +205,11 @@ class ClassroomManageView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         u = self.request.user
-        classroom, _ = Classroom.objects.get_or_create(instructor=u, defaults={'name': 'کلاس جدید'})
+        classroom, _ = Classroom.objects.get_or_create(instructor=u, is_staging=True, defaults={'name': 'کلاس موقت'})
+        if self.request.GET.get('reset') == '1':
+            classroom.students.clear()
+            classroom.name = 'کلاس جدید'
+            classroom.save(update_fields=['name'])
         students = User.objects.select_related('role', 'profile').filter(role__code='student')
         member_ids = set(classroom.students.values_list('id', flat=True))
         ctx['classroom'] = classroom
@@ -217,18 +219,50 @@ class ClassroomManageView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         u = request.user
-        classroom, _ = Classroom.objects.get_or_create(instructor=u, defaults={'name': 'کلاس جدید'})
+        staging, _ = Classroom.objects.get_or_create(instructor=u, is_staging=True, defaults={'name': 'کلاس موقت'})
         name = request.POST.get('class_name', '').strip()
-        if name:
-            classroom.name = name
-            classroom.save()
+        new_class = Classroom.objects.create(instructor=u, name=(name or 'کلاس جدید'), is_staging=False)
+        new_class.students.set(staging.students.all())
         try:
             numq = int(request.POST.get('num_questions', '0'))
         except ValueError:
             numq = 0
-        exam = Exam.objects.create(name=classroom.name, classroom=classroom, num_questions=numq, created_by=u)
-        exam.students.set(classroom.students.all())
-        return redirect('classroom')
+        src_id = request.POST.get('source_exam_id')
+        src = None
+        if src_id:
+            try:
+                src = Exam.objects.get(pk=src_id, created_by=u)
+            except Exam.DoesNotExist:
+                src = None
+        if src:
+            exam = Exam.objects.create(name=new_class.name, classroom=new_class, num_questions=numq, created_by=u, source_exam=src)
+            exam.students.set(new_class.students.all())
+            import random
+            src_qs = list(src.questions.values_list('id', flat=True))
+            for s in new_class.students.all():
+                sel = src_qs[:]
+                random.shuffle(sel)
+                if numq and numq > 0:
+                    sel = sel[:numq]
+                ExamAssignment.objects.create(exam=exam, student=s, selected_question_ids=sel)
+        return redirect('classes_list')
+
+@method_decorator(login_required, name="dispatch")
+class ClassesListView(TemplateView):
+    template_name = "accounts/classes_list.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+        if not is_instructor:
+            return redirect('profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        ctx['classes'] = Classroom.objects.filter(instructor=u).order_by('name')
+        return ctx
 
 @login_required
 @require_POST
@@ -237,7 +271,7 @@ def classroom_toggle_member(request):
     is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
     if not is_instructor:
         return redirect('profile')
-    classroom, _ = Classroom.objects.get_or_create(instructor=u, defaults={'name': 'کلاس جدید'})
+    classroom, _ = Classroom.objects.get_or_create(instructor=u, is_staging=True, defaults={'name': 'کلاس موقت'})
     sid = request.POST.get('student_id')
     try:
         student = User.objects.get(pk=sid, role__code='student')

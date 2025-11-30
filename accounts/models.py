@@ -41,10 +41,12 @@ class Classroom(models.Model):
     name = models.CharField(max_length=200)
     instructor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_classes')
     students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='classes', blank=True)
+    is_staging = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "کلاس"
         verbose_name_plural = "کلاس‌ها"
+        constraints = []
 
     def __str__(self):
         return f"{self.name} - {getattr(self.instructor, 'username', '')}"
@@ -56,6 +58,8 @@ class Exam(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_exams')
     students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='exams', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    source_exam = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='derived_exams')
+    shuffle_per_student = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "آزمون"
@@ -64,8 +68,6 @@ class Exam(models.Model):
     def __str__(self):
         return f"آزمون {self.name} ({self.num_questions})"
 
-<<<<<<< Updated upstream
-=======
 class Question(models.Model):
     KIND_CHOICES = (
         ('des', 'تشریحی'),
@@ -87,8 +89,14 @@ class Question(models.Model):
 
     def __str__(self):
         return f"سوال {self.exam.name} - {self.kind}"
+class ExamAssignment(models.Model):
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='assignments')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='exam_assignments')
+    selected_question_ids = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
->>>>>>> Stashed changes
+    class Meta:
+        unique_together = ('exam', 'student')
 class RecoveryCode(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recovery_codes')
     code_hash = models.CharField(max_length=128)

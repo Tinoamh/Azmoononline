@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ایجاد بانک سوال{% endblock %}
+{% block body_class %}question-bank-new{% endblock %}
+{% block extra_css %}
+<style>
+  :root{--primary:#3d66ff;--primary2:#638aff;--border:#c8d2ff;--bg:#eef4ff;--card:#fff;--muted:#777}
+  *{box-sizing:border-box}
+  body.question-bank-new{background:linear-gradient(180deg,var(--bg),#e7ecff)}
+  .wrap{max-width:960px;margin:20px auto;padding:0 16px}
+  .panel{background:#fff;border:1.6px solid var(--border);border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,.06);overflow:hidden}
+  .head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center}
+  .head input{flex:1;height:40px;border:1.6px solid var(--border);border-radius:10px;padding:0 10px;outline:none}
+  .btn{background:var(--primary);color:#fff;border:none;border-radius:10px;height:40px;padding:0 18px;cursor:pointer}
+  .btn.secondary{background:#fff;color:var(--primary);border:1.6px solid var(--primary)}
+  .body{padding:16px;overflow:hidden}
+  .type-row{display:flex;gap:16px;align-items:center;margin-bottom:12px}
+  .type-row label{display:flex;align-items:center;gap:6px}
+  .field{margin-bottom:12px}
+  .field textarea{width:100%;max-width:100%;min-height:120px;border:1.6px solid var(--border);border-radius:10px;padding:10px;outline:none}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%}
+  .opt{display:flex;align-items:center;gap:8px}
+  .opt input[type=text]{flex:1;min-width:0;height:36px;border:1.6px solid var(--border);border-radius:10px;padding:0 10px;outline:none}
+  .row-actions{display:flex;gap:10px;margin-top:10px}
+  .list{margin-top:16px}
+  .card{border:1.6px solid var(--border);border-radius:10px;padding:10px;background:#fff;margin-bottom:8px}
+  .card .meta{font-size:12px;color:#555;margin-top:6px;display:flex;justify-content:space-between}
+  .final{display:flex;justify-content:flex-end;margin-top:16px}
+  .hint{color:#555;font-size:13px;margin-left:auto}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <div class="panel">
+    <div class="head">
+      <input id="bankName" type="text" placeholder="نام بانک سوال">
+      <button id="createBankBtn" class="btn">ایجاد بانک</button>
+      <span id="bankStatus" class="hint"></span>
+    </div>
+    <div class="body">
+      <div class="type-row">
+        <label><input type="radio" name="qtype" value="mcq" checked> تستی</label>
+        <label><input type="radio" name="qtype" value="des"> تشریحی</label>
+      </div>
+      <div class="field"><textarea id="qText" placeholder="متن سوال"></textarea></div>
+      <div id="mcqBox" class="grid">
+        <div class="opt"><input type="radio" name="correct" value="0"><input type="text" id="opt0" placeholder="گزینه اول"></div>
+        <div class="opt"><input type="radio" name="correct" value="1"><input type="text" id="opt1" placeholder="گزینه دوم"></div>
+        <div class="opt"><input type="radio" name="correct" value="2"><input type="text" id="opt2" placeholder="گزینه سوم"></div>
+        <div class="opt"><input type="radio" name="correct" value="3"><input type="text" id="opt3" placeholder="گزینه چهارم"></div>
+      </div>
+      <div id="desBox" class="field" style="display:none"><textarea id="ansText" placeholder="پاسخ تشریحی"></textarea></div>
+      <div class="row-actions">
+        <button id="addQuestionBtn" class="btn secondary">افزودن سوال</button>
+        <button id="clearFormBtn" class="btn secondary">خالی کردن فرم</button>
+      </div>
+      <div class="list" id="tempList"></div>
+      <div class="final"><button id="finishBtn" class="btn">ثبت نهایی</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCookie(name){const v=(document.cookie||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(name+'='));return v?decodeURIComponent(v.split('=')[1]):''}
+// Ensure CSRF cookie exists
+;(async function(){ try { await fetch('/accounts/api/csrf/', {credentials:'same-origin'}) } catch(e){} })()
+var examId=null
+var creating=false
+var list=document.getElementById('tempList')
+var bankName=document.getElementById('bankName')
+var bankStatus=document.getElementById('bankStatus')
+var createBtn=document.getElementById('createBankBtn')
+var addBtn=document.getElementById('addQuestionBtn')
+var clearBtn=document.getElementById('clearFormBtn')
+var finishBtn=document.getElementById('finishBtn')
+var qText=document.getElementById('qText')
+var desBox=document.getElementById('desBox')
+var ansText=document.getElementById('ansText')
+var mcqBox=document.getElementById('mcqBox')
+document.querySelectorAll('input[name="qtype"]').forEach(r=>r.addEventListener('change',function(){var v=this.value;mcqBox.style.display=v==='mcq'?'grid':'none';desBox.style.display=v==='des'?'block':'none'}))
+
+createBtn.onclick=async function(){if(creating)return;creating=true;bankStatus.textContent='در حال ایجاد...';const name=(bankName.value||'').trim();if(!name){bankStatus.textContent='نام بانک را وارد کنید';creating=false;return}const res=await fetch('/accounts/api/create-exam/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':getCookie('csrftoken')},body:new URLSearchParams({name})});creating=false;if(!res.ok){bankStatus.textContent='خطا در ایجاد بانک';return}const data=await res.json();examId=data.exam?.id;bankStatus.textContent=examId?'ایجاد شد':'خطا' }
+
+addBtn.onclick=async function(){const type=document.querySelector('input[name="qtype"]:checked').value;const text=(qText.value||'').trim();if(!text){return}if(!examId){await createBtn.onclick()}if(!examId){return}var payload={};if(type==='des'){payload={kind:'des',text,answer_text:(ansText.value||'').trim()}}else{var opts=[0,1,2,3].map(i=>document.getElementById('opt'+i).value||'').filter(s=>s.trim().length>0);var c=document.querySelector('input[name="correct"]:checked');var ci=c?parseInt(c.value,10):NaN;if(!opts.length||isNaN(ci)||ci<0||ci>=opts.length){return}payload={kind:'mcq',text,options:JSON.stringify(opts),correct_index:String(ci)}}
+const res=await fetch('/accounts/api/exams/'+examId+'/add-question/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':getCookie('csrftoken')},body:new URLSearchParams(payload)});if(!res.ok){return}const data=await res.json();var id=data.question?.id;var card=document.createElement('div');card.className='card';card.dataset.id=id;card.innerHTML='<div>'+text+'</div><div class="meta"><button type="button" class="btn secondary" data-del>حذف سوال</button><span>ثبت شد</span></div>';list.prepend(card);clearForm()}
+
+function clearForm(){qText.value='';ansText.value='';['opt0','opt1','opt2','opt3'].forEach(id=>{var el=document.getElementById(id);if(el)el.value=''});var c=document.querySelector('input[name="correct"]:checked');if(c)c.checked=false}
+clearBtn.onclick=clearForm
+
+list.addEventListener('click',async function(e){if(e.target&&e.target.hasAttribute('data-del')){var card=e.target.closest('.card');var id=card?.dataset?.id;if(!id)return;const res=await fetch('/accounts/api/questions/'+id+'/delete/',{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});if(res.ok){card.remove()}}})
+
+finishBtn.onclick=function(){window.location.href='/accounts/question-bank/'}
+</script>
+{% endblock %}
