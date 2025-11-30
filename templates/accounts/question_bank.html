@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block title %}بانک سوالات{% endblock %}
 {% block body_class %}question-bank{% endblock %}
 {% block extra_css %}
@@ -23,25 +24,29 @@
   .hero .title { font-size: 24px; font-weight: 800; margin: 0; }
   .hero .stats { margin-top: 10px; display:flex; gap: 12px; flex-wrap: wrap; }
   .pill { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
-  .container { width: 100%; margin: 20px auto; padding: 0 16px; }
-  .filters { background:#fff; border:1px solid var(--border); border-radius:12px; padding: 12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+  .container { width: 100%; margin: 20px auto; padding: 0 16px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .filters { background:#fff; border:1px solid var(--border); border-radius:12px; padding: 12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; box-shadow:0 4px 12px rgba(0,0,0,0.06); width:100%; max-width:780px; }
   .search { flex:1; }
   .search input { width:100%; height:40px; border:1.6px solid var(--border); border-radius:10px; padding:0 10px; outline:none; }
   .select, .radio { display:flex; gap: 10px; align-items:center; }
   .select select { height:40px; border:1.6px solid var(--border); border-radius:10px; padding:4px 10px; outline:none; }
-  .grid { margin-top:14px; display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .grid { margin-top:0; display:grid; grid-template-columns: 1fr; gap: 12px; width:100%; max-width:780px; }
   .qb-card { border:1.8px solid var(--border); border-radius:12px; background:var(--card-bg); padding: 12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
-  .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid var(--border); color: var(--primary); background:#f5f7ff; }
-  .exam { color:#555; font-size:13px; margin-top:6px; }
-  .qtext { color:var(--text); margin-top:8px; font-weight:600; }
-  .meta { display:flex; justify-content:space-between; color:#888; font-size:12px; margin-top:8px; }
-  .options { margin-top:8px; display:none; }
-  .toggle { color: var(--primary); background:#fff; border:1.6px solid var(--primary); border-radius:10px; padding:6px 10px; cursor:pointer; font-size:12px; }
+  .qb-title{font-weight:700;color:var(--text);}
+  .meta { display:flex; justify-content:space-between; align-items:center; color:#555; font-size:13px; margin-top:8px; }
+  .actions{display:flex; gap:8px;}
+  .btn{display:inline-block; padding:6px 10px; border-radius:10px; font-size:12px; text-decoration:none; cursor:pointer}
+  .btn-primary{color:#fff; background:var(--primary); border:1.6px solid var(--primary)}
+  .btn-outline{color:var(--primary); background:#fff; border:1.6px solid var(--primary)}
   .empty { color:#777; text-align:center; padding:20px; }
+  .add-wrap{margin-top:0; width:100%; max-width:780px; text-align:center}
+  .count-badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:#f5f7ff; color:#3d66ff}
 </style>
 {% endblock %}
 
 {% block content %}
+</br>
+</br>
   <section class="hero">
     <div class="title">بانک سوالات</div>
     <div class="stats">
@@ -53,91 +58,50 @@
 
   <div class="container">
     <div class="filters">
-          <div class="search"><input id="searchInput" type="text" placeholder="جست‌وجو در متن سوال"></div>
-          <div class="select">
-            <label for="examFilter">آزمون:</label>
-            <select id="examFilter">
-              <option value="">همه</option>
-              {% for e in exams %}
-              <option value="{{ e.id }}">{{ e.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="radio">
-            <label><input type="radio" name="typeFilter" value="" checked> همه</label>
-            <label><input type="radio" name="typeFilter" value="des"> تشریحی</label>
-            <label><input type="radio" name="typeFilter" value="mcq"> تستی</label>
-          </div>
+      <div class="search"><input id="searchInput" type="text" placeholder="جست‌وجو در نام بانک"></div>
     </div>
 
-    {% if questions %}
+    {% if banks %}
     <div id="grid" class="grid">
-      {% for q in questions %}
-      <div class="qb-card" data-exam-id="{{ q.exam.id }}" data-kind="{{ q.kind }}">
-        <div class="badge">{% if q.kind == 'mcq' %}تستی{% else %}تشریحی{% endif %}</div>
-        <div class="exam">آزمون: {{ q.exam.name }}</div>
-        <div class="qtext">{{ q.text }}</div>
+      {% for b in banks %}
+      <div class="qb-card" data-name="{{ b.name|lower }}">
+        <div class="qb-title">{{ b.name }} <span class="count-badge">تعداد سوالات: {{ b.q_count|default:b.num_questions }}</span></div>
         <div class="meta">
-          <div>{{ q.created_at|date:"Y/m/d H:i" }}</div>
-          {% if q.kind == 'mcq' %}
-          <button class="toggle" type="button">نمایش گزینه‌ها</button>
-          {% endif %}
+          <div></div>
+          <div class="actions">
+            <a class="btn btn-primary" href="{% url 'question_bank_edit' b.id %}">ویرایش</a>
+            <form method="post" action="{% url 'question_bank_delete' b.id %}" style="display:inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline">حذف</button>
+            </form>
+          </div>
         </div>
-        {% if q.kind == 'mcq' %}
-        <div class="options">
-          <ol>
-            {% for opt in q.options %}
-            <li>{% if forloop.counter0 == q.correct_index %}<strong>{{ opt }}</strong> (صحیح){% else %}{{ opt }}{% endif %}</li>
-            {% endfor %}
-          </ol>
-        </div>
-        {% elif q.answer_text %}
-        <div class="options" style="display:block;color:#555;">پاسخ: {{ q.answer_text }}</div>
-        {% endif %}
       </div>
       {% endfor %}
     </div>
+   
     {% else %}
-      <div class="empty">هنوز سوالی ثبت نکرده‌اید.</div>
+      <div class="empty">هنوز بانکی ایجاد نکرده‌اید.</div>
+      
     {% endif %}
+    <div class="add-wrap">
+      
+      <a class="btn btn-primary" href="{% url 'question_bank_new' %}">افزودن بانک سوال جدید</a>
+    </div>
   </div>
 
   <script>
     const searchInput = document.getElementById('searchInput');
-    const examFilter = document.getElementById('examFilter');
-    const typeRadios = document.querySelectorAll('input[name="typeFilter"]');
     const cards = Array.from(document.querySelectorAll('.qb-card'));
-
     function normalize(s){ return (s||'').toLowerCase(); }
     function applyFilters(){
       const q = normalize(searchInput.value);
-      const examId = examFilter.value;
-      const typeVal = Array.from(typeRadios).find(r=>r.checked)?.value || '';
       cards.forEach(card=>{
-        let ok = true;
-        if(examId && card.dataset.examId !== String(examId)) ok = false;
-        if(typeVal && card.dataset.kind !== typeVal) ok = false;
-        if(q){
-          const text = normalize(card.querySelector('.qtext')?.textContent);
-          if(!text.includes(q)) ok = false;
-        }
-        card.style.display = ok ? '' : 'none';
+        const name = card.dataset.name || '';
+        card.style.display = (!q || name.includes(q)) ? '' : 'none';
       });
     }
     searchInput.addEventListener('input', applyFilters);
-    examFilter.addEventListener('change', applyFilters);
-    typeRadios.forEach(r=>r.addEventListener('change', applyFilters));
     applyFilters();
-
-    document.addEventListener('click', function(e){
-      if(e.target && e.target.classList.contains('toggle')){
-        const card = e.target.closest('.qb-card');
-        const box = card.querySelector('.options');
-        if(!box) return;
-        const show = box.style.display !== 'block';
-        box.style.display = show ? 'block' : 'none';
-        e.target.textContent = show ? 'پنهان کردن گزینه‌ها' : 'نمایش گزینه‌ها';
-      }
-    });
   </script>
 {% endblock %}

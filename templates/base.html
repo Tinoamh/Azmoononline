@@ -49,17 +49,10 @@
             <li><a href="/accounts/dashboard/"><span>لیست آزمون‌ها</span></a></li>
             <li><a href="/accounts/exam-profile/"><span>لیست نمرات</span></a></li>
           {% elif user.role and user.role.code == 'instructor' %}
-<<<<<<< Updated upstream
-            <li><a href="/accounts/dashboard/"><span>بانک سوالات</span></a></li>
-            <li><a href="/accounts/students/"><span>لیست دانشجویان</span></a></li>
-            <li><a href="/accounts/exam-profile/"><span>نتایج آزمون</span></a></li>
-            <li><a href="/accounts/classroom/"><span>تعریف آزمون</span></a></li>
-=======
             <li><a href="/accounts/question-bank/"><span>بانک سوالات</span></a></li>
             <li><a href="/accounts/students/"><span>لیست دانشجویان</span></a></li>
             <li><a href="/accounts/exam-profile/"><span>نتایج آزمون</span></a></li>
-            <li><a href="{% static 'index.html' %}"><span>تعریف آزمون</span></a></li>
->>>>>>> Stashed changes
+            <li><a href="/accounts/classroom/"><span>تعریف آزمون</span></a></li>
           {% endif %}
           <li><a href="/accounts/logout/"><span>خروج</span></a></li>
         </ul>

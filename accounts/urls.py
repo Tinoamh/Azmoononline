@@ -21,6 +21,9 @@ from .views import (
     api_csrf,
     question_bank,
     question_bank_new,
+    question_bank_create,
+    question_bank_edit,
+    question_bank_delete,
     api_add_question,
     api_exam_questions,
     api_question_delete,
@@ -72,4 +75,7 @@ urlpatterns = [
     path('api/questions/<int:question_id>/update/', api_question_update, name='api_question_update'),
     path('question-bank/', question_bank, name='question_bank'),
     path('question-bank/new/', question_bank_new, name='question_bank_new'),
+    path('question-bank/create/', question_bank_create, name='question_bank_create'),
+    path('question-bank/<int:exam_id>/edit/', question_bank_edit, name='question_bank_edit'),
+    path('question-bank/<int:exam_id>/delete/', question_bank_delete, name='question_bank_delete'),
 ]

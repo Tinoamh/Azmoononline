@@ -113,14 +113,16 @@ def question_bank(request):
     is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
     if not is_instructor:
         return redirect('dashboard')
-    qs = Question.objects.select_related('exam').filter(exam__created_by=u).order_by('-created_at')
-    total_questions = qs.count()
-    des_count = qs.filter(kind='des').count()
-    mcq_count = qs.filter(kind='mcq').count()
-    exams = Exam.objects.filter(created_by=u, questions__isnull=False).distinct().values('id','name')
+    banks = (Exam.objects
+             .filter(created_by=u)
+             .annotate(q_count=Count('questions'))
+             .order_by('-created_at'))
+    totals = Question.objects.filter(exam__created_by=u)
+    total_questions = totals.count()
+    des_count = totals.filter(kind='des').count()
+    mcq_count = totals.filter(kind='mcq').count()
     return render(request, 'accounts/question_bank.html', {
-        'questions': qs,
-        'exams': list(exams),
+        'banks': banks,
         'total_questions': total_questions,
         'des_count': des_count,
         'mcq_count': mcq_count,
@@ -133,6 +135,48 @@ def question_bank_new(request):
     if not is_instructor:
         return redirect('dashboard')
     return render(request, 'accounts/question_bank_new.html')
+
+@login_required
+@require_POST
+def question_bank_create(request):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return redirect('dashboard')
+    name = request.POST.get('name', '').strip()
+    if not name:
+        return redirect('question_bank')
+    classroom = Classroom.objects.filter(instructor=u).order_by('id').first()
+    if classroom is None:
+        classroom = Classroom.objects.create(instructor=u, name='کلاس جدید', is_staging=True)
+    Exam.objects.create(name=name, classroom=classroom, created_by=u)
+    return redirect('question_bank')
+
+@login_required
+def question_bank_edit(request, exam_id: int):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return redirect('dashboard')
+    try:
+        exam = Exam.objects.get(pk=exam_id, created_by=u)
+    except Exam.DoesNotExist:
+        return redirect('question_bank')
+    return render(request, 'accounts/question_bank_edit.html', {'exam': exam})
+
+@login_required
+@require_POST
+def question_bank_delete(request, exam_id: int):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return redirect('dashboard')
+    try:
+        exam = Exam.objects.get(pk=exam_id, created_by=u)
+    except Exam.DoesNotExist:
+        return redirect('question_bank')
+    exam.delete()
+    return redirect('question_bank')
 
 
 @method_decorator(login_required, name="dispatch")
