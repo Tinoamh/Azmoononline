@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}داشبورد{% endblock %}
+{% block content %}
+<section class="dashboard">
+  <div class="dash-left">
+    <div class="dash-avatar"></div>
+    <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+    {% if role %}
+      <span class="role-badge">{{ role.name }}</span>
+    {% endif %}
+    <div style="margin-top:16px;">
+      <a href="/accounts/profile/" class="btn outline small">ویرایش پروفایل</a>
+    </div>
+  </div>
+  <div class="dash-right">
+    <ul class="menu">
+      <li><a href="#">خانه</a></li>
+      <li><a href="#">آزمون</a></li>
+      <li><a href="#">آزمون آنلاین درسی</a></li>
+      <li><a href="#">نمونه سوال اختصاصی</a></li>
+      <li><a href="#">بانک سوال</a></li>
+      <li><a href="/accounts/logout/">خروج</a></li>
+    </ul>
+  </div>
+</section>
+{% endblock %}
