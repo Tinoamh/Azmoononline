@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>افزودن سوالات</title>
+
+<style>
+/* فونت */
+@font-face {
+    font-family: IranSans;
+    src: url("assets/IranSans.woff2");
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: IranSans;
+    background: linear-gradient(180deg, #eef4ff, #e7ecff);
+}
+
+/* هدر */
+.header {
+    background: rgba(0,0,0,0.05);
+    padding: 15px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    position: relative;
+    color: #333;
+}
+
+/* منو */
+.menu-btn {
+    position: absolute;
+    right: 15px;
+    top: 14px;
+    width: 32px;
+    height: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.menu-btn span {
+    height: 4px;
+    background: #3f5fff;
+    border-radius: 5px;
+}
+
+/* سایدبار */
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    position: fixed;
+    right: -270px;
+    top: 0;
+    background: linear-gradient(#446aff, #82a3ff);
+    color: white;
+    padding-top: 70px;
+    text-align: center;
+    transition: 0.35s;
+    z-index: 1000;
+    border-radius: 0 0 0 25px;
+}
+
+.sidebar.open { right: 0; }
+
+.sidebar img {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+}
+
+.menu-links {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.menu-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+/* overlay */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.3s;
+    z-index: 900;
+}
+
+.overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* دکمه‌های بالا */
+.main {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.btn-row {
+    display: flex;
+    gap: 200px;
+}
+
+.select-btn {
+    width: 180px;
+    padding:  18px;
+    border-radius: 25px;
+    background: linear-gradient(90deg,#3d66ff,#638aff);
+    border: none;
+    color: white;
+    font-size: 17px;
+    cursor: pointer;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.10);
+    transition: 0.2s;
+}
+
+.select-btn:hover { 
+    filter: brightness(0.85);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgb(0,0, 0,0.15);
+ }
+
+.select-btn.active {
+    background: #506bff;
+    filter: brightness(0.75);
+}
+
+/* فرم‌ها */
+.form-box {
+    width: 85%;
+    margin: 30px auto;
+    background: white;
+    padding: 22px 72px;
+    border-radius: 15px;
+    border: 2px solid #c8d2ff;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.08);
+    display: none;
+}
+
+.form-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #444;
+    margin-bottom: 20px;
+}
+
+.text-input {
+    width: 100%;
+    height: 120px;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1.8px solid #b7c4ff;
+    font-size: 16px;
+    margin-bottom: 18px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: inline-block;
+}
+
+/* تستی */
+.test-options {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+/* دکمه‌های حذف/افزودن */
+.form-btns {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 10px;
+}
+
+.add-btn, .delete-btn {
+    padding: 9px 25px;
+    font-size: 16px;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.add-btn { border: 2px solid #28a745; color: #28a745; }
+.delete-btn { border: 2px solid #ff4d4f; color: #ff4d4f; }
+
+.add-btn:hover { background: #00ff3c; color: white; }
+.delete-btn:hover { background: #ff0004; color: white; }
+
+/* دکمه ثبت */
+.submit-btn {
+    width: 200px;
+    margin: 25px auto 0;
+    display: block;
+    padding: 12px;
+    background:linear-gradient(90deg,#3d66ff,#638aff);
+    border: none;
+    color: white;
+    font-size: 18px;
+    border-radius: 22px;
+    cursor: pointer;
+}
+.submit-btn:hover {
+    transform: translateY(-3px);
+    filter: brightness(0.85);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="header">
+    <h2 id="page-title">افزودن سوالات</h2>
+
+    <div id="menu-btn" class="menu-btn">
+        <span></span><span></span><span></span>
+    </div>
+</header>
+<!-- SIDEBAR -->
+<aside id="sidebar" class="sidebar">
+    <img src="profile.jpg">
+    <p>پروفایل کاربر</p>
+    <div class="menu-links">
+        <a href="#">داشبورد</a>
+        <a href="#">مدیریت آزمون‌ها</a>
+        <a href="#">بانک سوالات</a>
+        <a href="#">نتایج</a>
+        <a href="#">تنظیمات</a>
+    </div>
+</aside>
+
+<div id="overlay" class="overlay"></div>
+
+<!-- دکمه‌ها -->
+<main class="main">
+    <div class="btn-row">
+        <button id="btn-des" class="select-btn">تشریحی</button>
+        <button id="btn-test" class="select-btn">تستی</button>
+    </div>
+</main>
+
+<!-- فرم تشریحی -->
+<div id="form-des" class="form-box">
+    <h2 class="form-title">سوالات تشریحی</h2>
+
+    <label>سوال:</label>
+    <textarea class="text-input"></textarea>
+
+    <label>پاسخ:</label>
+    <textarea class="text-input"></textarea>
+
+    <label>کلمات کلیدی:</label>
+    <textarea class="text-input"></textarea>
+
+    <div class="form-btns">
+        <button class="delete-btn">حذف سوال</button>
+        <button class="add-btn">افزودن سوال</button>
+    </div>
+
+    <button class="submit-btn">ثبت</button>
+</div>
+
+<!-- فرم تستی -->
+<div id="form-test" class="form-box">
+    <h2 class="form-title">سوالات تستی</h2>
+
+    <label>سوال:</label>
+    <textarea class="text-input"></textarea>
+
+    <div class="test-options">
+        <label><input type="radio" name="opt"> گزینه اول</label>
+        <label><input type="radio" name="opt"> گزینه دوم</label>
+        <label><input type="radio" name="opt"> گزینه سوم</label>
+        <label><input type="radio" name="opt"> گزینه چهارم</label>
+    </div>
+
+    <div class="form-btns">
+        <button class="delete-btn">حذف سوال</button>
+        <button class="add-btn">افزودن سوال</button>
+    </div>
+
+    <button class="submit-btn">ثبت</button>
+</div>
+
+<!-- JS -->
+<script>
+const menuBtn = document.getElementById("menu-btn");
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+
+menuBtn.onclick = () => {
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("show");
+};
+
+overlay.onclick = () => {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("show");
+};
+
+/* دکمه‌ها */
+const btnDes = document.getElementById("btn-des");
+const btnTest = document.getElementById("btn-test");
+const formDes = document.getElementById("form-des");
+const formTest = document.getElementById("form-test");
+const pageTitle = document.getElementById("page-title");
+
+btnDes.onclick = () => {
+    btnDes.classList.add("active");
+    btnTest.classList.remove("active");
+
+    formDes.style.display = "block";
+    formTest.style.display = "none";
+
+    pageTitle.textContent = "سوالات تشریحی";
+};
+
+btnTest.onclick = () => {
+    btnTest.classList.add("active");
+    btnDes.classList.remove("active");
+
+    formDes.style.display = "none";
+    formTest.style.display = "block";
+
+    pageTitle.textContent = "سوالات تستی";
+};
+</script>
+
+</body>
+</html>
+
