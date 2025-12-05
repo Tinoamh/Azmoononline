@@ -3,21 +3,24 @@
 {% block body_class %}exam-define{% endblock %}
 {% block extra_css %}
 <style>
+  *{box-sizing:border-box}
   body.exam-define{background:linear-gradient(180deg,#f5f8ff 0%, #eef3ff 100%)}
   .wrap{max-width:1000px;margin:24px auto;padding:0 16px}
-  .card{background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:16px}
+  .card{background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:20px; overflow:hidden}
   .section{margin-top:16px}
   .title{color:#3A6CF4;font-weight:800;margin:0 0 12px 0}
   .grid{display:grid;grid-template-columns:1fr;gap:12px}
   .table{width:100%;border-collapse:collapse}
   th,td{padding:8px;border-bottom:1px solid #f0f4ff;text-align:right}
+  th.chk, td.chk{ text-align:center; width:90px }
   .banks{list-style:none;margin:0;padding:0;border:1px solid #eaf1ff;border-radius:12px}
   .bank-item{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #f0f4ff}
   .bank-item:last-child{border-bottom:none}
-  .count{font-size:12px;color:#3A6CF4;border:1px solid #cfe3ff;background:#eef6ff;border-radius:999px;padding:2px 8px}
-  .actions{display:flex;justify-content:flex-end;margin-top:14px}
+  .count{font-size:12px;color:#3A6CF4;border:1px solid #cfe3ff;background:#eef6ff;border-radius:999px;padding:2px 8px;margin-right:auto}
+  .actions{display:flex;justify-content:center;margin-top:18px}
   .input{width:100%;height:40px;border:1.6px solid #cfe3ff;border-radius:10px;padding:8px 10px}
-  .btn{padding:10px 14px;border-radius:10px;background:#3A6CF4;color:#fff;border:none;cursor:pointer}
+  .btn{padding:12px 24px;border-radius:12px;background:#3A6CF4;color:#fff;border:none;cursor:pointer;font-size:16px}
+  .bank-item input[type="radio"]{width:16px;height:16px;accent-color:#22c55e}
 </style>
 {% endblock %}
 {% block content %}
@@ -31,13 +34,13 @@
     <div class="section">
       <h2 class="title">دانشجویان</h2>
       <table class="table">
-        <thead><tr><th>نام</th><th>نام خانوادگی</th><th>شرکت در آزمون</th></tr></thead>
+        <thead><tr><th>نام</th><th>نام خانوادگی</th><th class="chk">شرکت در آزمون</th></tr></thead>
         <tbody>
           {% for s in students %}
           <tr>
             <td>{{ s.first_name }}</td>
             <td>{{ s.last_name }}</td>
-            <td><input type="checkbox" name="student_ids" value="{{ s.id }}" /></td>
+            <td class="chk"><input type="checkbox" name="student_ids" value="{{ s.id }}" /></td>
           </tr>
           {% endfor %}
         </tbody>
@@ -47,7 +50,7 @@
       <h2 class="title">لیست بانک سوالات</h2>
       <ul class="banks">
         {% for b in banks %}
-          <li class="bank-item"><label><input type="radio" name="source_exam_id" value="{{ b.id }}"> {{ b.name }}</label> <span class="count">تعداد سوالات: {{ b.q_count|default:b.num_questions }}</span></li>
+          <li class="bank-item"><input type="radio" name="source_exam_id" value="{{ b.id }}"><span>{{ b.name }}</span> <span class="count">تعداد سوالات: {{ b.q_count|default:b.num_questions }}</span></li>
         {% empty %}
           <li class="bank-item" style="color:#6b7aa6">بانک سوالی موجود نیست</li>
         {% endfor %}
@@ -63,4 +66,3 @@
   </form>
 </div>
 {% endblock %}
-

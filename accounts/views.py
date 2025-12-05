@@ -114,7 +114,7 @@ def question_bank(request):
     if not is_instructor:
         return redirect('dashboard')
     banks = (Exam.objects
-             .filter(created_by=u)
+             .filter(created_by=u, source_exam__isnull=True)
              .annotate(q_count=Count('questions'))
              .order_by('-created_at'))
     totals = Question.objects.filter(exam__created_by=u)
@@ -325,7 +325,7 @@ class ExamsListView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         u = self.request.user
-        ctx['exams'] = Exam.objects.filter(created_by=u).order_by('-created_at')
+        ctx['exams'] = Exam.objects.filter(created_by=u, source_exam__isnull=False).order_by('-created_at')
         return ctx
 
 @method_decorator(login_required, name="dispatch")
@@ -344,7 +344,10 @@ class ExamDefineView(TemplateView):
         u = self.request.user
         students = User.objects.select_related('role').filter(role__code='student')
         from django.db.models import Count
-        banks = Exam.objects.filter(created_by=u).annotate(q_count=Count('questions')).order_by('-created_at')
+        banks = (Exam.objects
+                 .filter(created_by=u, source_exam__isnull=True)
+                 .annotate(q_count=Count('questions'))
+                 .order_by('-created_at'))
         ctx['students'] = students
         ctx['banks'] = banks
         return ctx
