@@ -19,8 +19,17 @@
     <div class="grid">
       {% for e in exams %}
       <div class="item">
-        <div><strong>{{ e.name }}</strong></div>
-        <div class="meta"><span>تعداد سوالات: {{ e.num_questions }}</span><span>تعداد شرکت‌کنندگان: {{ e.students.count }}</span><span>ایجاد: {{ e.created_at|date:"Y/m/d H:i" }}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div><strong>{{ e.name }}</strong></div>
+          {% if is_student_view %}
+            <a href="/accounts/exams/{{ e.id }}/start/" class="btn-start" title="شروع آزمون">شروع</a>
+          {% endif %}
+        </div>
+        <div class="meta">
+          <span>تعداد سوالات: {{ e.num_questions }}</span>
+          {% if not is_student_view %}<span>تعداد شرکت‌کنندگان: {{ e.students.count }}</span>{% endif %}
+          <span>ایجاد: {{ e.created_at|date:"Y/m/d H:i" }}</span>
+        </div>
       </div>
       {% empty %}
       <div class="item">هنوز آزمونی تعریف نشده است</div>
@@ -28,4 +37,8 @@
     </div>
   </div>
 </div>
+<style>
+  .btn-start{display:inline-block;padding:8px 14px;border-radius:10px;background:#3A6CF4;color:#fff;text-decoration:none;font-weight:700}
+  .btn-start:hover{background:#2E56D0}
+</style>
 {% endblock %}
