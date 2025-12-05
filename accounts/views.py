@@ -114,7 +114,7 @@ def question_bank(request):
     if not is_instructor:
         return redirect('dashboard')
     banks = (Exam.objects
-             .filter(created_by=u)
+             .filter(created_by=u, source_exam__isnull=True)
              .annotate(q_count=Count('questions'))
              .order_by('-created_at'))
     totals = Question.objects.filter(exam__created_by=u)
@@ -259,13 +259,16 @@ class ClassroomManageView(TemplateView):
         ctx['classroom'] = classroom
         ctx['students'] = students
         ctx['member_ids'] = member_ids
+        from django.db.models import Count
+        banks = Exam.objects.filter(created_by=u).annotate(q_count=Count('questions')).order_by('-created_at')
+        ctx['banks'] = banks
         return ctx
 
     def post(self, request, *args, **kwargs):
         u = request.user
         staging, _ = Classroom.objects.get_or_create(instructor=u, is_staging=True, defaults={'name': 'کلاس موقت'})
-        name = request.POST.get('class_name', '').strip()
-        new_class = Classroom.objects.create(instructor=u, name=(name or 'کلاس جدید'), is_staging=False)
+        name = request.POST.get('exam_name', '').strip()
+        new_class = Classroom.objects.create(instructor=u, name=(name or 'آزمون جدید'), is_staging=False)
         new_class.students.set(staging.students.all())
         try:
             numq = int(request.POST.get('num_questions', '0'))
@@ -279,7 +282,7 @@ class ClassroomManageView(TemplateView):
             except Exam.DoesNotExist:
                 src = None
         if src:
-            exam = Exam.objects.create(name=new_class.name, classroom=new_class, num_questions=numq, created_by=u, source_exam=src)
+            exam = Exam.objects.create(name=(name or new_class.name), classroom=new_class, num_questions=numq, created_by=u, source_exam=src)
             exam.students.set(new_class.students.all())
             import random
             src_qs = list(src.questions.values_list('id', flat=True))
@@ -289,7 +292,7 @@ class ClassroomManageView(TemplateView):
                 if numq and numq > 0:
                     sel = sel[:numq]
                 ExamAssignment.objects.create(exam=exam, student=s, selected_question_ids=sel)
-        return redirect('classes_list')
+        return redirect('exams_list')
 
 @method_decorator(login_required, name="dispatch")
 class ClassesListView(TemplateView):
@@ -307,6 +310,84 @@ class ClassesListView(TemplateView):
         u = self.request.user
         ctx['classes'] = Classroom.objects.filter(instructor=u).order_by('name')
         return ctx
+
+@method_decorator(login_required, name="dispatch")
+class ExamsListView(TemplateView):
+    template_name = "accounts/exams_list.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+        if not is_instructor:
+            return redirect('profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        ctx['exams'] = Exam.objects.filter(created_by=u, source_exam__isnull=False).order_by('-created_at')
+        return ctx
+
+@method_decorator(login_required, name="dispatch")
+class ExamDefineView(TemplateView):
+    template_name = "accounts/exam_define.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+        if not is_instructor:
+            return redirect('profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        students = User.objects.select_related('role').filter(role__code='student')
+        from django.db.models import Count
+        banks = (Exam.objects
+                 .filter(created_by=u, source_exam__isnull=True)
+                 .annotate(q_count=Count('questions'))
+                 .order_by('-created_at'))
+        ctx['students'] = students
+        ctx['banks'] = banks
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        u = request.user
+        name = request.POST.get('exam_name', '').strip()
+        try:
+            numq = int(request.POST.get('num_questions', '0'))
+        except ValueError:
+            numq = 0
+        src_id = request.POST.get('source_exam_id')
+        sel_ids = request.POST.getlist('student_ids')
+
+        # Build classroom specific to this exam
+        classroom = Classroom.objects.create(instructor=u, name=(name or 'آزمون جدید'), is_staging=False)
+        students = User.objects.filter(id__in=sel_ids)
+        classroom.students.set(students)
+
+        src = None
+        if src_id:
+            try:
+                src = Exam.objects.get(pk=src_id, created_by=u)
+            except Exam.DoesNotExist:
+                src = None
+        exam = Exam.objects.create(name=(name or classroom.name), classroom=classroom, num_questions=numq, created_by=u, source_exam=src)
+        exam.students.set(classroom.students.all())
+
+        # Random selection per student from source exam if provided
+        if src:
+            import random
+            src_qs = list(src.questions.values_list('id', flat=True))
+            for s in classroom.students.all():
+                sel = src_qs[:]
+                random.shuffle(sel)
+                if numq and numq > 0:
+                    sel = sel[:numq]
+                ExamAssignment.objects.create(exam=exam, student=s, selected_question_ids=sel)
+
+        return redirect('exams_list')
 
 @login_required
 @require_POST

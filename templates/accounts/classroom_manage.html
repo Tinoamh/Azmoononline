@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}تشکیل کلاس{% endblock %}
-{% block body_class %}classroom{% endblock %}
+{% block title %}تعریف آزمون{% endblock %}
+{% block body_class %}exam-define{% endblock %}
 {% block extra_css %}
 <style>
-  body.classroom { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
+  body.exam-define { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
   .class-wrap { max-width:1000px; margin:24px auto; padding:24px; background:#fff; border:1px solid #dfe6fb; border-radius:16px; box-shadow:0 16px 28px rgba(58,108,244,0.12); }
   .class-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .class-title h2 { margin:0; color:#3A6CF4; font-weight:800 }
@@ -14,17 +14,25 @@
   th, td { text-align:right; padding:10px; border-bottom:1px solid #f0f4ff }
   .act { white-space:nowrap }
   .btn.remove { background:#d9534f }
+  .banks{background:#f7fcff;border:1px solid #dfe6fb;border-radius:10px;padding:12px;list-style:none;margin:0 0 16px 0}
+  .bank-item{padding:8px;border-bottom:1px solid #e8eefc;display:flex;align-items:center;gap:10px}
+  .bank-item:last-child{border-bottom:none}
+  .count{font-size:12px;color:#3A6CF4;border:1px solid #cfe3ff;background:#eef6ff;border-radius:999px;padding:2px 8px}
+  .q-list{background:#fbfdff;border:1px solid #eaf1ff;border-radius:10px;padding:10px;margin-top:10px}
+  .q-card{border:1px solid #eaf1ff;border-radius:10px;padding:10px;margin:6px 0}
+  .row{display:flex;gap:10px}
+  .col{flex:1}
 </style>
 {% endblock %}
 {% block content %}
 <section class="class-wrap">
   <div class="class-title">
-    <h2>تشکیل کلاس</h2>
+    <h2>تعریف آزمون</h2>
   </div>
   <form method="post" class="class-form">
     {% csrf_token %}
-    <label>نام کلاس</label>
-    <input class="input" type="text" name="class_name" value="{{ classroom.name }}" />
+    <label>نام آزمون</label>
+    <input class="input" type="text" name="exam_name" placeholder="نام آزمون" />
   </form>
   <h3 style="margin-top:0;color:#2d3a6b">دانشجویان</h3>
   <table>
@@ -60,9 +68,14 @@
     </tbody>
   </table>
   <h3 style="color:#2d3a6b">لیست بانک سوالات</h3>
-  <ul style="background:#f7fcff;border:1px solid #dfe6fb;border-radius:10px;padding:12px;list-style:none;margin:0 0 16px 0">
-    <li style="color:#6b7aa6">بانک سوالات خالی است</li>
+  <ul class="banks" id="banks">
+    {% for b in banks %}
+      <li class="bank-item"><label><input type="radio" name="source_exam_id" value="{{ b.id }}"> {{ b.name }}</label> <span class="count">تعداد سوالات: {{ b.q_count|default:b.num_questions }}</span></li>
+    {% empty %}
+      <li style="color:#6b7aa6">بانک سوالات خالی است</li>
+    {% endfor %}
   </ul>
+  <div id="qList" class="q-list" style="display:none"></div>
   <form method="post">
     {% csrf_token %}
     <label>تعداد سوالات آزمون</label>
@@ -70,4 +83,57 @@
     <button class="btn" type="submit">ثبت</button>
   </form>
 </section>
+<script>
+  (function(){
+    const box=document.getElementById('qList');
+    function loadQuestions(examId){
+      if(!examId){ box.style.display='none'; box.innerHTML=''; return; }
+      fetch(`/accounts/api/exams/${examId}/questions/`).then(r=>r.json()).then(j=>{
+        const qs=j.questions||[]; box.style.display='block'; box.innerHTML='';
+        if(qs.length===0){ box.innerHTML='<div style="color:#6b7aa6">سوالی ثبت نشده است</div>'; return; }
+        qs.forEach(q=>{
+          const el=document.createElement('div'); el.className='q-card';
+          let body='';
+          if(q.kind==='des'){
+            body=`<div class='row'><div class='col'><label>متن</label><textarea class='input q-text'>${q.text}</textarea></div><div class='col'><label>پاسخ</label><textarea class='input q-ans'>${q.answer_text||''}</textarea></div></div>`;
+          } else {
+            const opts=(q.options||[]);
+            body=`<div class='row'><div class='col'><label>متن تستی</label><textarea class='input q-text'>${q.text}</textarea></div></div>
+                  <div class='row'>${opts.map((o,i)=>`<div class='col'><input class='input q-opt' data-idx='${i}' value='${o||''}'></div>`).join('')}</div>
+                  <label>گزینه صحیح</label><select class='input q-correct'>${opts.map((o,i)=>`<option value='${i}' ${i===q.correct_index?'selected':''}>${i+1}</option>`).join('')}</select>`;
+          }
+          el.innerHTML=`${body}<div style='margin-top:8px'><button class='btn' data-save='${q.id}'>ذخیره</button> <button class='btn remove' data-del='${q.id}'>حذف</button></div>`;
+          box.appendChild(el);
+        });
+      });
+    }
+    document.getElementById('banks')?.addEventListener('change', function(e){
+      const r=e.target.closest('input[type="radio"]');
+      if(r){ loadQuestions(r.value); }
+    });
+    box.addEventListener('click', async function(e){
+      const csrf=(document.cookie.match(/csrftoken=([^;]+)/)||[])[1]||'';
+      if(e.target.getAttribute('data-save')){
+        const id=e.target.getAttribute('data-save');
+        const card=e.target.closest('.q-card');
+        const fd=new FormData();
+        const text=card.querySelector('.q-text').value.trim(); fd.append('text', text);
+        const correctSel=card.querySelector('.q-correct');
+        if(correctSel){
+          const opts=Array.from(card.querySelectorAll('.q-opt')).map(i=>i.value.trim()).filter(Boolean);
+          fd.append('options', JSON.stringify(opts));
+          fd.append('correct_index', correctSel.value);
+        } else {
+          fd.append('answer_text', (card.querySelector('.q-ans').value||'').trim());
+        }
+        await fetch(`{% url 'api_question_update' 0 %}`.replace('/0/','/'+id+'/'), {method:'POST', headers:{'X-CSRFToken':csrf}, body:fd});
+      }
+      if(e.target.getAttribute('data-del')){
+        const id=e.target.getAttribute('data-del');
+        await fetch(`{% url 'api_question_delete' 0 %}`.replace('/0/','/'+id+'/'), {method:'POST', headers:{'X-CSRFToken':csrf}});
+        const sel=document.querySelector('input[name="source_exam_id"]:checked'); if(sel) loadQuestions(sel.value);
+      }
+    });
+  })();
+</script>
 {% endblock %}
