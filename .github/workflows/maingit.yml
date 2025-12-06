@@ -1,0 +1,81 @@
+name: Sync Commit with Trello
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  update-trello:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: استخراج پیام کامیت و لینک Trello (ایمن برای multiline)
+        id: extract
+        shell: bash
+        run: |
+          # اگر head_commit خالی بود (مثلاً در بعضی eventها) امن‌سازی کن
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          if [ -z "$COMMIT_MSG" ]; then
+            COMMIT_MSG="${{ github.event.before }} (no commit message found)"
+          fi
+
+          # استخراج اولین لینک Trello از متن (در صورت وجود)
+          TRELLO_URL=$(printf '%s\n' "$COMMIT_MSG" | grep -Eo 'https://trello.com/c/[A-Za-z0-9]+' | head -n1 || true)
+
+          # نوشتن multiline به صورت امن به GITHUB_OUTPUT
+          # برای msg از فرمت <<EOF استفاده می‌کنیم تا متن چندخطی مشکلی نداشته باشد
+          printf "msg<<EOF\n%s\nEOF\n" "$COMMIT_MSG" >> "$GITHUB_OUTPUT"
+
+          # برای url هم از فرمت <<EOF استفاده می‌کنیم (بی‌خطر حتی اگر خالی باشد)
+          printf "url<<EOF\n%s\nEOF\n" "$TRELLO_URL" >> "$GITHUB_OUTPUT"
+
+      - name: نمایش مقادیر استخراج‌شده (برای دیباگ)
+        run: |
+          echo "---- commit message ----"
+          echo "${{ steps.extract.outputs.msg }}"
+          echo "---- trello url ----"
+          echo "${{ steps.extract.outputs.url }}"
+
+      - name: توقف اگر لینک پیدا نشد
+        if: steps.extract.outputs.url == ''
+        run: |
+          echo "هیچ لینک کارت Trello در پیام کامیت نیست — اکشن متوقف شد."
+          
+      - name: استخراج CARD ID
+        id: id
+        if: steps.extract.outputs.url != ''
+        run: |
+          # تبدیل https://trello.com/c/AbC12345 به AbC12345
+          CARD_ID=$(echo "${{ steps.extract.outputs.url }}" | sed -e 's#https://trello.com/c/##' -e 's#/$##')
+          printf "card=%s\n" "$CARD_ID" >> "$GITHUB_OUTPUT"
+
+      - name: اضافه کردن کامنت روی کارت Trello
+        if: steps.extract.outputs.url != ''
+        run: |
+          CARD="${{ steps.id.outputs.card }}"
+          COMMENT="💬 Commit Message:\n\n${{ steps.extract.outputs.msg }}"
+
+          curl -s -X POST "https://api.trello.com/1/cards/$CARD/actions/comments" \
+            -d "text=$COMMENT" \
+            -d "key=${{ secrets.TRELLO_KEY }}" \
+            -d "token=${{ secrets.TRELLO_TOKEN }}" \
+            || (echo "خطا در اضافه کردن کامنت به Trello" && exit 1)
+
+      - name: اتچ کردن لینک کامیت به کارت (پشتیبانی‌شده)
+        if: steps.extract.outputs.url != ''
+        run: |
+          CARD="${{ steps.id.outputs.card }}"
+          # لینک کامیت گیت‌هاب (API url یا web url) — github.event.head_commit.url معمولاً API url است
+          COMMIT_URL="${{ github.event.head_commit.url }}"
+
+          # اگر خواستی لینک وب را ترجیح بدی می‌تونی این را بسازی:
+          # COMMIT_WEB="https://github.com/${{ github.repository }}/commit/${{ github.event.head_commit.id }}"
+
+          curl -s -X POST "https://api.trello.com/1/cards/$CARD/attachments" \
+            -d "url=$COMMIT_URL" \
+            -d "name=Commit: $COMMIT_URL" \
+            -d "key=${{ secrets.TRELLO_KEY }}" \
+            -d "token=${{ secrets.TRELLO_TOKEN }}" \
+            || (echo "خطا در اضافه کردن attachment به Trello" && exit 1)
