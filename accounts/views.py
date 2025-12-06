@@ -316,16 +316,79 @@ class ExamsListView(TemplateView):
     template_name = "accounts/exams_list.html"
 
     def dispatch(self, request, *args, **kwargs):
+        # Allow both instructors and students to access this view.
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # If student has exactly one active exam, redirect directly to exam page
         u = request.user
-        is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
-        if not is_instructor:
+        role_code = getattr(getattr(u, 'role', None), 'code', '')
+        if role_code == 'student':
+            member_qs = Exam.objects.filter(students=u)
+            assigned_ids = list(ExamAssignment.objects.filter(student=u).values_list('exam_id', flat=True))
+            qs = (member_qs | Exam.objects.filter(id__in=assigned_ids)).distinct()
+            if qs.count() == 1:
+                e = qs.first()
+                from django.shortcuts import redirect
+                return redirect('exam_start', exam_id=e.id)
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        role_code = getattr(getattr(u, 'role', None), 'code', '')
+        if role_code == 'instructor':
+            ctx['exams'] = Exam.objects.filter(created_by=u, source_exam__isnull=False).order_by('-created_at')
+            ctx['is_student_view'] = False
+        elif role_code == 'student':
+            # Show exams activated for the student. This includes:
+            # - Exams where the student is a member (exam.students)
+            # - Exams explicitly assigned via ExamAssignment (selected questions)
+            member_qs = Exam.objects.filter(students=u)
+            assigned_ids = list(ExamAssignment.objects.filter(student=u).values_list('exam_id', flat=True))
+            ctx['exams'] = (member_qs | Exam.objects.filter(id__in=assigned_ids)).order_by('-created_at').distinct()
+            ctx['is_student_view'] = True
+        else:
+            ctx['exams'] = Exam.objects.none()
+            ctx['is_student_view'] = False
+        return ctx
+
+
+@method_decorator(login_required, name="dispatch")
+class ExamTakeView(TemplateView):
+    template_name = "accounts/exam_take.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        role_code = getattr(getattr(u, 'role', None), 'code', '')
+        if role_code != 'student':
             return redirect('profile')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         u = self.request.user
-        ctx['exams'] = Exam.objects.filter(created_by=u).order_by('-created_at')
+        exam_id = kwargs.get('exam_id')
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            ctx['exam'] = None
+            ctx['questions'] = []
+            return ctx
+        # Ensure student is assigned to this exam
+        if not exam.students.filter(pk=u.pk).exists():
+            ctx['exam'] = None
+            ctx['questions'] = []
+            return ctx
+        assignment = ExamAssignment.objects.filter(exam=exam, student=u).first()
+        if assignment:
+            selected_ids = assignment.selected_question_ids or []
+            questions = list(Question.objects.filter(id__in=selected_ids).order_by('id'))
+        else:
+            # Fallback: if no assignment exists, show exam's own questions
+            questions = list(exam.questions.order_by('created_at'))
+        ctx['exam'] = exam
+        ctx['questions'] = questions
         return ctx
 
 @method_decorator(login_required, name="dispatch")
