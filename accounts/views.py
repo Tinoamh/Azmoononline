@@ -15,7 +15,8 @@ from .models import User
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.middleware.csrf import get_token
-from django.db.models import Count
+from django.db.models import Count, Q
+from django.views.generic import TemplateView
 
 
 class RegisterView(FormView):
@@ -317,15 +318,31 @@ class ExamsListView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         u = request.user
-        is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
-        if not is_instructor:
+        role_code = getattr(getattr(u, 'role', None), 'code', '')
+        if role_code == 'instructor':
+            return super().dispatch(request, *args, **kwargs)
+        elif role_code == 'student':
+            exams_qs = Exam.objects.filter(Q(students=u) | Q(assignments__student=u)).distinct().order_by('-created_at')
+            if exams_qs.count() == 1:
+                e = exams_qs.first()
+                return redirect('exam_start', exam_id=e.id)
+            return super().dispatch(request, *args, **kwargs)
+        else:
             return redirect('profile')
-        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         u = self.request.user
-        ctx['exams'] = Exam.objects.filter(created_by=u, source_exam__isnull=False).order_by('-created_at')
+        role_code = getattr(getattr(u, 'role', None), 'code', '')
+        if role_code == 'instructor':
+            ctx['exams'] = Exam.objects.filter(created_by=u, source_exam__isnull=False).order_by('-created_at')
+            ctx['is_student_view'] = False
+        elif role_code == 'student':
+            ctx['exams'] = Exam.objects.filter(Q(students=u) | Q(assignments__student=u)).distinct().order_by('-created_at')
+            ctx['is_student_view'] = True
+        else:
+            ctx['exams'] = Exam.objects.none()
+            ctx['is_student_view'] = False
         return ctx
 
 @method_decorator(login_required, name="dispatch")
@@ -572,6 +589,52 @@ def api_question_delete(request, question_id: int):
     exam.num_questions = exam.questions.count()
     exam.save(update_fields=['num_questions'])
     return JsonResponse({'ok': True})
+
+@method_decorator(login_required, name="dispatch")
+class ExamTakeView(TemplateView):
+    template_name = "accounts/exam_take.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        is_student = (getattr(getattr(u, 'role', None), 'code', '') == 'student')
+        if not is_student:
+            return redirect('profile')
+
+        exam_id = kwargs.get('exam_id')
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            return redirect('exams_list')
+
+        # Access allowed if student is a member of the exam or has an assignment
+        has_membership = exam.students.filter(pk=u.pk).exists()
+        has_assignment = ExamAssignment.objects.filter(exam=exam, student=u).exists()
+        if not (has_membership or has_assignment):
+            return redirect('exams_list')
+
+        self.exam = exam
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        exam = getattr(self, 'exam', None)
+        if not exam:
+            return ctx
+
+        # Prefer questions from assignment. For derived exams, fetch questions from source_exam.
+        assignment = ExamAssignment.objects.filter(exam=exam, student=self.request.user).first()
+        if exam.source_exam_id:
+            base_qs = exam.source_exam.questions
+        else:
+            base_qs = exam.questions
+
+        if assignment and assignment.selected_question_ids:
+            qs = base_qs.filter(id__in=assignment.selected_question_ids).order_by('created_at')
+        else:
+            qs = base_qs.order_by('created_at')
+        ctx['exam'] = exam
+        ctx['questions'] = qs
+        return ctx
 
 @login_required
 @require_POST
