@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>آزمون‌یار صمصامیان - دانش‌آموز</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Vazirmatn', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to bottom, #c7f0ff, #fdf6ff);
+    overflow-x: hidden;
+    color: #333;
+}
+
+a { text-decoration: none; color: inherit; }
+
+:root {
+    --primary-color: #3F59CF;
+    --primary-pastel: #8c9cff;
+    --accent-color: #ffd166;
+    --secondary-color: #ffe0f0;
+    --card-bg: #ffffff;
+}
+
+/* هدر */
+header {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 20px 30px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 100;
+}
+
+/* لینک‌ها سمت چپ */
+nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+nav a {
+    padding: 8px 20px;
+    border-radius: 25px;
+    background: var(--accent-color);
+    color: #333;
+    font-weight: 700;
+    transition: all 0.3s;
+}
+nav a:hover { background: #ffc857; }
+
+/* همبرگر و عنوان سمت راست */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.header-right h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* همبرگر */
+.hamburger {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+.hamburger div {
+    width: 28px;
+    height: 4px;
+    background-color: #fff;
+    margin: 4px 0;
+    border-radius: 3px;
+    transition: all 0.3s;
+}
+
+/* منوی همبرگری */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: -250px;
+    width: 250px;
+    height: 100%;
+    background: var(--primary-color);
+    color: #fff;
+    padding-top: 60px;
+    transition: right 0.3s ease;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+}
+.sidebar a {
+    padding: 15px 25px;
+    margin: 10px 0;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+.sidebar a:hover { background: rgba(255,255,255,0.3); }
+
+/* Overlay وقتی منو باز است */
+.overlay {
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.4);
+    display:none;
+    z-index: 150;
+}
+
+/* Hero */
+.hero {
+    text-align: center;
+    padding: 60px 20px;
+    margin: 40px auto;
+    max-width: 1000px;
+    background: var(--secondary-color);
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+.hero h2 { font-size: 2.8rem; color: var(--primary-color); margin-bottom: 20px; }
+.hero p { font-size: 1.2rem; color: #555; line-height: 1.7; }
+.hero::before { content: "☁️🌈☁️"; position: absolute; top: -20px; left: 5%; font-size: 3rem; animation: float 5s ease-in-out infinite; }
+.hero::after { content: "🎓✨"; position: absolute; top: 20px; right: 5%; font-size: 2.5rem; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);} }
+
+/* کارت‌ها */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto 60px auto; }
+.card {
+    background: var(--card-bg);
+    padding: 30px 20px;
+    border-radius: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    text-align: center;
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+.card::before {
+    content: "";
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    background: var(--primary-pastel);
+    top: -10%;
+    left: -10%;
+    transform: rotate(25deg);
+    z-index: -1;
+    transition: 0.4s;
+}
+.card:hover::before { transform: rotate(0deg); }
+.card:hover { transform: translateY(-10px) scale(1.05) rotate(-1deg); animation: bounce 0.5s; }
+@keyframes bounce { 0%,100%{transform:translateY(-10px) scale(1.05);}50%{transform:translateY(-20px) scale(1.08);} }
+.card h3 { color: var(--primary-color); font-size: 1.5rem; margin-bottom: 15px; }
+.card p { font-size: 1rem; color: #555; }
+.btn {
+    display: inline-block;
+    margin-top: 20px;
+    background: var(--accent-color);
+    color: #333;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-weight: 700;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+}
+.btn:hover { transform: translateY(-5px) scale(1.05); background: #ffc857; }
+
+/* ستاره و confetti */
+.stars, .confetti { position:absolute; width:100%; height:100%; top:0; left:0; overflow:hidden; z-index:0; pointer-events:none; }
+.star, .conf { position:absolute; border-radius:50%; }
+.star { width:6px; height:6px; background:#ffd700; animation: twinkle 2s infinite alternate; }
+@keyframes twinkle {0%{opacity:0.3;transform:scale(1);}50%{opacity:1;transform:scale(1.3);}100%{opacity:0.3;transform:scale(1);} }
+.conf { width:8px; height:8px; background: #ff4da6; animation: fall 3s linear infinite; }
+@keyframes fall { 0%{transform:translateY(-10px) rotate(0deg);}100%{transform:translateY(800px) rotate(360deg);} }
+
+/* ریسپانسیو */
+@media(max-width:768px){
+    nav a { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="confetti" id="confetti"></div>
+
+<header>
+    <nav>
+        <a href="#">ورود</a>
+        <a href="#">ثبت‌نام</a>
+    </nav>
+    <div class="header-right">
+        <h1>آزمون‌یار صمصامیان</h1>
+        <div class="hamburger" id="hamburger">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</header>
+
+<div class="sidebar" id="sidebar">
+    <a href="#">صفحه اصلی</a>
+    <a href="#">لیست آزمون‌ها</a>
+    <a href="#">لیست نمرات</a>
+    <a href="#">خروج</a>
+</div>
+<div class="overlay" id="overlay"></div>
+
+<main>
+    <div class="hero">
+        <h2>🌟 یادگیری و آزمون با دنیای بازی 🌈</h2>
+        <p>ساخت آزمون تستی و تشریحی دریافت کارنامه ارسال تکالیف و تجربه محیط جذاب رنگارنگ و بازی‌گونه مخصوص دانش‌آموزان</p>
+    </div>
+
+    <div class="cards">
+        <div class="card">
+            <h3>📝 آزمون ساز هوشمند</h3>
+            <p>ساخت و مدیریت آزمون‌ها با چند کلیک ساده</p>
+            <a href="#" class="btn">شروع آزمون</a>
+        </div>
+        <div class="card">
+            <h3>📚 بانک سوال و کارنامه</h3>
+            <p>دسترسی به بانک سوالات و مشاهده انواع کارنامه‌ها</p>
+            <a href="#" class="btn">مشاهده بانک سوال</a>
+        </div>
+        <div class="card">
+            <h3>✅ آزمون تشریحی و تستی</h3>
+            <p>برگزاری آنلاین یا حضوری هر نوع آزمون</p>
+            <a href="#" class="btn">ایجاد آزمون</a>
+        </div>
+        <div class="card">
+            <h3>💰 درآمدزایی</h3>
+            <p>با آزمون‌های خود کسب درآمد کنید</p>
+            <a href="#" class="btn">بیشتر بدانید</a>
+        </div>
+    </div>
+</main>
+
+<script>
+// ستاره‌ها
+const starsContainer = document.getElementById('stars');
+for(let i=0;i<50;i++){
+    const star = document.createElement('div');
+    star.classList.add('star');
+    star.style.top = Math.random()*100 + '%';
+    star.style.left = Math.random()*100 + '%';
+    star.style.width = Math.random()*4 + 4 + 'px';
+    star.style.height = star.style.width;
+    star.style.animationDuration = (Math.random()*3+2)+'s';
+    starsContainer.appendChild(star);
+}
+
+// confetti
+const confettiContainer = document.getElementById('confetti');
+for(let i=0;i<40;i++){
+    const c = document.createElement('div');
+    c.classList.add('conf');
+    c.style.left = Math.random()*100 + '%';
+    c.style.width = Math.random()*6+4 + 'px';
+    c.style.height = c.style.width;
+    c.style.background = ['#ff4da6','#ffde59','#4da6ff','#00ff99'][Math.floor(Math.random()*4)];
+    c.style.animationDuration = (Math.random()*3+2)+'s';
+    confettiContainer.appendChild(c);
+}
+
+// منوی همبرگری
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+
+function openSidebar(){
+    sidebar.style.right = '0px';
+    overlay.style.display = 'block';
+}
+function closeSidebar(){
+    sidebar.style.right = '-250px';
+    overlay.style.display = 'none';
+}
+
+hamburger.addEventListener('click', openSidebar);
+overlay.addEventListener('click', closeSidebar);
+</script>
+
+</body>
+</html>
