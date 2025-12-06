@@ -3,7 +3,8 @@ from django.urls import reverse_lazy
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.views.generic import FormView, TemplateView
+from django.utils import timezone
+from django.views.generic import FormView, TemplateView, View
 from .forms import RegisterForm, EmailAuthenticationForm
 from .forms import ExamProfileForm
 from .models import Role
@@ -150,7 +151,47 @@ def question_bank_create(request):
     classroom = Classroom.objects.filter(instructor=u).order_by('id').first()
     if classroom is None:
         classroom = Classroom.objects.create(instructor=u, name='کلاس جدید', is_staging=True)
-    Exam.objects.create(name=name, classroom=classroom, created_by=u)
+    exam = Exam.objects.create(name=name, classroom=classroom, created_by=u)
+
+    # Process questions from hidden input
+    import json
+    q_data = request.POST.get('questions_data')
+    if q_data:
+        try:
+            questions_list = json.loads(q_data)
+            for q_item in questions_list:
+                kind = q_item.get('kind')
+                text = q_item.get('text', '').strip()
+                if not text:
+                    continue
+                
+                if kind == 'des':
+                    exam.questions.create(
+                        kind='des',
+                        text=text,
+                        answer_text=q_item.get('answer_text', '').strip()
+                    )
+                elif kind == 'mcq':
+                    options = q_item.get('options', [])
+                    correct_index = q_item.get('correct_index')
+                    # Basic validation
+                    if not options or correct_index is None:
+                        continue
+                    exam.questions.create(
+                        kind='mcq',
+                        text=text,
+                        options=options,
+                        correct_index=correct_index
+                    )
+            
+            # Update exam question count
+            exam.num_questions = exam.questions.count()
+            exam.save(update_fields=['num_questions'])
+
+        except Exception as e:
+            # In production, log this error properly
+            print(f"Error saving questions for exam {exam.id}: {e}")
+
     return redirect('question_bank')
 
 @login_required
@@ -338,8 +379,17 @@ class ExamsListView(TemplateView):
             ctx['exams'] = Exam.objects.filter(created_by=u, source_exam__isnull=False).order_by('-created_at')
             ctx['is_student_view'] = False
         elif role_code == 'student':
-            ctx['exams'] = Exam.objects.filter(Q(students=u) | Q(assignments__student=u)).distinct().order_by('-created_at')
+            exams = Exam.objects.filter(Q(students=u) | Q(assignments__student=u)).distinct().order_by('-created_at')
+            ctx['exams'] = exams
             ctx['is_student_view'] = True
+            
+            # Find completed exams
+            completed_ids = ExamAssignment.objects.filter(
+                student=u, 
+                exam__in=exams, 
+                completed_at__isnull=False
+            ).values_list('exam_id', flat=True)
+            ctx['completed_exam_ids'] = set(completed_ids)
         else:
             ctx['exams'] = Exam.objects.none()
             ctx['is_student_view'] = False
@@ -681,3 +731,151 @@ def api_question_update(request, question_id: int):
         'options': q.options or [],
         'correct_index': q.correct_index,
     }})
+
+@method_decorator(login_required, name="dispatch")
+class ExamSubmitView(View):
+    def post(self, request, exam_id):
+        u = request.user
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            return redirect('exams_list')
+
+        # Check assignment
+        try:
+            assignment = ExamAssignment.objects.get(exam=exam, student=u)
+        except ExamAssignment.DoesNotExist:
+            return redirect('exams_list')
+
+        # Get questions
+        if exam.source_exam_id:
+            base_qs = exam.source_exam.questions
+        else:
+            base_qs = exam.questions
+        
+        if assignment.selected_question_ids:
+            questions = base_qs.filter(id__in=assignment.selected_question_ids).order_by('created_at')
+        else:
+            questions = base_qs.order_by('created_at')
+
+        student_answers = {}
+        correct_count = 0
+        total_questions = 0
+
+        for q in questions:
+            total_questions += 1
+            # Form field name: q{id}
+            ans = request.POST.get(f'q{q.id}')
+            
+            if q.kind == 'mcq':
+                if ans is not None:
+                    try:
+                        selected_idx = int(ans)
+                        student_answers[str(q.id)] = selected_idx
+                        if q.correct_index is not None and selected_idx == q.correct_index:
+                            correct_count += 1
+                    except ValueError:
+                        pass # Invalid input
+            else:
+                # Descriptive
+                if ans:
+                    student_answers[str(q.id)] = ans
+
+        if total_questions > 0:
+            score = (correct_count / total_questions) * 100
+        else:
+            score = 0
+
+        assignment.score = score
+        assignment.student_answers = student_answers
+        assignment.completed_at = timezone.now()
+        assignment.save()
+
+        return redirect('exam_result', exam_id=exam.id)
+
+
+@method_decorator(login_required, name="dispatch")
+class ExamResultView(TemplateView):
+    template_name = "accounts/exam_result.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        exam_id = kwargs.get('exam_id')
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            return ctx
+        
+        try:
+            assignment = ExamAssignment.objects.get(exam=exam, student=u)
+        except ExamAssignment.DoesNotExist:
+            return ctx
+
+        # Re-fetch questions to display details
+        if exam.source_exam_id:
+            base_qs = exam.source_exam.questions
+        else:
+            base_qs = exam.questions
+        
+        if assignment.selected_question_ids:
+            qs_list = base_qs.filter(id__in=assignment.selected_question_ids).order_by('created_at')
+        else:
+            qs_list = base_qs.order_by('created_at')
+
+        # Prepare detailed results
+        results = []
+        correct_count = 0
+        total_questions = 0
+        
+        answers = assignment.student_answers or {}
+
+        for q in qs_list:
+            total_questions += 1
+            user_ans = answers.get(str(q.id))
+            is_correct = False
+            
+            if q.kind == 'mcq':
+                if user_ans is not None:
+                    try:
+                        user_ans = int(user_ans)
+                    except:
+                        pass
+                
+                if q.correct_index is not None and user_ans == q.correct_index:
+                    is_correct = True
+                    correct_count += 1
+            
+            results.append({
+                'question': q,
+                'user_answer': user_ans,
+                'is_correct': is_correct,
+                'correct_index': q.correct_index,
+                'options': q.options
+            })
+
+        ctx['exam'] = exam
+        ctx['score_percent'] = assignment.score
+        ctx['correct_count'] = correct_count
+        ctx['total_questions'] = total_questions
+        ctx['results'] = results
+        return ctx
+
+@method_decorator(login_required, name="dispatch")
+class StudentScoresView(TemplateView):
+    template_name = "accounts/student_scores.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        if getattr(getattr(u, 'role', None), 'code', '') != 'student':
+            return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        assignments = ExamAssignment.objects.filter(
+            student=self.request.user,
+            completed_at__isnull=False
+        ).select_related('exam').order_by('-completed_at')
+        ctx['assignments'] = assignments
+        return ctx

@@ -43,8 +43,9 @@
 <section class="hero"><div class="title">بانک سوال جدید</div></section>
 <div class="wrap">
   <div class="card">
-    <form method="post" action="{% url 'question_bank_create' %}">
+    <form method="post" action="{% url 'question_bank_create' %}" id="createForm">
       {% csrf_token %}
+      <input type="hidden" name="questions_data" id="questionsData">
     <div class="row">
       <div class="col"><label>نام بانک سوال</label><input id="bankName" name="name" class="input" type="text" placeholder="مثلاً: بانک فصل ۱"></div>
       <div class="col"><label>نوع سوال</label>
@@ -149,6 +150,9 @@
     if(d!=null){ questions.splice(parseInt(d,10),1); renderPreview(); }
   });
 
+  document.getElementById('createForm').addEventListener('submit', function(e) {
+    document.getElementById('questionsData').value = JSON.stringify(questions);
+  });
   
 </script>
 {% endblock %}

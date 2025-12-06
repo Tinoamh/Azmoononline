@@ -7,9 +7,32 @@
   .wrap{max-width:900px;margin:24px auto;padding:0 16px}
   .card{background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:16px}
   .title{font-weight:800;color:#3A6CF4;margin-bottom:16px}
-  .question{border:1px solid #eaf1ff;border-radius:12px;padding:12px;margin-bottom:10px}
-  .q-text{font-weight:700;margin-bottom:8px}
-  .options{display:flex;flex-direction:column;gap:6px}
+  .question{border:1px solid #eaf1ff;border-radius:8px;padding:10px;margin-bottom:10px}
+  .q-text{font-weight:700;margin-bottom:6px;font-size:14px}
+  .options{display:flex;flex-direction:column;gap:8px}
+  
+  /* Reset radio buttons to default browser style */
+  .options input[type="radio"] {
+    width: auto !important;
+    height: auto !important;
+    appearance: auto !important;
+    -webkit-appearance: auto !important;
+    -moz-appearance: auto !important;
+    margin: 0 !important;
+    margin-left: 8px !important; /* Spacing between radio and text in RTL */
+    box-shadow: none !important;
+    border: none !important;
+    position: static !important;
+    flex-shrink: 0;
+  }
+  
+  .options label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    cursor: pointer;
+    width: fit-content;
+  }
   .back{display:inline-block;margin-top:16px}
   .pill{display:inline-block;padding:8px 14px;border-radius:999px;background:#e6f0ff;color:#2d3a6b;border:1px solid #cfe3ff;text-decoration:none;font-weight:700}
   .muted{color:#6b7aa6;font-size:12px}
@@ -23,6 +46,8 @@
     {% if exam %}
       <h2 class="title">شروع آزمون: {{ exam.name }}</h2>
       <p class="muted">تعداد سوالات این آزمون: {{ questions|length }}</p>
+      <form method="post" action="{% url 'exam_submit' exam.id %}">
+      {% csrf_token %}
       {% for q in questions %}
         <div class="question">
           <div class="q-text">{{ forloop.counter }}. {{ q.text }}</div>
@@ -33,14 +58,15 @@
               {% endfor %}
             </div>
           {% else %}
-            <textarea rows="3" style="width:100%;"></textarea>
+            <textarea name="q{{ q.id }}" rows="3" style="width:100%;"></textarea>
           {% endif %}
         </div>
       {% endfor %}
       <div style="display:flex;gap:10px;">
         <a href="/accounts/exams/" class="pill back">بازگشت به لیست آزمون‌ها</a>
-        <a href="#" class="btn-primary" title="ثبت پاسخ‌ها">ثبت پاسخ‌ها (نمونه)</a>
+        <button type="submit" class="btn-primary" style="border:none;cursor:pointer;">ثبت پاسخ‌ها</button>
       </div>
+      </form>
     {% else %}
       <h2 class="title">آزمون یافت نشد یا دسترسی ندارید</h2>
       <a href="/accounts/exams/" class="pill back">بازگشت</a>

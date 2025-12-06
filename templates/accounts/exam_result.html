@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}کارنامه آزمون{% endblock %}
+{% block content %}
+<div style="max-width:800px;margin:30px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+  <h2 style="text-align:center;color:#3d66ff;">کارنامه: {{ exam.name }}</h2>
+  
+  <div style="text-align:center;margin:20px 0;padding:20px;background:#f0f4ff;border-radius:12px;">
+    <h3>نمره شما: {{ score_percent|floatformat:1 }}%</h3>
+    <p>تعداد پاسخ صحیح: {{ correct_count }} از {{ total_questions }}</p>
+  </div>
+
+  <div style="text-align:center;">
+    <button id="toggleDetails" style="padding:10px 20px;background:#3d66ff;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+      مشاهده بیشتر (جزئیات سوالات)
+    </button>
+    <a href="{% url 'exams_list' %}" style="display:inline-block;margin-right:10px;padding:10px 20px;background:#fff;color:#3d66ff;border:1px solid #3d66ff;border-radius:8px;text-decoration:none;">بازگشت به لیست آزمون‌ها</a>
+  </div>
+
+  <div id="details" style="display:none;margin-top:20px;">
+    {% for item in results %}
+      <div style="border:1px solid #ddd;padding:15px;border-radius:8px;margin-bottom:15px;">
+        <p><strong>سوال {{ forloop.counter }}:</strong> {{ item.question.text }}</p>
+        
+        {% if item.question.kind == 'mcq' %}
+          <div style="display:flex;flex-direction:column;gap:5px;">
+          {% for opt in item.options %}
+            {% with idx=forloop.counter0 %}
+            <div style="padding:8px;border-radius:6px;
+              {% if idx == item.correct_index %}background-color:#d1fae5;border:1px solid #10b981;{% endif %}
+              {% if idx == item.user_answer and idx != item.correct_index %}background-color:#fee2e2;border:1px solid #ef4444;{% endif %}
+            ">
+              {{ opt }}
+              {% if idx == item.correct_index %} <span style="color:#059669;font-weight:bold;">(صحیح)</span> {% endif %}
+              {% if idx == item.user_answer %} <span style="font-weight:bold;">(انتخاب شما)</span> {% endif %}
+            </div>
+            {% endwith %}
+          {% endfor %}
+          </div>
+        {% else %}
+           <p>پاسخ شما: {{ item.user_answer|default:"-" }}</p>
+           <p>پاسخ صحیح: {{ item.question.answer_text }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  document.getElementById('toggleDetails').addEventListener('click', function() {
+    var d = document.getElementById('details');
+    if(d.style.display === 'none') {
+      d.style.display = 'block';
+      this.textContent = 'بستن جزئیات';
+    } else {
+      d.style.display = 'none';
+      this.textContent = 'مشاهده بیشتر (جزئیات سوالات)';
+    }
+  });
+</script>
+{% endblock %}

@@ -14,12 +14,18 @@
   </div>
   <div class="dash-right">
     <ul class="menu">
-      <li><a href="#">خانه</a></li>
-      <li><a href="#">آزمون</a></li>
-      <li><a href="#">آزمون آنلاین درسی</a></li>
-      <li><a href="#">نمونه سوال اختصاصی</a></li>
-      <li><a href="/accounts/question-bank/">بانک سوالات</a></li>
-      <li><a href="/accounts/logout/">خروج</a></li>
+      <li><a href="/">خانه</a></li>
+      {% if role.code == 'student' %}
+        <li><a href="{% url 'exams_list' %}">لیست آزمون‌ها</a></li>
+        <li><a href="{% url 'student_scores' %}">لیست نمرات</a></li>
+      {% elif role.code == 'instructor' %}
+        <li><a href="{% url 'question_bank' %}">بانک سوالات</a></li>
+        <li><a href="{% url 'exams_list' %}">آزمون‌های فعال</a></li>
+        <li><a href="{% url 'students' %}">لیست دانشجویان</a></li>
+      {% elif role.code == 'admin' %}
+        <li><a href="{% url 'users' %}">مدیریت کاربران</a></li>
+      {% endif %}
+      <li><a href="{% url 'logout' %}">خروج</a></li>
     </ul>
   </div>
 </section>

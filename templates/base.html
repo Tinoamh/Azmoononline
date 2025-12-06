@@ -47,7 +47,7 @@
             <li><a href="/accounts/dashboard/"><span>لیست کلاس‌ها</span></a></li>
           {% elif user.role and user.role.code == 'student' %}
             <li><a href="/accounts/exams/"><span>لیست آزمون‌ها</span></a></li>
-            <li><a href="/accounts/exam-profile/"><span>لیست نمرات</span></a></li>
+            <li><a href="{% url 'student_scores' %}"><span>لیست نمرات</span></a></li>
           {% elif user.role and user.role.code == 'instructor' %}
             <li><a href="/accounts/question-bank/"><span>بانک سوالات</span></a></li>
             <li><a href="/accounts/students/"><span>لیست دانشجویان</span></a></li>

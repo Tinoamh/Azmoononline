@@ -22,7 +22,14 @@
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div><strong>{{ e.name }}</strong></div>
           {% if is_student_view %}
-            <a href="/accounts/exams/{{ e.id }}/start/" class="btn-start" title="شروع آزمون">شروع</a>
+            {% if e.id in completed_exam_ids %}
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span style="color:#6b7aa6;font-size:13px;font-weight:bold;">تمام شد</span>
+                    <a href="{% url 'exam_result' e.id %}" style="color:#3A6CF4;text-decoration:none;font-size:13px;border:1px solid #3A6CF4;padding:4px 8px;border-radius:6px;">کارنامه</a>
+                </div>
+            {% else %}
+                <a href="/accounts/exams/{{ e.id }}/start/" class="btn-start" title="شروع آزمون">شروع</a>
+            {% endif %}
           {% endif %}
         </div>
         <div class="meta">

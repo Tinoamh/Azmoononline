@@ -93,6 +93,9 @@ class ExamAssignment(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='assignments')
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='exam_assignments')
     selected_question_ids = models.JSONField()
+    score = models.FloatField(null=True, blank=True)
+    student_answers = models.JSONField(default=dict, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
