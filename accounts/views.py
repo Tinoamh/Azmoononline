@@ -440,7 +440,20 @@ class ExamDefineView(TemplateView):
                 src = Exam.objects.get(pk=src_id, created_by=u)
             except Exam.DoesNotExist:
                 src = None
-        exam = Exam.objects.create(name=(name or classroom.name), classroom=classroom, num_questions=numq, created_by=u, source_exam=src)
+        
+        try:
+            duration = int(request.POST.get('duration', '60'))
+        except ValueError:
+            duration = 60
+
+        exam = Exam.objects.create(
+            name=(name or classroom.name), 
+            classroom=classroom, 
+            num_questions=numq, 
+            created_by=u, 
+            source_exam=src,
+            duration=duration
+        )
         exam.students.set(classroom.students.all())
 
         # Random selection per student from source exam if provided

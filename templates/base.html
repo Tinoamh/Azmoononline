@@ -19,10 +19,34 @@
     .admin-drawer-list li{margin:0;border-top:1px solid rgba(255,255,255,0.2)}
     .admin-drawer-list a{display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:12px 18px;color:#fff;text-decoration:none}
     .site-footer.student-footer{background:#e2fdff}
+    /* Student theme global overrides */
+    body.student-theme {
+      background: linear-gradient(to bottom, #c7f0ff, #fdf6ff) !important;
+      min-height: 100vh;
+    }
+    body.student-theme .admin-drawer {
+      background: #ffe0f0 !important;
+      color: #333 !important;
+    }
+    body.student-theme .admin-drawer a {
+      color: #333 !important;
+    }
+    body.student-theme .admin-drawer-header {
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    body.student-theme .admin-drawer-list li {
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+    body.student-theme .admin-drawer-list a:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    body.student-theme .hamburger .bar {
+      background: #3F59CF; /* ensure contrast on student pages if needed, though header usually has its own bg */
+    }
   </style>
   {% block extra_css %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% if user.is_authenticated and user.role and user.role.code == 'student' %}student-theme{% endif %} {% block body_class %}{% endblock %}">
   {% block header %}
   <header>
     <nav>
