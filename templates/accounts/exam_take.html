@@ -671,7 +671,8 @@
                 if (q.kind === 'mcq') {
                     inputHtml = `<div class="mcq-options">`;
                     q.options.forEach((opt, i) => {
-                        const checked = q.answer == i ? 'checked' : '';
+                        // Only check if q.answer matches i (and q.answer is not empty string)
+                        const checked = (q.answer !== '' && q.answer == i) ? 'checked' : '';
                         inputHtml += `
                             <label class="mcq-option">
                                 <input type="radio" name="q_${q.id}" value="${i}" ${checked} onchange="updateAnswer(${q.id}, '${i}')">
