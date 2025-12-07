@@ -251,3 +251,42 @@ class ExamProfileForm(forms.Form):
         Profile.objects.update_or_create(user=user, defaults={
             'phone': cleaned.get('phone', ''),
         })
+
+class SimpleProfileEditForm(forms.Form):
+    first_name = forms.CharField(max_length=150, required=True, label="نام")
+    last_name = forms.CharField(max_length=150, required=True, label="نام خانوادگی")
+    username = forms.CharField(max_length=150, required=True, label="نام کاربری")
+    phone = forms.CharField(max_length=20, required=False, label="شماره تماس")
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields['first_name'].widget.attrs.update({'placeholder': 'نام', 'class': 'prof-box prof-input'})
+        self.fields['last_name'].widget.attrs.update({'placeholder': 'نام خانوادگی', 'class': 'prof-box prof-input'})
+        self.fields['username'].widget.attrs.update({'placeholder': 'نام کاربری', 'class': 'prof-box prof-input'})
+        self.fields['phone'].widget.attrs.update({'placeholder': 'شماره تماس', 'class': 'prof-box prof-input'})
+        
+        if user is not None:
+            profile = getattr(user, 'profile', None)
+            self.initial.update({
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'username': user.username,
+                'phone': getattr(profile, 'phone', ''),
+            })
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exclude(pk=self.user.pk).exists():
+            raise forms.ValidationError("این نام کاربری قبلاً گرفته شده است.")
+        return username
+
+    def save(self, user: User):
+        user.first_name = self.cleaned_data.get('first_name', '')
+        user.last_name = self.cleaned_data.get('last_name', '')
+        user.username = self.cleaned_data.get('username')
+        user.save()
+        Profile.objects.update_or_create(user=user, defaults={
+            'phone': self.cleaned_data.get('phone', ''),
+        })
