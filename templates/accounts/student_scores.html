@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}لیست نمرات{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:900px;margin:24px auto;padding:0 16px">
+  <div class="card" style="background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:16px">
+    <h2 style="font-weight:800;color:#3A6CF4;margin-bottom:16px">لیست نمرات و سوابق آزمون</h2>
+    <div style="display:grid;grid-template-columns:1fr;gap:12px">
+      {% for a in assignments %}
+      <div style="border:1px solid #eaf1ff;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <div style="font-weight:bold;">{{ a.exam.name }}</div>
+            <div style="color:#6b7aa6;font-size:12px;">تاریخ شرکت: {{ a.completed_at|date:"Y/m/d H:i" }}</div>
+        </div>
+        <div style="text-align:left;">
+            <div style="font-weight:bold;color:#3A6CF4;">نمره: {{ a.score|floatformat:1 }}%</div>
+            <a href="{% url 'exam_result' a.exam.id %}" style="font-size:12px;color:#3d66ff;text-decoration:none;display:inline-block;margin-top:4px;">مشاهده کارنامه</a>
+        </div>
+      </div>
+      {% empty %}
+      <div style="padding:20px;text-align:center;color:#6b7aa6;">شما هنوز در هیچ آزمونی شرکت نکرده‌اید.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

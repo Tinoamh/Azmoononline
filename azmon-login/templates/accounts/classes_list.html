@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}لیست کلاس‌ها{% endblock %}
+{% block body_class %}classes-list{% endblock %}
+{% block extra_css %}
+<style>
+  body.classes-list{background:linear-gradient(180deg,#f5f8ff 0%, #eef3ff 100%)}
+  .wrap{max-width:900px;margin:24px auto;padding:24px;background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12)}
+  .title{color:#3A6CF4;font-weight:800;margin:0 0 12px 0}
+  .list{list-style:none;margin:0;padding:0}
+  .item{padding:10px;border-bottom:1px solid #f0f4ff;display:flex;justify-content:space-between;align-items:center}
+  .item:last-child{border-bottom:none}
+  .name{font-weight:700;color:#2d3a6b}
+  .small{font-size:12px;color:#6b7aa6}
+</style>
+{% endblock %}
+{% block content %}
+<section class="wrap">
+  <h2 class="title">کلاس‌های ذخیره‌شده</h2>
+  {% if classes %}
+    <ul class="list">
+      {% for c in classes %}
+      <li class="item"><span class="name">{{ c.name }}</span><span class="small">{{ c.students.count }} دانشجو</span></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="small">هنوز کلاسی ثبت نشده است.</div>
+  {% endif %}
+</section>
+{% endblock %}

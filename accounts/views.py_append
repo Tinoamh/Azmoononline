@@ -1,0 +1,19 @@
+
+@method_decorator(login_required, name="dispatch")
+class StudentScoresView(TemplateView):
+    template_name = "accounts/student_scores.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        u = request.user
+        if getattr(getattr(u, 'role', None), 'code', '') != 'student':
+            return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        assignments = ExamAssignment.objects.filter(
+            student=self.request.user,
+            completed_at__isnull=False
+        ).select_related('exam').order_by('-completed_at')
+        ctx['assignments'] = assignments
+        return ctx

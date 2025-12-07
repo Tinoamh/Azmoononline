@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}تشکیل کلاس{% endblock %}
+{% block body_class %}classroom{% endblock %}
+{% block extra_css %}
+<style>
+  body.classroom { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
+  .class-wrap { max-width:1000px; margin:24px auto; padding:24px; background:#fff; border:1px solid #dfe6fb; border-radius:16px; box-shadow:0 16px 28px rgba(58,108,244,0.12); }
+  .class-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .class-title h2 { margin:0; color:#3A6CF4; font-weight:800 }
+  .class-form { display:flex; gap:10px; align-items:center; margin-bottom:16px; }
+  .input { padding:10px 12px; border:1px solid #cfe3ff; border-radius:8px; }
+  .btn { padding:10px 14px; background:#3A6CF4; color:#fff; border:none; border-radius:8px; cursor:pointer; }
+  table { width:100%; border-collapse:collapse }
+  th, td { text-align:right; padding:10px; border-bottom:1px solid #f0f4ff }
+  .act { white-space:nowrap }
+  .btn.remove { background:#d9534f }
+  .banks { background:#f7fcff;border:1px solid #dfe6fb;border-radius:10px;padding:12px;list-style:none;margin:0 0 16px 0 }
+  .bank-item { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px dashed #e6eefc }
+  .bank-item:last-child { border-bottom:none }
+  .questions { background:#fff; border:1px solid #e6eefc; border-radius:10px; padding:12px; }
+  .questions * { box-sizing:border-box }
+  .questions { overflow:hidden }
+  .qrow { border-bottom:1px solid #f0f4ff; padding:8px 0 }
+  .qrow:last-child{ border-bottom:none }
+  .qmeta { font-size:12px; color:#6b7aa6; display:flex; gap:10px }
+  .edit-box { background:#f9fbff; border:1px solid #e6eefc; border-radius:10px; padding:10px; margin-top:8px }
+  .edit-box .input { width:100% }
+  .opts { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-top:6px }
+  .opts-row { display:flex; align-items:center; gap:8px }
+  .opts-row .input { flex:1; min-width:0 }
+  .opts-row input[type="radio"] { accent-color:#16a34a }
+  .opt-divider{height:1px;background:#e6eefc;margin:10px 0}
+  .final-submit{display:flex;justify-content:center;margin-top:24px}
+</style>
+{% endblock %}
+{% block content %}
+<section class="class-wrap">
+  <div class="class-title">
+    <h2>تشکیل کلاس</h2>
+  </div>
+  <form method="post" class="class-form">
+    {% csrf_token %}
+    <label>نام کلاس</label>
+    <input class="input" type="text" name="class_name" value="{{ classroom.name }}" />
+  </form>
+  <h3 style="margin-top:0;color:#2d3a6b">دانشجویان</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>نام</th>
+        <th>نام خانوادگی</th>
+        <th>ایمیل</th>
+        <th>وضعیت در کلاس</th>
+        <th>اقدام</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.first_name }}</td>
+        <td>{{ s.last_name }}</td>
+        <td>{{ s.email }}</td>
+        <td>{% if s.id in member_ids %}عضو کلاس{% else %}غیرعضو{% endif %}</td>
+        <td class="act">
+          <form method="post" action="/accounts/classroom/toggle-member/" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="student_id" value="{{ s.id }}" />
+            {% if s.id in member_ids %}
+              <button class="btn remove" type="submit">حذف از کلاس</button>
+            {% else %}
+              <button class="btn" type="submit">اضافه کردن</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h3 style="color:#2d3a6b">لیست بانک سوالات</h3>
+  <div id="banks" class="banks"><div style="color:#6b7aa6">در حال بارگذاری...</div></div>
+  <div style="margin-bottom:12px;color:#2d3a6b">بانک انتخاب شده: <strong id="pickedName">—</strong></div>
+  <div id="questions" class="questions" style="display:none"></div>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="source_exam_id" id="source_exam_id" />
+    <label>تعداد سوالات آزمون</label>
+    <input class="input" type="number" min="0" name="num_questions" value="0" style="width:160px" />
+    <div class="final-submit"><button class="btn" type="submit">ثبت</button></div>
+  </form>
+</section>
+<script>
+function getCookie(name){const v=(document.cookie||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(name+'='));return v?decodeURIComponent(v.split('=')[1]):''}
+// Ensure CSRF cookie exists
+try { fetch('/accounts/api/csrf/', {credentials:'same-origin'}); } catch(e) {}
+(async function(){
+  try{
+    const res = await fetch('/accounts/api/my-exams/', {credentials:'same-origin'});
+    if(!res.ok){document.getElementById('banks').innerHTML='<div style="color:#c00">عدم دسترسی</div>';return}
+    const data = await res.json();
+    const list = (data.exams||[]);
+    const b = document.getElementById('banks');
+    if(!list.length){b.innerHTML='<div style="color:#6b7aa6">بانک سوالات خالی است</div>';return}
+    b.innerHTML = list.map(e=>`<div class="bank-item" data-id="${e.id}" data-name="${e.name}"><div><strong>${e.name}</strong> <span class="qmeta">(${e.num_questions} سوال)</span></div><button class="btn" data-pick>انتخاب</button></div>`).join('');
+  }catch(err){document.getElementById('banks').innerHTML='<div style="color:#c00">خطا در بارگذاری</div>'}
+})();
+
+document.getElementById('banks').addEventListener('click',async function(e){
+  if(e.target && e.target.hasAttribute('data-pick')){
+    const item = e.target.closest('.bank-item');
+    const id = item?.dataset?.id; const name = item?.dataset?.name; if(!id) return;
+    document.getElementById('source_exam_id').value = id;
+    document.getElementById('pickedName').textContent = name;
+    const box = document.getElementById('questions');
+    box.style.display='block'; box.innerHTML='<div style="color:#6b7aa6">بارگذاری سوالات...</div>';
+    const res = await fetch('/accounts/api/exams/'+id+'/questions/', {credentials:'same-origin'});
+    if(!res.ok){box.innerHTML='<div style="color:#c00">خطا در دریافت سوالات</div>';return}
+    const data = await res.json();
+    const qs = data.questions||[];
+    if(!qs.length){box.innerHTML='<div style="color:#6b7aa6">سوالی برای این بانک ثبت نشده است</div>';return}
+    box.innerHTML = qs.map(q=>renderQRow(q)).join('');
+  }
+});
+
+function renderQRow(q){
+  const opts = (q.options||[]).map((o,i)=>`<div class="opts-row"><input type="radio" name="correct-${q.id}" ${q.correct_index===i?'checked':''} data-corr value="${i}"><input class="input" type="text" value="${escapeHtml(o)}" data-opt data-i="${i}"></div>`).join('');
+  const edit = q.kind==='mcq' ? `
+    <div class="opts">${opts}</div>
+  ` : `
+    <textarea class="input" data-ans>${escapeHtml(q.answer_text||'')}</textarea>
+  `;
+  return `
+    <div class="qrow" data-id="${q.id}" data-kind="${q.kind}">
+      <div><strong>${escapeHtml(q.text)}</strong> <span class="qmeta">${q.kind==='mcq'?'تستی':'تشریحی'}</span></div>
+      <div class="edit-box">
+        <div class="field"><textarea class="input" data-text>${escapeHtml(q.text)}</textarea></div>
+        ${edit}
+        <div class="opt-divider"></div>
+        <div style="display:flex;gap:8px"><button class="btn" data-save>ذخیره تغییرات</button></div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[c]})}
+
+document.getElementById('questions').addEventListener('click',async function(e){
+  if(e.target && e.target.hasAttribute('data-save')){
+    const row = e.target.closest('.qrow');
+    const id = row?.dataset?.id; const kind = row?.dataset?.kind; if(!id) return;
+    const text = row.querySelector('[data-text]').value.trim(); if(!text) return;
+    let body;
+    if(kind==='des'){
+      const ans = (row.querySelector('[data-ans]')?.value||'').trim();
+      body = new URLSearchParams({text, answer_text: ans});
+    } else {
+      const opts = Array.from(row.querySelectorAll('[data-opt]')).map(i=>i.value).filter(s=>s.trim().length>0);
+      const corr = row.querySelector('[data-corr]:checked');
+      const ci = corr?parseInt(corr.value,10):NaN;
+      if(!opts.length || isNaN(ci) || ci<0 || ci>=opts.length) return;
+      body = new URLSearchParams({text, options: JSON.stringify(opts), correct_index: String(ci)});
+    }
+    const res = await fetch('/accounts/api/questions/'+id+'/update/', {method:'POST', headers:{'X-CSRFToken':getCookie('csrftoken')}, body});
+    if(res.ok){ e.target.textContent='ذخیره شد'; setTimeout(()=>{e.target.textContent='ذخیره تغییرات'}, 1500); }
+  }
+});
+</script>
+{% endblock %}

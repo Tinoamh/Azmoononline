@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}ERD کامل پروژه (سامانه آزمون آنلاین){% endblock %}
+{% block extra_css %}
+<style>
+  .erd-container { max-width: 1100px; margin: 24px auto; padding: 16px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .erd-container h1 { font-size: 20px; margin-bottom: 12px; }
+  .erd-note { font-size: 14px; color: #333; margin-top: 12px; line-height: 1.7; }
+  .mermaid { direction: ltr; }
+  code { background: #f5f5f5; padding: 0 4px; border-radius: 4px; }
+  ul.legend { margin-top: 12px; }
+  ul.legend li { margin-bottom: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erd-container">
+  <h1>ERD کامل پروژه: سامانه آزمون آنلاین</h1>
+  <div class="toolbar" style="margin:8px 0 16px; display:flex; gap:8px;">
+    <button id="download-pdf" class="btn">دانلود PDF</button>
+  </div>
+  <div class="mermaid">
+erDiagram
+  %% --- Users & Auth ---
+  ROLE {
+    int id PK
+    string code
+    string name
+  }
+
+  USER {
+    int id PK
+    string username
+    string email
+    int role_id FK
+  }
+
+  PROFILE {
+    int id PK
+    int user_id FK
+    string phone
+  }
+
+  RECOVERY_CODE {
+    int id PK
+    int user_id FK
+    string code_hash
+    boolean used
+    datetime created_at
+  }
+
+  PASSWORD_RESET_ATTEMPT {
+    int id PK
+    string email
+    datetime requested_at
+  }
+
+  ROLE ||--o{ USER : assigns
+  USER ||--|| PROFILE : has
+  USER ||--o{ RECOVERY_CODE : has
+
+  %% --- Question Bank ---
+  QUESTION_BANK {
+    int id PK
+    string name
+  }
+
+  CATEGORY {
+    int id PK
+    string name
+  }
+
+  TAG {
+    int id PK
+    string name
+  }
+
+  QUESTION {
+    int id PK
+    int bank_id FK
+    int category_id FK
+    string type
+    text content
+    boolean is_active
+  }
+
+  QUESTION_TAG {
+    int id PK
+    int question_id FK
+    int tag_id FK
+  }
+
+  OPTION {
+    int id PK
+    int question_id FK
+    text content
+    boolean is_correct
+  }
+
+  QUESTION_BANK ||--o{ QUESTION : contains
+  CATEGORY ||--o{ QUESTION : categorizes
+  QUESTION }o--o{ TAG : labeled
+  QUESTION ||--o{ OPTION : has
+
+  %% --- Exam ---
+  EXAM {
+    int id PK
+    string code
+    string title
+  }
+
+  EXAM_QUESTION {
+    int id PK
+    int exam_id FK
+    int question_id FK
+    float points
+    int order_index
+  }
+
+  EXAM_ASSIGNMENT {
+    int id PK
+    int exam_id FK
+    int student_id FK
+    datetime assigned_at
+    datetime due_at
+  }
+
+  EXAM_ATTEMPT {
+    int id PK
+    int exam_id FK
+    int student_id FK
+    int assignment_id FK
+    datetime started_at
+    datetime submitted_at
+    float total_score
+  }
+
+  RESPONSE {
+    int id PK
+    int attempt_id FK
+    int question_id FK
+    int selected_option_id FK
+    text answer_text
+    boolean is_correct
+    float score_awarded
+  }
+
+  USER ||--o{ EXAM : authors
+  EXAM ||--o{ EXAM_QUESTION : includes
+  EXAM ||--o{ EXAM_ASSIGNMENT : assigns
+  USER ||--o{ EXAM_ASSIGNMENT : receives
+  EXAM_ASSIGNMENT ||--o{ EXAM_ATTEMPT : allows
+  USER ||--o{ EXAM_ATTEMPT : takes
+  EXAM_ATTEMPT ||--o{ RESPONSE : records
+  QUESTION ||--o{ RESPONSE : asked
+  OPTION ||--o{ RESPONSE : chosen
+  </div>
+
+  <h2 style="margin-top:20px">Conceptual ER (Rectangles & Diamonds)</h2>
+  <div class="mermaid">
+flowchart LR
+  ROLE[Role] --> R_assigns{assigns} --> USER[User]
+  USER --> R_has_profile{has 1:1} --> PROFILE[Profile]
+  USER --> R_has_recovery{has 1:n} --> RECOVERY_CODE[RecoveryCode]
+  QB[QuestionBank] --> R_contains{contains} --> QUESTION[Question]
+  CATEGORY[Category] --> R_categorizes{categorizes} --> QUESTION
+  QUESTION --> R_labeled{labeled} --> TAG[Tag]
+  QUESTION --> R_has_options{has 1:n} --> OPTION[Option]
+  EXAM[Exam] --> R_includes{includes} --> EXAM_QUESTION[ExamQuestion]
+  EXAM --> R_assigned{assigned} --> EXAM_ASSIGNMENT[ExamAssignment]
+  EXAM_ASSIGNMENT --> R_allows{allows} --> EXAM_ATTEMPT[ExamAttempt]
+  EXAM_ATTEMPT --> R_records{records} --> RESPONSE[Response]
+  RESPONSE --> R_for{for} --> QUESTION
+  RESPONSE --> R_chosen{chosen} --> OPTION
+  </div>
+
+  <h2 style="margin-top:20px">Entities Table (Simplified)</h2>
+  <table style="width:100%; border-collapse:collapse; font-size:14px">
+    <thead>
+      <tr>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Entity</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Key Fields</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Relationships</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:6px">Role</td><td style="padding:6px">id (PK), code, name</td><td style="padding:6px">1:n Users</td></tr>
+      <tr><td style="padding:6px">User</td><td style="padding:6px">id (PK), username, email, role_id (FK)</td><td style="padding:6px">1:1 Profile, 1:n RecoveryCodes</td></tr>
+      <tr><td style="padding:6px">Profile</td><td style="padding:6px">id (PK), user_id (FK), phone</td><td style="padding:6px">1:1 User</td></tr>
+      <tr><td style="padding:6px">QuestionBank</td><td style="padding:6px">id (PK), name</td><td style="padding:6px">1:n Questions</td></tr>
+      <tr><td style="padding:6px">Question</td><td style="padding:6px">id (PK), bank_id (FK), category_id (FK), type</td><td style="padding:6px">n:m Tags, 1:n Options</td></tr>
+      <tr><td style="padding:6px">Exam</td><td style="padding:6px">id (PK), code, title</td><td style="padding:6px">1:n ExamQuestions, 1:n Assignments</td></tr>
+      <tr><td style="padding:6px">ExamAttempt</td><td style="padding:6px">id (PK), exam_id (FK), student_id (FK), assignment_id (FK)</td><td style="padding:6px">1:n Responses</td></tr>
+      <tr><td style="padding:6px">Response</td><td style="padding:6px">id (PK), attempt_id (FK), question_id (FK), selected_option_id (FK)</td><td style="padding:6px">n:1 Attempt, n:1 Question, n:1 Option</td></tr>
+    </tbody>
+  </table>
+
+  <div class="erd-note">
+    <strong>Legend & Notes:</strong>
+    <ul class="legend">
+      <li>نقش‌ها: <code>Role</code> (نقش) شامل <em>دانشجو</em>، <em>طراح سؤال</em> و <em>مدیر</em> است؛ کاربرها با FK به نقش متصل می‌شوند.</li>
+      <li>بانک سؤال: سؤالات در <code>QuestionBank</code> (بانک سؤال) نگه‌داری می‌شوند و با <code>Category</code> (دسته) و <code>Tag</code> (برچسب) قابل دسته‌بندی/برچسب‌گذاری هستند.</li>
+      <li>آزمون: سؤالات از بانک به‌وسیلهٔ <code>ExamQuestion</code> (سؤال آزمون) به آزمون‌ها متصل می‌شوند؛ تنظیمات شافل در سطح آزمون و سؤال قابل کنترل است.</li>
+      <li>تخصیص و شرکت در آزمون: دانشجوها از طریق <code>ExamAssignment</code> (تخصیص آزمون) به آزمون‌ها تخصیص داده می‌شوند و هر تخصیص می‌تواند چند <code>ExamAttempt</code> (تلاش) داشته باشد.</li>
+      <li>پاسخ‌ها: هر پاسخ در <code>Response</code> (پاسخ) نگه‌داری می‌شود؛ برای چندگزینه‌ای گزینهٔ انتخابی و برای متنی، پاسخ در <code>متن_پاسخ</code> ذخیره می‌شود.</li>
+      <li>تحلیل: داشبوردهای اسپرینت ۴ بر اساس داده‌های <code>ExamAttempt</code> و <code>Response</code> ساخته می‌شوند.</li>
+    </ul>
+    <p style="margin-top:10px">راهنما: برای دریافت PDF روی دکمه «دانلود PDF» کلیک کنید.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+  document.getElementById('download-pdf').addEventListener('click', async () => {
+    const { jsPDF } = window.jspdf || window.jspdf.jsPDF ? window.jspdf : window.jspdf;
+    const container = document.querySelector('.erd-container');
+    // اطمینان از رندر مرمید
+    await new Promise(r => setTimeout(r, 500));
+    const canvas = await html2canvas(container, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('landscape', 'pt', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth - 40; // margin
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let y = 20;
+    pdf.addImage(imgData, 'PNG', 20, y, imgWidth, imgHeight);
+    pdf.save('ERD_Full_Project.pdf');
+  });
+</script>
+{% endblock %}

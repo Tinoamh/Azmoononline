@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ویرایش بانک: {{ exam.name }}{% endblock %}
+{% block body_class %}question-bank{% endblock %}
+{% block extra_css %}
+<style>
+  *{box-sizing:border-box}
+  .wrap{max-width:980px;margin:20px auto;padding:0 16px}
+  .card{background:#fff;border:1.6px solid #c8d2ff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);padding:16px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .col{flex:1 1 260px}
+  .input, select, textarea{width:100%;height:40px;border:1.6px solid #c8d2ff;border-radius:10px;padding:8px 10px;outline:none}
+  textarea{height:100px}
+  .btn{display:inline-block;padding:8px 14px;border-radius:10px;font-size:14px;text-decoration:none;cursor:pointer}
+  .btn-primary{color:#fff;background:#3d66ff;border:1.6px solid #3d66ff}
+  .btn-outline{color:#3d66ff;background:#fff;border:1.6px solid #3d66ff}
+  .grid{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .q-card{border:1.6px solid #c8d2ff;border-radius:12px;padding:12px}
+  .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .hero{background:linear-gradient(90deg,#3d66ff,#638aff);color:#fff;padding:22px;border-radius:0 0 20px 20px;box-shadow:0 6px 16px rgba(0,0,0,0.12)}
+  .title{font-size:24px;font-weight:800;margin:0}
+  .radio-row{display:flex;gap:18px;align-items:center;margin-top:10px}
+  .radio-row label{display:flex;gap:8px;align-items:center;color:#333}
+  .radio-green{accent-color:#22c55e;width:18px;height:18px}
+  .btn-danger{color:#ef4444;background:#fff;border:1.6px solid #ef4444}
+  .mcq-grid{display:flex;flex-wrap:wrap;gap:12px}
+  .mcq-grid .cell{flex:0 0 calc(50% - 6px)}
+  .mcq-grid .cell1{order:2}
+  .mcq-grid .cell2{order:1}
+  .mcq-grid .cell3{order:4}
+  .mcq-grid .cell4{order:3}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero"><div class="title">ویرایش بانک سوالات: {{ exam.name }}</div></section>
+<div class="wrap">
+  <div class="card">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:8px">
+      <a class="btn btn-outline" href="{% url 'question_bank' %}">بازگشت</a>
+    </div>
+    <div class="grid" id="list"></div>
+    <hr>
+    <div class="row">
+      <div class="col"><label>نوع سوال</label>
+        <div class="kind-row">
+          <label class="opt-wrap"><input class="kind-radio" type="radio" name="newKind" value="des" checked> تشریحی</label>
+          <label class="opt-wrap"><input class="kind-radio" type="radio" name="newKind" value="mcq"> تستی</label>
+        </div>
+      </div>
+    </div>
+    <div id="newDes">
+      <label>متن سوال</label><textarea id="newDesText" class="input"></textarea>
+      <label>پاسخ</label><textarea id="newDesAns" class="input"></textarea>
+    </div>
+    <div id="newMcq" style="display:none">
+      <label>متن سوال تستی</label><textarea id="newMcqText" class="input"></textarea>
+      <div id="newMcqGrid" class="mcq-grid">
+        <div class="cell cell1"><div class="opt-wrap"><input class="radio-green" type="radio" name="newMcqCorrect" value="0" checked><input class="input opt" type="text" placeholder="گزینه اول"></div></div>
+        <div class="cell cell2"><div class="opt-wrap"><input class="radio-green" type="radio" name="newMcqCorrect" value="1"><input class="input opt" type="text" placeholder="گزینه دوم"></div></div>
+        <div class="cell cell3"><div class="opt-wrap"><input class="radio-green" type="radio" name="newMcqCorrect" value="2"><input class="input opt" type="text" placeholder="گزینه سوم"></div></div>
+        <div class="cell cell4"><div class="opt-wrap"><input class="radio-green" type="radio" name="newMcqCorrect" value="3"><input class="input opt" type="text" placeholder="گزینه چهارم"></div></div>
+      </div>
+    </div>
+    <div class="action-bar"><button id="btnAddAny" class="btn btn-outline" type="button">افزودن سوال</button><button id="btnClearNew" class="btn btn-danger" type="button">پاک کردن</button></div>
+    <div style="margin-top:14px;display:flex;justify-content:center"><button id="btnSave" class="btn btn-primary" type="button">ثبت</button></div>
+  </div>
+</div>
+
+<script>
+  const list=document.getElementById('list');
+  function getCSRF(){ const m=document.cookie.match(/csrftoken=([^;]+)/); return m?m[1]:''; }
+  async function ensureCSRF(){ if(!getCSRF()){ await fetch('/accounts/api/csrf/'); } }
+
+  async function fetchQuestions(){
+    const r=await fetch('{% url 'api_exam_questions' exam.id %}');
+    const j=await r.json();
+    renderList(j.questions||[]);
+  }
+  function renderList(items){
+    list.innerHTML='';
+    items.forEach((q)=>{
+      const el=document.createElement('div'); el.className='q-card';
+      let body='';
+      if(q.kind==='des'){
+        body=`<label>متن سوال</label><textarea class='input q-text'>${q.text}</textarea>
+              <label>پاسخ</label><textarea class='input q-ans'>${q.answer_text||''}</textarea>`;
+      } else {
+        const opts=(q.options||[]);
+        const group=`correct_${q.id}`;
+        body=`<label>متن سوال تستی</label><textarea class='input q-text'>${q.text}</textarea>
+              <div class='row'>
+                ${(opts.map((o,i)=>`<div class='col'><div class='opt-wrap'><input class='radio-green' type='radio' name='${group}' value='${i}' ${i===q.correct_index?'checked':''}><input class='input q-opt' data-idx='${i}' value='${o||''}'></div></div>`)).join('')}
+              </div>`;
+      }
+      el.innerHTML=`<div><strong>${q.kind==='mcq'?'تستی':'تشریحی'}</strong></div>${body}
+        <div class='meta'>
+          <div style='display:flex;gap:8px'>
+            <button class='btn btn-primary' data-save='${q.id}'>ذخیره</button>
+            <button class='btn btn-outline btn-danger' data-del='${q.id}'>حذف سوال</button>
+          </div>
+        </div>`;
+      list.appendChild(el);
+    });
+  }
+  list.addEventListener('click', async (e)=>{
+    const csrf=getCSRF();
+    if(e.target.getAttribute('data-save')){
+      const id=e.target.getAttribute('data-save');
+      const card=e.target.closest('.q-card');
+      const fd=new FormData();
+      const text=card.querySelector('.q-text').value.trim(); fd.append('text', text);
+      const kind=card.querySelector('strong').textContent==='تستی'?'mcq':'des';
+      if(kind==='des'){
+        fd.append('answer_text', (card.querySelector('.q-ans').value||'').trim());
+      } else {
+        const opts=Array.from(card.querySelectorAll('.q-opt')).map(i=>i.value.trim()).filter(Boolean);
+        const r=card.querySelector('input[type="radio"][name^="correct_"]:checked');
+        const correct=r?r.value:'0';
+        fd.append('options', JSON.stringify(opts));
+        fd.append('correct_index', correct);
+      }
+      await fetch(`{% url 'api_question_update' 0 %}`.replace('/0/','/'+id+'/'), {method:'POST', headers:{'X-CSRFToken':csrf}, body:fd});
+      await fetchQuestions();
+    }
+    if(e.target.getAttribute('data-del')){
+      const id=e.target.getAttribute('data-del');
+      const fd=new FormData();
+      await fetch(`{% url 'api_question_delete' 0 %}`.replace('/0/','/'+id+'/'), {method:'POST', headers:{'X-CSRFToken':csrf}, body:fd});
+      await fetchQuestions();
+    }
+  });
+
+  const newKindRadios=Array.from(document.querySelectorAll('input[name="newKind"]'));
+  const newDes=document.getElementById('newDes');
+  const newMcq=document.getElementById('newMcq');
+  function getNewKind(){ const r=newKindRadios.find(x=>x.checked); return r?r.value:'des'; }
+  function updateNewForms(){ const v=getNewKind(); newDes.style.display=v==='des'?'block':'none'; newMcq.style.display=v==='mcq'?'block':'none'; }
+  newKindRadios.forEach(r=>r.addEventListener('change', updateNewForms));
+  updateNewForms();
+  async function addNewQuestion(){
+    await ensureCSRF(); const csrf=getCSRF();
+    const v=getNewKind(); const fd=new FormData(); fd.append('kind', v);
+    if(v==='des'){
+      fd.append('text', document.getElementById('newDesText').value.trim());
+      fd.append('answer_text', document.getElementById('newDesAns').value.trim());
+    } else {
+      fd.append('text', document.getElementById('newMcqText').value.trim());
+      const opts=Array.from(document.querySelectorAll('#newMcq .opt')).map(i=>i.value.trim()).filter(Boolean);
+      fd.append('options', JSON.stringify(opts));
+      const rc=document.querySelector('input[name="newMcqCorrect"]:checked');
+      fd.append('correct_index', rc?rc.value:'0');
+    }
+    await fetch(`/accounts/api/exams/{{ exam.id }}/add-question/`, {method:'POST', headers:{'X-CSRFToken':csrf}, body:fd});
+    clearNewForm();
+    fetchQuestions();
+  }
+  function clearNewForm(){
+    if(getNewKind()==='des'){
+      document.getElementById('newDesText').value=''; document.getElementById('newDesAns').value='';
+    } else {
+      document.getElementById('newMcqText').value=''; document.querySelectorAll('#newMcq .opt').forEach(i=>i.value='');
+      const def=document.querySelector('input[name="newMcqCorrect"][value="0"]'); if(def) def.checked=true;
+    }
+  }
+  document.getElementById('btnAddAny').addEventListener('click', addNewQuestion);
+  document.getElementById('btnClearNew').addEventListener('click', clearNewForm);
+
+  document.getElementById('btnSave').addEventListener('click', ()=>{ location.href='{% url 'question_bank' %}'; });
+  fetchQuestions();
+</script>
+{% endblock %}
+

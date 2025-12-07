@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}لیست کاربران{% endblock %}
+{% block body_class %}users{% endblock %}
+{% block extra_css %}
+<style>
+  body.users { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
+  .hamburger { position:fixed; top:22px; right:22px; width:40px; height:32px; display:flex; flex-direction:column; justify-content:center; gap:6px; cursor:pointer; z-index:1100; }
+  .hamburger .bar { height:3px; background:#3A6CF4; border-radius:3px; }
+  .drawer-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.25); backdrop-filter:saturate(120%); display:none; z-index:1090; }
+  .drawer-backdrop.open { display:block; }
+  .admin-drawer { position:fixed; top:0; right:0; height:100vh; width:280px; background:#3A6CF4; color:#fff; box-shadow:-12px 0 28px rgba(0,0,0,0.18); transform:translateX(100%); transition:transform .25s ease; z-index:1110; direction: rtl; display:flex; flex-direction:column; }
+  .admin-drawer.open { transform:translateX(0); }
+  .admin-drawer-header { padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.25); font-weight:800; text-align:right; }
+  .admin-drawer-header a { color:#fff; text-decoration:none; display:block; }
+  .admin-drawer-header a:hover { opacity:0.9; }
+  .admin-drawer-gap { height:24px; }
+  .admin-drawer-list { list-style:none; margin:8px 0 0 0; padding:0; }
+  .admin-drawer-list li { margin:0; border-top:1px solid rgba(255,255,255,0.2); }
+  .admin-drawer-list a { display:flex; align-items:center; justify-content:flex-start; gap:12px; padding:12px 18px; color:#fff; text-decoration:none; white-space: nowrap; }
+  .admin-drawer-list a:hover { background:rgba(255,255,255,0.18); }
+  .admin-drawer-list .label { font-weight:600; }
+  .admin-drawer-list .ico { width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; opacity:0.95; }
+  .actions button { cursor:pointer; }
+  .role-form { display:none; }
+  .role-form.show { display:inline-flex; align-items:center; gap:6px; }
+</style>
+{% endblock %}
+{% block header %}
+<header style="height:60px"></header>
+{% if user.is_authenticated %}
+  {% if user.email == 'tinahmohammadi82@gmail.com' or user.role and user.role.code == 'admin' %}
+    <div id="adminHamburger" class="hamburger" aria-label="Admin menu" title="Admin menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </div>
+    <div id="adminDrawerBackdrop" class="drawer-backdrop"></div>
+    <nav id="adminDrawer" class="admin-drawer" aria-label="Admin menu">
+      <div class="admin-drawer-header"><a href="/accounts/profile/">{{ user.get_full_name|default:user.email }}</a></div>
+      <div class="admin-drawer-gap"></div>
+      <ul class="admin-drawer-list">
+        <li>
+          <a href="/">
+            <span class="ico">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3l9 8h-3v8H6v-8H3l9-8z"/></svg>
+            </span>
+            <span class="label">صفحه اصلی</span>
+          </a>
+        </li>
+        <li>
+          <a href="/accounts/users/">
+            <span class="ico">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0zm-6 5a6 6 0 00-6 6h16a6 6 0 00-6-6H10z"/></svg>
+            </span>
+            <span class="label">لیست کاربران</span>
+          </a>
+        </li>
+        <li>
+          <a href="/accounts/dashboard/">
+            <span class="ico">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 5h16v2H4V5zm0 6h16v2H4v-2zm0 6h16v2H4v-2z"/></svg>
+            </span>
+            <span class="label">لیست کلاس‌ها</span>
+          </a>
+        </li>
+        <li>
+          <a href="/accounts/logout/">
+            <span class="ico">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M10 3h4v2h-4V3zm1 4h2v10h-2V7zm-6 6h4v2H5v-2zm10 0h4v2h-4v-2z"/></svg>
+            </span>
+            <span class="label">خروج</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <script>
+      (function(){
+        var b=document.getElementById('adminHamburger');
+        var d=document.getElementById('adminDrawer');
+        var k=document.getElementById('adminDrawerBackdrop');
+        if(b&&d&&k){
+          var t=function(){ d.classList.toggle('open'); k.classList.toggle('open'); };
+          b.addEventListener('click', t);
+          k.addEventListener('click', t);
+          document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&d.classList.contains('open')) t(); });
+        }
+      })();
+    </script>
+  {% endif %}
+{% endif %}
+{% endblock %}
+{% block content %}
+<section style="max-width:1000px;margin:24px auto;padding:16px;background:#fff;border:1px solid #dfe6fb;border-radius:12px;box-shadow:0 10px 20px rgba(0,0,0,0.06)">
+  <h2 style="margin-top:0;color:#3A6CF4;font-weight:800">لیست کاربران</h2>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:#eef3ff;color:#2d3a6b">
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">نام کاربری</th>
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">نام</th>
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">نام خانوادگی</th>
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">ایمیل</th>
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">نقش</th>
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">شماره تماس</th>
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">وضعیت</th>
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">تاریخ عضویت</th>
+          <th style="text-align:right;padding:10px;border-bottom:1px solid #d7e0f3">اقدامات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="padding:10px;border-bottom:1px solid #f0f4ff">{{ u.username }}</td>
+          <td style="padding:10px;border-bottom:1px solid #f0f4ff">{{ u.first_name }}</td>
+          <td style="padding:10px;border-bottom:1px solid #f0f4ff">{{ u.last_name }}</td>
+          <td style="padding:10px;border-bottom:1px solid #f0f4ff">{{ u.email }}</td>
+          <td style="padding:10px;border-bottom:1px solid #f0f4ff">{{ u.role.name|default:"" }}</td>
+          <td style="padding:10px;border-bottom:1px solid #f0f4ff">{% if u.profile %}{{ u.profile.phone }}{% endif %}</td>
+          <td style="padding:10px;border-bottom:1px solid #f0f4ff">{% if u.is_active %}فعال{% else %}غیرفعال{% endif %}</td>
+          <td style="padding:10px;border-bottom:1px solid #f0f4ff">{{ u.date_joined|date:"Y-m-d H:i" }}</td>
+          <td class="actions" style="padding:10px;border-bottom:1px solid #f0f4ff; white-space:nowrap">
+            {% if user.role and user.role.code == 'admin' %}
+              <button type="button" class="edit-btn" data-target="role-form-{{ u.id }}" style="padding:6px 10px; background:#6b7aa6; color:#fff; border:none; border-radius:6px">ویرایش</button>
+              <form id="role-form-{{ u.id }}" class="role-form" action="/accounts/users/{{ u.id }}/role/" method="post">
+                {% csrf_token %}
+                <select name="role_code" style="padding:6px; border:1px solid #d7e0f3; border-radius:6px">
+                  {% for r in roles %}
+                    <option value="{{ r.code }}" {% if u.role and u.role.code == r.code %}selected{% endif %}>{{ r.name }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="save-btn" style="padding:6px 10px; background:#3A6CF4; color:#fff; border:none; border-radius:6px">ثبت</button>
+              </form>
+              <form action="/accounts/users/{{ u.id }}/delete/" method="post" style="display:inline-block; margin-right:8px" onsubmit="return confirm('آیا از حذف این کاربر مطمئن هستید؟')">
+                {% csrf_token %}
+                <button type="submit" style="padding:6px 10px; background:#d9534f; color:#fff; border:none; border-radius:6px">حذف</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="padding:12px;text-align:center;color:#6b7aa6">هیچ کاربری یافت نشد</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<script>
+  (function(){
+    document.querySelectorAll('.edit-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-target');
+        var form = document.getElementById(id);
+        if(!form) return;
+        var showing = form.classList.contains('show');
+        document.querySelectorAll('.role-form').forEach(function(f){ f.classList.remove('show'); });
+        document.querySelectorAll('.edit-btn').forEach(function(b){ b.textContent = 'ویرایش'; });
+        if(!showing){ form.classList.add('show'); btn.textContent = 'انصراف'; } else { form.classList.remove('show'); btn.textContent = 'ویرایش'; }
+      });
+    });
+  })();
+</script>
+{% endblock %}

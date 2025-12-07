@@ -183,6 +183,9 @@ label {
     padding: 10px 20px;
 }
 
+.opt-row { display:flex; align-items:center; gap:10px; }
+.opt-input { width: 280px; height: 36px; padding: 6px 10px; border-radius: 8px; border: 1.8px solid #b7c4ff; font-size: 15px; outline: none; }
+
 /* دکمه‌های حذف/افزودن */
 .form-btns {
     display: flex;
@@ -224,6 +227,35 @@ label {
     filter: brightness(0.85);
     box-shadow: 0 10px 20px rgba(0,0,0,0.15);
 }
+
+/* کارت سوال */
+.question-card {
+    border: 1.8px solid #b7c4ff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    background: #fff;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+.question-card .q-type { color: #506bff; font-weight: 700; }
+.question-card .q-text { color: #333; }
+.question-card .q-options { margin-top: 8px; color: #555; }
+.edit-btn { border: 2px solid #3d66ff; color: #3d66ff; padding: 9px 18px; border-radius: 12px; background: white; cursor: pointer; }
+.edit-btn:hover { background: #3d66ff; color: white; }
+/* کشویی انتخاب آزمون */
+.exam-select {
+    width: 100%;
+    height: 44px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1.8px solid #b7c4ff;
+    font-size: 16px;
+    margin-top: 8px;
+    outline: none;
+    box-sizing: border-box;
+}
 </style>
 </head>
 
@@ -242,15 +274,31 @@ label {
     <img src="profile.jpg">
     <p>پروفایل کاربر</p>
     <div class="menu-links">
-        <a href="#">داشبورد</a>
-        <a href="#">مدیریت آزمون‌ها</a>
-        <a href="#">بانک سوالات</a>
-        <a href="#">نتایج</a>
-        <a href="#">تنظیمات</a>
+        <a href="/accounts/dashboard/">داشبورد</a>
+        <a href="/accounts/classroom/">مدیریت آزمون‌ها</a>
+        <a href="/accounts/question-bank/">بانک سوالات</a>
+        <a href="/accounts/exam-profile/">نتایج</a>
+        <a href="/accounts/profile/">تنظیمات</a>
     </div>
 </aside>
 
 <div id="overlay" class="overlay"></div>
+
+<!-- تعریف آزمون -->
+<section id="define-exam" class="form-box" style="display:block;">
+  <h2 class="form-title">تعریف آزمون</h2>
+  <label for="exam-name-input">نام آزمون</label>
+  <input id="exam-name-input" type="text" placeholder="مثلاً: آزمون فصل اول" style="width:100%;height:48px;padding:10px;border-radius:12px;border:1.8px solid #b7c4ff;font-size:16px;margin-bottom:18px;outline:none;box-sizing:border-box;">
+  <button id="create-exam-btn" class="submit-btn">ایجاد آزمون</button>
+  <p id="create-exam-msg" style="text-align:center;margin-top:10px;color:#2e7d32;display:none;">آزمون با موفقیت ایجاد شد.</p>
+  <p id="create-exam-err" style="text-align:center;margin-top:10px;color:#c62828;display:none;">خطا در ایجاد آزمون. دوباره تلاش کنید.</p>
+  <hr style="margin:25px 0;border:none;border-top:1px solid #e0e7ff">
+  <label for="exam-select">انتخاب آزمون‌های قبلی (ایجاد شده توسط شما)</label>
+  <select id="exam-select" class="exam-select">
+    <option value="">— انتخاب آزمون —</option>
+  </select>
+  <p id="exam-select-msg" style="text-align:center;margin-top:10px;color:#2e7d32;display:none;">آزمون انتخاب شد.</p>
+</section>
 
 <!-- دکمه‌ها -->
 <main class="main">
@@ -281,6 +329,13 @@ label {
     <button class="submit-btn">ثبت</button>
 </div>
 
+<!-- سوالات آزمون -->
+<section id="questions-section" class="form-box" style="display:block;">
+  <h2 class="form-title">سوالات آزمون</h2>
+  <div id="questions-container"></div>
+  <p id="questions-note" style="text-align:center;margin-top:10px;color:#777;display:none;">برای مشاهده سوالات، یک آزمون انتخاب کنید.</p>
+</section>
+
 <!-- فرم تستی -->
 <div id="form-test" class="form-box">
     <h2 class="form-title">سوالات تستی</h2>
@@ -288,11 +343,14 @@ label {
     <label>سوال:</label>
     <textarea class="text-input"></textarea>
 
-    <div class="test-options">
-        <label><input type="radio" name="opt"> گزینه اول</label>
-        <label><input type="radio" name="opt"> گزینه دوم</label>
-        <label><input type="radio" name="opt"> گزینه سوم</label>
-        <label><input type="radio" name="opt"> گزینه چهارم</label>
+    <div id="mcq-options" class="test-options" style="flex-wrap:wrap; gap:12px; justify-content:flex-start;">
+        <div class="opt-row"><input type="radio" name="mcqCorrect"><input type="text" class="opt-input" placeholder="گزینه ۱"></div>
+        <div class="opt-row"><input type="radio" name="mcqCorrect"><input type="text" class="opt-input" placeholder="گزینه ۲"></div>
+        <div class="opt-row"><input type="radio" name="mcqCorrect"><input type="text" class="opt-input" placeholder="گزینه ۳"></div>
+        <div class="opt-row"><input type="radio" name="mcqCorrect"><input type="text" class="opt-input" placeholder="گزینه ۴"></div>
+    </div>
+    <div style="display:flex; justify-content:center; margin-top:8px;">
+        <button id="add-option-btn" class="edit-btn" type="button">افزودن گزینه</button>
     </div>
 
     <div class="form-btns">
@@ -305,6 +363,56 @@ label {
 
 <!-- JS -->
 <script>
+// CSRF helper
+function getCookie(name){ const v = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return v ? v.pop() : ''; }
+let examId = null;
+const examSelect = document.getElementById('exam-select');
+const examSelectMsg = document.getElementById('exam-select-msg');
+const questionsNote = document.getElementById('questions-note');
+// اطمینان از وجود CSRF کوکی
+fetch('/accounts/api/csrf/')
+  .then(r=>r.json())
+  .catch(()=>{});
+// Fetch latest exam for instructor
+fetch('/accounts/api/latest-exam/')
+  .then(r => r.json())
+  .then(d => { if(d && d.exam){ examId = d.exam.id; } })
+  .catch(() => {});
+// بارگذاری فهرست آزمون‌ها
+function loadMyExams(){
+  fetch('/accounts/api/my-exams/')
+    .then(r=>r.json())
+    .then(d=>{
+      const list = d.exams || [];
+      // پاک کردن آیتم‌های قبلی به‌جز گزینه خالی
+      examSelect.querySelectorAll('option:not([value=""])').forEach(o=>o.remove());
+      list.forEach(e=>{
+        const opt = document.createElement('option');
+        opt.value = String(e.id);
+        opt.textContent = `${e.name} (${e.num_questions} سوال)`;
+        examSelect.appendChild(opt);
+      });
+      if(examId){ examSelect.value = String(examId); fetchQuestions(); examSelectMsg.style.display='block'; questionsNote.style.display='none'; }
+    })
+    .catch(()=>{});
+}
+// تغییر انتخاب آزمون
+examSelect.addEventListener('change', ()=>{
+  const val = examSelect.value;
+  examId = val ? parseInt(val) : null;
+  examSelectMsg.style.display = examId ? 'block' : 'none';
+  questionsNote.style.display = examId ? 'none' : 'block';
+  renderQuestions([]);
+  fetchQuestions();
+});
+// پس از دریافت شناسه آزمون، فهرست سوالات را بگیر
+function fetchQuestions(){
+  if(!examId) return;
+  fetch(`/accounts/api/exams/${examId}/questions/`)
+    .then(r=>r.json())
+    .then(d=>{ renderQuestions(d.questions||[]); })
+    .catch(()=>{});
+}
 const menuBtn = document.getElementById("menu-btn");
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
@@ -345,6 +453,232 @@ btnTest.onclick = () => {
 
     pageTitle.textContent = "سوالات تستی";
 };
+
+// ایجاد آزمون
+const createBtn = document.getElementById('create-exam-btn');
+const examNameInput = document.getElementById('exam-name-input');
+const createMsg = document.getElementById('create-exam-msg');
+const createErr = document.getElementById('create-exam-err');
+createBtn.addEventListener('click', function(){
+  createMsg.style.display = 'none';
+  createErr.style.display = 'none';
+  const name = (examNameInput.value||'').trim();
+  if(!name){ alert('نام آزمون را وارد کنید'); return; }
+  const csrf = getCookie('csrftoken');
+  const fd = new FormData();
+  fd.append('name', name);
+  fetch('/accounts/api/create-exam/', { method:'POST', body: fd, headers: { 'X-CSRFToken': csrf }, credentials: 'same-origin' })
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.ok && d.exam){
+        examId = d.exam.id;
+        createMsg.style.display = 'block';
+        pageTitle.textContent = 'افزودن سوالات';
+        renderQuestions([]);
+        // آزمون تازه ایجاد شده را در کشویی بیاوریم و انتخاب کنیم
+        loadMyExams();
+        examSelect.value = String(examId);
+        examSelectMsg.style.display = 'block';
+      } else {
+        createErr.style.display = 'block';
+      }
+    })
+    .catch(()=>{ createErr.style.display = 'block'; });
+});
+
+// Wire add buttons to API
+document.addEventListener('click', function(e){
+  if(e.target && e.target.classList.contains('add-btn')){
+    if(!examId){ alert('آزمونی یافت نشد. ابتدا یک آزمون بسازید.'); return; }
+    const csrf = getCookie('csrftoken');
+    if(formDes.style.display === 'block'){
+      // descriptive
+      const areas = formDes.querySelectorAll('.text-input');
+      const text = (areas[0]||{}).value || '';
+      const answer = (areas[1]||{}).value || '';
+      if(!text.trim()){ alert('متن سوال را وارد کنید'); return; }
+      const fd = new FormData();
+      fd.append('kind','des');
+      fd.append('text', text);
+      fd.append('answer_text', answer);
+      fetch(`/accounts/api/exams/${examId}/add-question/`, { method:'POST', body:fd, headers:{ 'X-CSRFToken': csrf } })
+        .then(r=>r.json()).then(d=>{ if(d.ok){ fetchQuestions(); } else { alert('خطا در افزودن سوال'); } });
+    } else if(formTest.style.display === 'block'){
+      // mcq
+      const qtext = (formTest.querySelector('.text-input')||{}).value || '';
+      const optInputs = formTest.querySelectorAll('#mcq-options .opt-input');
+      const options = Array.from(optInputs).map(i => i.value.trim());
+      if(!qtext.trim() || options.length<2 || options.some(v=>!v)) { alert('سوال تستی و همه گزینه‌ها را کامل کنید'); return; }
+      const radios = formTest.querySelectorAll('#mcq-options input[type="radio"]');
+      let correctIndex = Array.from(radios).findIndex(r=>r.checked);
+      if(correctIndex < 0){ alert('پاسخ صحیح را انتخاب کنید'); return; }
+      const fd = new FormData();
+      fd.append('kind','mcq');
+      fd.append('text', qtext);
+      fd.append('options', JSON.stringify(options));
+      fd.append('correct_index', String(correctIndex));
+      fetch(`/accounts/api/exams/${examId}/add-question/`, { method:'POST', body:fd, headers:{ 'X-CSRFToken': csrf }, credentials:'same-origin' })
+        .then(r=>r.json()).then(d=>{ if(d.ok){ fetchQuestions(); } else { alert('خطا در افزودن سوال'); } });
+    }
+  }
+  // ثبت و خروج به صفحه اصلی
+  else if(e.target && e.target.classList.contains('submit-btn')){
+    // فقط اگر دکمه ثبت داخل فرم‌های سوالات باشد
+    if(formDes.contains(e.target)){
+      if(!examId){ alert('ابتدا یک آزمون بسازید یا انتخاب کنید'); return; }
+      const csrf = getCookie('csrftoken');
+      const areas = formDes.querySelectorAll('.text-input');
+      const text = (areas[0]||{}).value || '';
+      const answer = (areas[1]||{}).value || '';
+      if(text.trim()){
+        const fd = new FormData();
+        fd.append('kind','des'); fd.append('text', text.trim()); fd.append('answer_text', answer.trim());
+        fetch(`/accounts/api/exams/${examId}/add-question/`, { method:'POST', body:fd, headers:{ 'X-CSRFToken': csrf }, credentials:'same-origin' })
+          .then(r=>r.json()).then(()=>{ window.location.href = '/accounts/dashboard/'; })
+          .catch(()=>{ window.location.href = '/accounts/dashboard/'; });
+      } else {
+        // اگر چیزی وارد نشده، مستقیم برو به صفحه اصلی
+        window.location.href = '/accounts/dashboard/';
+      }
+    } else if(formTest.contains(e.target)){
+      if(!examId){ alert('ابتدا یک آزمون بسازید یا انتخاب کنید'); return; }
+      const csrf = getCookie('csrftoken');
+      const qtext = (formTest.querySelector('.text-input')||{}).value || '';
+      const optInputs = formTest.querySelectorAll('#mcq-options .opt-input');
+      const options = Array.from(optInputs).map(i=>i.value.trim());
+      const radios = formTest.querySelectorAll('#mcq-options input[type="radio"]');
+      let correctIndex = Array.from(radios).findIndex(r=>r.checked);
+      if(qtext.trim() && options.length>=2 && !options.some(v=>!v) && correctIndex>=0 && correctIndex < options.length){
+        const fd = new FormData();
+        fd.append('kind','mcq'); fd.append('text', qtext.trim());
+        fd.append('options', JSON.stringify(options)); fd.append('correct_index', String(correctIndex));
+        fetch(`/accounts/api/exams/${examId}/add-question/`, { method:'POST', body:fd, headers:{ 'X-CSRFToken': csrf }, credentials:'same-origin' })
+          .then(r=>r.json()).then(()=>{ window.location.href = '/accounts/dashboard/'; })
+          .catch(()=>{ window.location.href = '/accounts/dashboard/'; });
+      } else {
+        window.location.href = '/accounts/dashboard/';
+      }
+    }
+  }
+});
+
+// رندر لیست سوالات
+const qContainer = document.getElementById('questions-container');
+function renderQuestions(list){
+  qContainer.innerHTML = '';
+  if(!list || list.length===0){
+    const p = document.createElement('p');
+    p.style.color = '#777';
+    p.style.textAlign = 'center';
+    p.textContent = 'هنوز سوالی ثبت نشده است.';
+    qContainer.appendChild(p);
+    return;
+  }
+  list.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.dataset.id = q.id;
+    const left = document.createElement('div');
+    const type = document.createElement('div'); type.className='q-type'; type.textContent = (q.kind==='des'?'تشریحی':'تستی');
+    const text = document.createElement('div'); text.className='q-text'; text.textContent = q.text;
+    left.appendChild(type); left.appendChild(text);
+    if(q.kind==='mcq'){
+      const opts = document.createElement('div'); opts.className='q-options';
+      const ol = document.createElement('ol');
+      (q.options||[]).forEach((opt,idx)=>{
+        const li = document.createElement('li');
+        li.textContent = opt + (idx===q.correct_index?' (صحیح)':'');
+        ol.appendChild(li);
+      });
+      opts.appendChild(ol);
+      left.appendChild(opts);
+    } else if(q.answer_text){
+      const ans = document.createElement('div'); ans.className='q-options'; ans.textContent = 'پاسخ: ' + q.answer_text;
+      left.appendChild(ans);
+    }
+    const actions = document.createElement('div'); actions.className='actions';
+    const edit = document.createElement('button'); edit.className='edit-btn'; edit.textContent='ویرایش';
+    const del = document.createElement('button'); del.className='delete-btn'; del.textContent='حذف';
+    actions.appendChild(edit); actions.appendChild(del);
+    card.appendChild(left); card.appendChild(actions);
+    // حذف
+    del.addEventListener('click', ()=>{
+      if(!confirm('این سوال حذف شود؟')) return;
+      const csrf = getCookie('csrftoken');
+      fetch(`/accounts/api/questions/${q.id}/delete/`, { method:'POST', headers:{ 'X-CSRFToken': csrf } })
+        .then(r=>r.json()).then(d=>{ if(d.ok){ fetchQuestions(); } });
+    });
+    // ویرایش
+    edit.addEventListener('click', ()=>{
+      showEditForm(card, q);
+    });
+    qContainer.appendChild(card);
+  });
+}
+
+function showEditForm(card, q){
+  const form = document.createElement('div');
+  form.style.width = '100%';
+  const textInput = document.createElement('textarea'); textInput.className='text-input'; textInput.style.height='80px'; textInput.value = q.text;
+  form.appendChild(textInput);
+  let optInputs = [];
+  let correctRadioInputs = [];
+  if(q.kind==='des'){
+    const ans = document.createElement('textarea'); ans.className='text-input'; ans.style.height='80px'; ans.value = q.answer_text||''; form.appendChild(ans);
+    form._ansInput = ans;
+  } else {
+    const wrap = document.createElement('div'); wrap.className='test-options'; wrap.style.flexWrap='wrap'; wrap.style.gap='10px';
+    (q.options||[]).forEach((opt,idx)=>{
+      const item = document.createElement('div');
+      const radio = document.createElement('input'); radio.type='radio'; radio.name='editCorrect'; radio.checked = (idx===q.correct_index);
+      const input = document.createElement('input'); input.type='text'; input.value=opt; input.style.height='36px'; input.style.border='1.5px solid #b7c4ff'; input.style.borderRadius='8px'; input.style.padding='6px';
+      item.appendChild(radio); item.appendChild(input); wrap.appendChild(item);
+      optInputs.push(input); correctRadioInputs.push(radio);
+    });
+    form.appendChild(wrap);
+  }
+  const actions = document.createElement('div'); actions.className='form-btns';
+  const save = document.createElement('button'); save.className='add-btn q-save'; save.textContent='ذخیره';
+  const cancel = document.createElement('button'); cancel.className='delete-btn q-cancel'; cancel.textContent='انصراف';
+  actions.appendChild(cancel); actions.appendChild(save);
+  form.appendChild(actions);
+  // replace card content
+  card.innerHTML='';
+  card.appendChild(form);
+  cancel.addEventListener('click', ()=>{ fetchQuestions(); });
+  save.addEventListener('click', ()=>{
+    const csrf = getCookie('csrftoken');
+    const fd = new FormData();
+    fd.append('text', (textInput.value||'').trim());
+    if(q.kind==='des'){
+      fd.append('answer_text', (form._ansInput.value||'').trim());
+    } else {
+      const opts = optInputs.map(i=>i.value.trim()).filter(Boolean);
+      let correctIndex = correctRadioInputs.findIndex(r=>r.checked);
+      fd.append('options', JSON.stringify(opts));
+      fd.append('correct_index', String(correctIndex));
+    }
+    fetch(`/accounts/api/questions/${q.id}/update/`, { method:'POST', body: fd, headers:{ 'X-CSRFToken': csrf } })
+      .then(r=>r.json()).then(d=>{ if(d.ok){ fetchQuestions(); } else { alert('خطا در ویرایش سوال'); } });
+  });
+}
+
+// اگر آزمون قبلاً موجود بود، فهرست را بگیر
+setTimeout(fetchQuestions, 600);
+// فهرست آزمون‌ها را بارگذاری کن
+setTimeout(loadMyExams, 400);
+// افزودن گزینه جدید در فرم تستی
+const addOptBtn = document.getElementById('add-option-btn');
+const mcqOpts = document.getElementById('mcq-options');
+addOptBtn && addOptBtn.addEventListener('click', ()=>{
+  const idx = mcqOpts.querySelectorAll('.opt-row').length + 1;
+  const row = document.createElement('div');
+  row.className = 'opt-row';
+  const r = document.createElement('input'); r.type='radio'; r.name='mcqCorrect';
+  const inp = document.createElement('input'); inp.type='text'; inp.className='opt-input'; inp.placeholder = `گزینه ${idx}`;
+  row.appendChild(r); row.appendChild(inp);
+  mcqOpts.appendChild(row);
+});
 </script>
 
 </body>

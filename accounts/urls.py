@@ -1,12 +1,46 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import RegisterView, DashboardView, ProfileView, EmailLoginView, RecoveryCodeResetView
+from .views import (
+    RegisterView,
+    DashboardView,
+    ProfileView,
+    EmailLoginView,
+    RecoveryCodeResetView,
+    ExamProfileView,
+    ExamTakeView,
+    ExamSubmitView,
+    ExamResultView,
+    StudentScoresView,
+    logout_to_home,
+    UsersListView,
+    StudentsListView,
+    ClassroomManageView,
+    ClassesListView,
+    ExamsListView,
+    ExamDefineView,
+    classroom_toggle_member,
+    user_update_role,
+    user_delete,
+    api_create_exam,
+    api_latest_exam,
+    api_my_exams,
+    api_csrf,
+    question_bank,
+    question_bank_new,
+    question_bank_create,
+    question_bank_edit,
+    question_bank_delete,
+    api_add_question,
+    api_exam_questions,
+    api_question_delete,
+    api_question_update,
+)
 from .forms import AzmonPasswordResetForm
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', EmailLoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('logout/', logout_to_home, name='logout'),
 
     # Password reset flow using built-in views with custom form and templates
     path(
@@ -28,4 +62,32 @@ urlpatterns = [
     # Authenticated pages
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('exam-profile/', ExamProfileView.as_view(), name='exam_profile'),
+    path('users/', UsersListView.as_view(), name='users'),
+    path('students/', StudentsListView.as_view(), name='students'),
+    path('classroom/', ClassroomManageView.as_view(), name='classroom'),
+    path('exam-define/', ExamDefineView.as_view(), name='exam_define'),
+    path('classes/', ClassesListView.as_view(), name='classes_list'),
+    path('exams/', ExamsListView.as_view(), name='exams_list'),
+    path('exams/<int:exam_id>/start/', ExamTakeView.as_view(), name='exam_start'),
+    path('exams/<int:exam_id>/submit/', ExamSubmitView.as_view(), name='exam_submit'),
+    path('exams/<int:exam_id>/result/', ExamResultView.as_view(), name='exam_result'),
+    path('student/scores/', StudentScoresView.as_view(), name='student_scores'),
+    path('classroom/toggle-member/', classroom_toggle_member, name='classroom_toggle_member'),
+    path('users/<int:pk>/role/', user_update_role, name='user_update_role'),
+    path('users/<int:pk>/delete/', user_delete, name='user_delete'),
+    # API endpoints for exam and questions
+    path('api/create-exam/', api_create_exam, name='api_create_exam'),
+    path('api/latest-exam/', api_latest_exam, name='api_latest_exam'),
+    path('api/csrf/', api_csrf, name='api_csrf'),
+    path('api/my-exams/', api_my_exams, name='api_my_exams'),
+    path('api/exams/<int:exam_id>/add-question/', api_add_question, name='api_add_question'),
+    path('api/exams/<int:exam_id>/questions/', api_exam_questions, name='api_exam_questions'),
+    path('api/questions/<int:question_id>/delete/', api_question_delete, name='api_question_delete'),
+    path('api/questions/<int:question_id>/update/', api_question_update, name='api_question_update'),
+    path('question-bank/', question_bank, name='question_bank'),
+    path('question-bank/new/', question_bank_new, name='question_bank_new'),
+    path('question-bank/create/', question_bank_create, name='question_bank_create'),
+    path('question-bank/<int:exam_id>/edit/', question_bank_edit, name='question_bank_edit'),
+    path('question-bank/<int:exam_id>/delete/', question_bank_delete, name='question_bank_delete'),
 ]

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}لیست آزمون‌های فعال{% endblock %}
+{% block body_class %}exams-list{% endblock %}
+{% block extra_css %}
+<style>
+  body.exams-list{background:linear-gradient(180deg,#f5f8ff 0%, #eef3ff 100%)}
+  .wrap{max-width:900px;margin:24px auto;padding:0 16px}
+  .card{background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:16px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .item{border:1px solid #eaf1ff;border-radius:12px;padding:12px}
+  .title{font-weight:800;color:#3A6CF4}
+  .meta{display:flex;gap:12px;color:#6b7aa6;font-size:12px}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="card">
+    <h2 class="title">آزمون‌های فعال</h2>
+    <div class="grid">
+      {% for e in exams %}
+      <div class="item">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div><strong>{{ e.name }}</strong></div>
+          {% if is_student_view %}
+            {% if e.id in completed_exam_ids %}
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span style="color:#6b7aa6;font-size:13px;font-weight:bold;">تمام شد</span>
+                    <a href="{% url 'exam_result' e.id %}" style="color:#3A6CF4;text-decoration:none;font-size:13px;border:1px solid #3A6CF4;padding:4px 8px;border-radius:6px;">کارنامه</a>
+                </div>
+            {% else %}
+                <a href="/accounts/exams/{{ e.id }}/start/" class="btn-start" title="شروع آزمون">شروع</a>
+            {% endif %}
+          {% endif %}
+        </div>
+        <div class="meta">
+          <span>تعداد سوالات: {{ e.num_questions }}</span>
+          {% if not is_student_view %}<span>تعداد شرکت‌کنندگان: {{ e.students.count }}</span>{% endif %}
+          <span>ایجاد: {{ e.created_at|date:"Y/m/d H:i" }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="item">هنوز آزمونی تعریف نشده است</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<style>
+  .btn-start{display:inline-block;padding:8px 14px;border-radius:10px;background:#3A6CF4;color:#fff;text-decoration:none;font-weight:700}
+  .btn-start:hover{background:#2E56D0}
+</style>
+{% endblock %}
