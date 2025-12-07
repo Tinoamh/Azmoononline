@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آزمون آنلاین</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'IranSans';
+            src: url('https://cdn.jsdelivr.net/npm/iran-sans@1.0.0/dist/IranSans.woff2') format('woff2'),
+                 url('https://cdn.jsdelivr.net/npm/iran-sans@1.0.0/dist/IranSans.woff') format('woff');
+            font-weight: normal;
+        }
+
+        @font-face {
+            font-family: 'IranSans';
+            src: url('https://cdn.jsdelivr.net/npm/iran-sans@1.0.0/dist/IranSans-Bold.woff2') format('woff2'),
+                 url('https://cdn.jsdelivr.net/npm/iran-sans@1.0.0/dist/IranSans-Bold.woff') format('woff');
+            font-weight: bold;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IranSans', 'Vazirmatn', sans-serif;
+            background-color: #F5F5F5;
+            direction: rtl;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .exam-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .exam-header {
+            background-color: #3F59CF;
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exam-title {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .exam-info {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .timer {
+            font-size: 28px;
+            font-weight: 700;
+            background-color: #FFD166;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .timer.warning {
+            background-color: #FF6B6B;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            padding: 20px 30px;
+            background-color: #D4F1FF;
+            border-bottom: 2px solid #D4F1FF;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: #3F59CF;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #E8E8E8;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #3F59CF;
+            transition: width 0.3s ease;
+        }
+
+        /* Questions Section */
+        .questions-section {
+            padding: 30px;
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+        }
+
+        .question-card {
+            margin-bottom: 30px;
+            padding: 25px;
+            background-color: #F9F9F9;
+            border-radius: 8px;
+            border-right: 5px solid #3F59CF;
+            transition: all 0.3s ease;
+        }
+
+        .question-card:hover {
+            background-color: #F0F8FF;
+            box-shadow: 0 4px 12px rgba(63, 89, 207, 0.1);
+        }
+
+        .question-number {
+            font-size: 14px;
+            color: #3F59CF;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .answer-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .answer-label {
+            font-size: 13px;
+            color: #3F59CF;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .answer-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #D4F1FF;
+            border-radius: 6px;
+            font-family: 'IranSans', 'Vazirmatn', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            transition: all 0.3s ease;
+            direction: rtl;
+            background-color: white;
+        }
+
+        .answer-textarea:focus {
+            outline: none;
+            border-color: #3F59CF;
+            background-color: #F0F8FF;
+            box-shadow: 0 0 0 3px rgba(63, 89, 207, 0.1);
+        }
+
+        .answer-textarea::placeholder {
+            color: #999;
+        }
+
+        .char-count {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+            text-align: left;
+        }
+
+        /* Sidebar */
+        .exam-sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #F0F8FF;
+            border-left: 2px solid #D4F1FF;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .exam-sidebar.open {
+            display: block;
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #3F59CF;
+            margin-bottom: 15px;
+            text-align: right;
+        }
+
+        .question-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .question-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px solid #D4F1FF;
+            background-color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .question-btn:hover {
+            border-color: #3F59CF;
+            color: #3F59CF;
+        }
+
+        .question-btn.answered {
+            background-color: #FFD166;
+            border-color: #FFD166;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .question-btn.current {
+            background-color: #3F59CF;
+            border-color: #3F59CF;
+            color: white;
+            font-weight: 700;
+        }
+
+        /* Footer */
+        .exam-footer {
+            padding: 20px 30px;
+            background-color: #F9F9F9;
+            border-top: 2px solid #D4F1FF;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .footer-info {
+            font-size: 13px;
+            color: #3F59CF;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'IranSans', 'Vazirmatn', sans-serif;
+        }
+
+        .btn-secondary {
+            background-color: #D4F1FF;
+            color: #3F59CF;
+        }
+
+        .btn-secondary:hover {
+            background-color: #B8E5FF;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background-color: #3F59CF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2E4399;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(63, 89, 207, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #3F59CF;
+            margin-bottom: 15px;
+        }
+
+        .modal-message {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .exam-sidebar {
+                width: 200px;
+            }
+
+            .exam-container {
+                margin-right: 0;
+            }
+
+            .question-list {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .exam-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .exam-info {
+                width: 100%;
+                justify-content: space-around;
+            }
+
+            .exam-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-left: none;
+                border-top: 2px solid #D4F1FF;
+                display: block;
+            }
+
+            .exam-sidebar.open {
+                display: block;
+            }
+
+            .questions-section {
+                max-height: none;
+            }
+
+            .question-list {
+                grid-template-columns: repeat(5, 1fr);
+            }
+
+            .exam-footer {
+                flex-direction: column;
+            }
+
+            .button-group {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .exam-title {
+                font-size: 20px;
+            }
+
+            .info-value {
+                font-size: 16px;
+            }
+
+            .timer {
+                font-size: 20px;
+            }
+
+            .question-list {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .exam-header {
+                padding: 20px;
+            }
+
+            .questions-section {
+                padding: 20px;
+            }
+
+            .question-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="exam-sidebar" id="sidebar">
+        <div class="sidebar-title">نقشه سوالات</div>
+        <div class="question-list" id="questionList">
+            <!-- Question buttons will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <div class="exam-container">
+        <!-- Header -->
+        <div class="exam-header">
+            <div class="exam-title">آزمون ریاضی</div>
+            <div class="exam-info">
+                <div class="info-item">
+                    <div class="info-label">تعداد سوالات</div>
+                    <div class="info-value">10</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">نوع سوالات</div>
+                    <div class="info-value">تشریحی</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">زمان باقی‌مانده</div>
+                    <div class="timer" id="timer">01:00:00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-section">
+            <div class="progress-label">
+                <span>پیشرفت آزمون</span>
+                <span id="progressText">0 از 10</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Questions -->
+        <div class="questions-section" id="questionsSection">
+            <!-- Questions will be generated by JavaScript -->
+        </div>
+
+        <!-- Footer -->
+        <div class="exam-footer">
+            <div class="footer-info">
+                <span id="answeredCount">0</span> سوال پاسخ داده شده
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="saveDraft()">ذخیره پیش‌نویس</button>
+                <button class="btn btn-primary" onclick="submitExam()">تحویل آزمون</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Modal -->
+    <div class="modal" id="submitModal">
+        <div class="modal-content">
+            <div class="modal-title">تحویل آزمون</div>
+            <div class="modal-message">
+                <p>آیا مطمئن هستید که می‌خواهید آزمون را تحویل دهید؟</p>
+                <p id="unansweredWarning" style="color: #FF6B6B; margin-top: 10px;"></p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">انصراف</button>
+                <button class="btn btn-primary" onclick="confirmSubmit()">تحویل</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Questions Data
+        const questions = [
+            {
+                id: 1,
+                text: 'معادله درجه دوم x² - 5x + 6 = 0 را حل کنید و ریشه‌های آن را بیان کنید.'
+            },
+            {
+                id: 2,
+                text: 'تابع f(x) = 2x³ - 3x² + 1 را مشتق بگیرید و نقاط بحرانی آن را پیدا کنید.'
+            },
+            {
+                id: 3,
+                text: 'انتگرال ∫(3x² + 2x + 1)dx را محاسبه کنید.'
+            },
+            {
+                id: 4,
+                text: 'حد lim(x→2) (x² - 4)/(x - 2) را محاسبه کنید.'
+            },
+            {
+                id: 5,
+                text: 'ماتریس A = [[1, 2], [3, 4]] را وارون کنید.'
+            },
+            {
+                id: 6,
+                text: 'سری هندسی با جمله اول a = 2 و نسبت q = 1/2 را توضیح دهید و مجموع بی‌نهایت آن را بیابید.'
+            },
+            {
+                id: 7,
+                text: 'معادله خط مماس بر منحنی y = x² در نقطه (2, 4) را پیدا کنید.'
+            },
+            {
+                id: 8,
+                text: 'حجم کره‌ای با شعاع r = 3 را محاسبه کنید.'
+            },
+            {
+                id: 9,
+                text: 'دستگاه معادلات خطی 2x + y = 5 و x - y = 1 را حل کنید.'
+            },
+            {
+                id: 10,
+                text: 'احتمال اینکه در پرتاب دو تاس، مجموع اعداد برابر 7 باشد را محاسبه کنید.'
+            }
+        ];
+
+        let answers = {};
+        let timeRemaining = 3600; // 1 hour in seconds
+        let currentQuestion = 1;
+
+        // Initialize
+        function init() {
+            renderQuestions();
+            renderQuestionList();
+            startTimer();
+            updateProgress();
+        }
+
+        // Render Questions
+        function renderQuestions() {
+            const section = document.getElementById('questionsSection');
+            section.innerHTML = '';
+
+            questions.forEach((q, index) => {
+                const div = document.createElement('div');
+                div.className = 'question-card';
+                div.id = `question-${q.id}`;
+                div.innerHTML = `
+                    <div class="question-number">سوال ${q.id}</div>
+                    <div class="question-text">${q.text}</div>
+                    <div class="answer-area">
+                        <label class="answer-label">پاسخ شما:</label>
+                        <textarea 
+                            class="answer-textarea" 
+                            id="answer-${q.id}"
+                            placeholder="پاسخ خود را اینجا بنویسید..."
+                            onchange="saveAnswer(${q.id})"
+                            oninput="updateCharCount(${q.id})"
+                        ></textarea>
+                        <div class="char-count" id="char-${q.id}">0 کاراکتر</div>
+                    </div>
+                `;
+                section.appendChild(div);
+
+                // Restore saved answer
+                if (answers[q.id]) {
+                    document.getElementById(`answer-${q.id}`).value = answers[q.id];
+                    updateCharCount(q.id);
+                }
+            });
+        }
+
+        // Render Question List
+        function renderQuestionList() {
+            const list = document.getElementById('questionList');
+            list.innerHTML = '';
+
+            questions.forEach(q => {
+                const btn = document.createElement('button');
+                btn.className = 'question-btn';
+                if (answers[q.id]) {
+                    btn.classList.add('answered');
+                }
+                if (q.id === currentQuestion) {
+                    btn.classList.add('current');
+                }
+                btn.textContent = q.id;
+                btn.onclick = () => goToQuestion(q.id);
+                list.appendChild(btn);
+            });
+        }
+
+        // Save Answer
+        function saveAnswer(questionId) {
+            const textarea = document.getElementById(`answer-${questionId}`);
+            answers[questionId] = textarea.value.trim();
+            updateProgress();
+            renderQuestionList();
+        }
+
+        // Update Character Count
+        function updateCharCount(questionId) {
+            const textarea = document.getElementById(`answer-${questionId}`);
+            const count = textarea.value.length;
+            document.getElementById(`char-${questionId}`).textContent = `${count} کاراکتر`;
+        }
+
+        // Go to Question
+        function goToQuestion(questionId) {
+            currentQuestion = questionId;
+            const element = document.getElementById(`question-${questionId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            renderQuestionList();
+        }
+
+        // Update Progress
+        function updateProgress() {
+            const answered = Object.keys(answers).length;
+            const total = questions.length;
+            const percentage = (answered / total) * 100;
+
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${answered} از ${total}`;
+            document.getElementById('answeredCount').textContent = answered;
+        }
+
+        // Timer
+        function startTimer() {
+            setInterval(() => {
+                timeRemaining--;
+
+                const hours = Math.floor(timeRemaining / 3600);
+                const minutes = Math.floor((timeRemaining % 3600) / 60);
+                const seconds = timeRemaining % 60;
+
+                const timerDisplay = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                const timerElement = document.getElementById('timer');
+                timerElement.textContent = timerDisplay;
+
+                // Warning when 5 minutes left
+                if (timeRemaining <= 300) {
+                    timerElement.classList.add('warning');
+                }
+
+                // Auto submit when time is up
+                if (timeRemaining <= 0) {
+                    confirmSubmit();
+                }
+            }, 1000);
+        }
+
+        // Save Draft
+        function saveDraft() {
+            const allAnswers = {};
+            questions.forEach(q => {
+                const textarea = document.getElementById(`answer-${q.id}`);
+                allAnswers[q.id] = textarea.value;
+            });
+
+            localStorage.setItem('examDraft', JSON.stringify(allAnswers));
+            alert('پیش‌نویس ذخیره شد!');
+        }
+
+        // Submit Exam
+        function submitExam() {
+            const answered = Object.keys(answers).length;
+            const total = questions.length;
+            const unanswered = total - answered;
+
+            const modal = document.getElementById('submitModal');
+            const warning = document.getElementById('unansweredWarning');
+
+            if (unanswered > 0) {
+                warning.textContent = `⚠️ ${unanswered} سوال پاسخ داده نشده است.`;
+            } else {
+                warning.textContent = '';
+            }
+
+            modal.classList.add('active');
+        }
+
+        // Confirm Submit
+        function confirmSubmit() {
+            const allAnswers = {};
+            questions.forEach(q => {
+                const textarea = document.getElementById(`answer-${q.id}`);
+                allAnswers[q.id] = textarea.value;
+            });
+
+            console.log('Exam Submitted:', allAnswers);
+            alert('آزمون شما با موفقیت ثبت شد!');
+            localStorage.removeItem('examDraft');
+            // Redirect to results page
+            // window.location.href = 'results.html';
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('submitModal').classList.remove('active');
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
