@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>داشبورد نتایج</title>
+
+<style>
+@font-face {
+    font-family: IranSans;
+    src: url("IranSans.woff2") format("woff2");
+}
+html, body{
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: IranSans, sans-serif;
+    background: linear-gradient(180deg,#E7CEE3,#E2FDFF,#9CADCE);
+    background-attachment: fixed;
+}
+
+/* هدر */
+.header {
+    background: #ffffffa8;
+    padding: 15px;
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    color: #5465FF;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+/* دکمه‌های بالا */
+.nav {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.view-btn {
+    padding: 12px 22px;
+    border-radius: 30px;
+    font-size: 17px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(90deg,#9BB1FF,#5465FF);
+    color: white;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.12);
+    transition: 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.view-btn:hover {
+    transform: translateY(-3px);
+    filter: brightness(0.85);
+}
+
+.view-btn.active {
+    background: #5465FF;
+    filter: brightness(0.8);
+}
+
+/* محتوای کارت‌ها */
+.container {
+    width: 85%;
+    margin: 35px auto;
+}
+
+.card {
+    display: none;
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    animation: fade 0.4s ease;
+}
+
+@keyframes fade {
+    from {opacity:0; transform: translateY(10px);}
+    to {opacity:1; transform: translateY(0);}
+}
+
+.title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #5465FF;
+    margin-bottom: 15px;
+}
+
+/* کارنامه اصلی */
+.score-item {
+    background: #E7CEE3;
+    padding: 12px 18px;
+    margin: 10px 0;
+    border-radius: 12px;
+    font-size: 18px;
+    display: flex;
+    justify-content: space-between;
+    color: #333;
+}
+
+/* مقایسه با کلاس */
+.compare-box {
+    background: #D1CFE2;
+    padding: 18px;
+    border-radius: 15px;
+    margin-top: 15px;
+}
+
+.percent {
+    font-size: 40px;
+    font-weight: 800;
+    color: #5465FF;
+    text-align: center;
+}
+
+/* آزمون‌ها */
+.test-row {
+    background: #E4B4C2;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 14px;
+    font-size: 18px;
+}
+
+.icon {
+    font-size: 22px;
+}
+.barChart {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 20px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+.details-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 18px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+    animation: fade 0.4s ease;
+}
+
+.detail-row {
+    font-size: 18px;
+    background:#E7CEE3;
+    margin: 8px 0;
+    padding: 10px 15px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.exam-item {
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.exam-item:hover {
+    background: #d9b7d9;
+    transform: translateY(-3px);
+}
+.lesson-box {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.score-item {
+    background: #E7CEE3;
+    padding: 12px 18px;
+    margin: 10px auto;
+    border-radius: 12px;
+    font-size: 18px;
+    width: 95%;
+    cursor: pointer;
+    transition: 0.2s;
+    display: block;
+}
+
+.show-report-btn {
+    display: none;
+    margin: 10px auto 15px auto;
+    padding: 10px 18px;
+    background: #5465FF;
+    color: white;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+    text-align: center ;
+    width: fit-content;
+}
+
+.show-report-btn:hover {
+    background: #2335c7;
+    transform: scale(1.05);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <span id="pageTitle">📘 کارنامه اصلی</span>
+</div>
+
+<div class="nav">
+    <button class="view-btn active" data-view="main">📘 کارنامه اصلی</button>
+    <button class="view-btn" data-view="class">📊 نسبت به کلاس</button>
+    <button class="view-btn" data-view="tests">📝 نسبت به آزمون‌ها</button>
+</div>
+
+<div class="container">
+
+  <!-- کارنامه اصلی -->
+<div class="card" data-view="main" style="display:block;">
+    <div class="title">📘 کارنامه آزمون‌ها</div>
+
+    <div class="lesson-box">
+        <div class="score-item exam-item">📘 ریاضی</div>
+        <button class="show-report-btn">🔍 مشاهده کارنامه</button>
+    </div>
+
+    <div class="lesson-box">
+        <div class="score-item exam-item">📗 علوم</div>
+        <button class="show-report-btn">🔍 مشاهده کارنامه</button>
+    </div>
+
+    <div class="lesson-box">
+        <div class="score-item exam-item">📙 فارسی</div>
+        <button class="show-report-btn">🔍 مشاهده کارنامه</button>
+    </div>
+
+    <div class="lesson-box">
+        <div class="score-item exam-item">📕 مطالعات</div>
+        <button class="show-report-btn">🔍 مشاهده کارنامه</button>
+    </div>
+
+    <div class="lesson-box">
+        <div class="score-item exam-item">📘 هدیه‌های آسمانی</div>
+        <button class="show-report-btn">🔍 مشاهده کارنامه</button>
+    </div>
+
+    <div class="lesson-box">
+        <div class="score-item exam-item">📗 ورزش</div>
+        <button class="show-report-btn">🔍 مشاهده کارنامه</button>
+    </div>
+</div>
+
+
+
+
+    <!-- مقایسه با کلاس -->
+<div class="card" data-view="class">
+    <div class="title">📊 مقایسه با کلاس</div>
+
+    <canvas id="barChart" width="340" height="220" style="display:block;margin:auto;"></canvas>
+
+    <div class="compare-box">
+        <p style="font-size:18px;text-align:center;">شما از میانگین کلاس</p>
+        <div class="percent">+۲۳٪</div>
+        <p style="text-align:center;font-size:18px;">بهتر عمل کرده‌اید 🎉</p>
+    </div>
+</div>
+
+
+
+    <!-- نسبت به آزمون‌ها -->
+    <div class="card" data-view="tests">
+        <div class="title">📝 عملکرد کلی آزمون‌ها</div>
+
+        <div class="test-row">📘 آزمون ریاضی — <b>۸۵٪</b></span></div>
+        <div class="test-row">📗 آزمون علوم — <b>۷۶٪</b></div>
+        <div class="test-row">📙 آزمون فارسی — <b>۹۲٪</b></div>
+<br>
+        <div class="title">🌈 خلاصه برای والدین</div>
+        <div class="compare-box">
+            <p style="text-align:center;font-size:18px;">
+                دانش‌آموز در درس‌های <b>فارسی</b> و <b>مطالعات</b> عملکرد بسیار عالی دارد.<br>
+                نیاز به تمرین بیشتر در <b>علوم</b> دارد 🌟
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const btns = document.querySelectorAll(".view-btn");
+const views = document.querySelectorAll(".card");
+const title = document.getElementById("pageTitle");
+
+btns.forEach(btn => {
+    btn.addEventListener("click", () => {
+
+        // فعال کردن دکمه
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const view = btn.dataset.view;
+
+        // تغییر عنوان
+        const titles = {
+            main: "📘 کارنامه اصلی",
+            class: "📊 نسبت به کلاس",
+            tests: "📝 نسبت به آزمون‌ها"
+        };
+        title.textContent = titles[view];
+
+        // نمایش کارت مربوطه
+        views.forEach(v => {
+            v.style.display = (v.dataset.view === view) ? "block" : "none";
+        });
+    });
+});
+</script>
+<script>
+    // نمودار ستونی فانتزی
+    function drawBarChart() {
+        const canvas = document.getElementById("barChart");
+        if (!canvas) return;
+    
+        const ctx = canvas.getContext("2d");
+    
+        const userScore = 85;
+        const classAvg = 62;
+    
+        // ارتفاع‌ها
+        const maxHeight = 180;
+        const uHeight = (userScore / 100) * maxHeight;
+        const cHeight = (classAvg / 100) * maxHeight;
+    
+        // رنگ‌ها (فانتزی + پاستلی)
+        const userColor = "#7EC4CF";   // فیروزه‌ای
+        const classColor = "#E7CEE3";  // صورتی پاستلی
+    
+        // ستون کاربر
+        ctx.fillStyle = userColor;
+        ctx.beginPath();
+        ctx.roundRect(70, 220 - uHeight, 70, uHeight, 20);
+        ctx.fill();
+    
+        // ستون کلاس
+        ctx.fillStyle = classColor;
+        ctx.beginPath();
+        ctx.roundRect(200, 220 - cHeight, 70, cHeight, 20);
+        ctx.fill();
+    
+        // متن درصدها
+        ctx.fillStyle = "#5465FF";
+        ctx.font = "bold 20px IranSans";
+        ctx.textAlign = "center";
+        ctx.fillText(userScore + "%", 105, 210 - uHeight);
+        ctx.fillText(classAvg + "%", 235, 210 - cHeight);
+    
+        // برچسب‌ها
+        ctx.font = "18px IranSans";
+        ctx.fillText("شما", 105, 245);
+        ctx.fillText("کلاس", 235, 245);
+    }
+    
+    drawBarChart();
+    </script>
+    <script>
+        const examItems = document.querySelectorAll(".exam-item");
+        
+        examItems.forEach(item => {
+            item.addEventListener("click", () => {
+                // بررسی اینکه آیا دکمه وجود داره
+                let next = item.nextElementSibling;
+                if (!next || !next.classList.contains("show-report-btn")) {
+                    // ساخت دکمه جدید
+                    const btn = document.createElement("button");
+                    btn.classList.add("show-report-btn");
+                    btn.innerHTML = "🔍 مشاهده کارنامه";
+                    
+                    // اضافه کردن کلیک روی دکمه
+                    btn.onclick = () => {
+                        alert(کارنامه ${item.textContent.trim()} نمایش داده شد!);
+                        // اینجا میتونی redirect یا نمایش کامل کارنامه اضافه کنی
+                    }
+        
+                    // اضافه کردن بعد از آیتم
+                    item.parentNode.insertBefore(btn, item.nextSibling);
+                } else {
+                    // toggle نمایش
+                    next.style.display = next.style.display === "none" ? "inline-block" : "none";
+                }
+            });
+        });
+        </script>
+        <script>
+            const lessons = document.querySelectorAll(".exam-item");
+            const buttons = document.querySelectorAll(".show-report-btn");
+            
+            lessons.forEach((lesson, index) => {
+                lesson.onclick = () => {
+                    // پنهان کردن همه دکمه‌ها
+                    buttons.forEach(btn => btn.style.display = "none");
+            
+                    // نمایش دکمه مربوط به همان درس
+                    buttons[index].style.display = "inline-block";
+                };
+            });
+            </script>
+</body>
+</html>
+
