@@ -60,6 +60,7 @@ class Exam(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     source_exam = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='derived_exams')
     shuffle_per_student = models.BooleanField(default=True)
+    duration = models.PositiveIntegerField(default=60, help_text="Duration in minutes")
 
     class Meta:
         verbose_name = "آزمون"

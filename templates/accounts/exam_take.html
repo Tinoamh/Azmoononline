@@ -1,77 +1,812 @@
-{% extends "base.html" %}
-{% block title %}شروع آزمون{% endblock %}
-{% block body_class %}exam-take{% endblock %}
-{% block extra_css %}
-<style>
-  body.exam-take{background:linear-gradient(180deg,#f5f8ff 0%, #eef3ff 100%)}
-  .wrap{max-width:900px;margin:24px auto;padding:0 16px}
-  .card{background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:16px}
-  .title{font-weight:800;color:#3A6CF4;margin-bottom:16px}
-  .question{border:1px solid #eaf1ff;border-radius:8px;padding:10px;margin-bottom:10px}
-  .q-text{font-weight:700;margin-bottom:6px;font-size:14px}
-  .options{display:flex;flex-direction:column;gap:8px}
-  
-  /* Reset radio buttons to default browser style */
-  .options input[type="radio"] {
-    width: auto !important;
-    height: auto !important;
-    appearance: auto !important;
-    -webkit-appearance: auto !important;
-    -moz-appearance: auto !important;
-    margin: 0 !important;
-    margin-left: 8px !important; /* Spacing between radio and text in RTL */
-    box-shadow: none !important;
-    border: none !important;
-    position: static !important;
-    flex-shrink: 0;
-  }
-  
-  .options label {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    cursor: pointer;
-    width: fit-content;
-  }
-  .back{display:inline-block;margin-top:16px}
-  .pill{display:inline-block;padding:8px 14px;border-radius:999px;background:#e6f0ff;color:#2d3a6b;border:1px solid #cfe3ff;text-decoration:none;font-weight:700}
-  .muted{color:#6b7aa6;font-size:12px}
-  .btn-primary{display:inline-block;padding:8px 14px;border-radius:10px;background:#3A6CF4;color:#fff;text-decoration:none;font-weight:700}
-  .btn-primary:hover{background:#2E56D0}
-</style>
-{% endblock %}
-{% block content %}
-<div class="wrap">
-  <div class="card">
-    {% if exam %}
-      <h2 class="title">شروع آزمون: {{ exam.name }}</h2>
-      <p class="muted">تعداد سوالات این آزمون: {{ questions|length }}</p>
-      <form method="post" action="{% url 'exam_submit' exam.id %}">
-      {% csrf_token %}
-      {% for q in questions %}
-        <div class="question">
-          <div class="q-text">{{ forloop.counter }}. {{ q.text }}</div>
-          {% if q.kind == 'mcq' %}
-            <div class="options">
-              {% for opt in q.options %}
-                <label><input type="radio" name="q{{ q.id }}" value="{{ forloop.counter0 }}"> {{ opt }}</label>
-              {% endfor %}
-            </div>
-          {% else %}
-            <textarea name="q{{ q.id }}" rows="3" style="width:100%;"></textarea>
-          {% endif %}
-        </div>
-      {% endfor %}
-      <div style="display:flex;gap:10px;">
-        <a href="/accounts/exams/" class="pill back">بازگشت به لیست آزمون‌ها</a>
-        <button type="submit" class="btn-primary" style="border:none;cursor:pointer;">ثبت پاسخ‌ها</button>
-      </div>
-      </form>
-    {% else %}
-      <h2 class="title">آزمون یافت نشد یا دسترسی ندارید</h2>
-      <a href="/accounts/exams/" class="pill back">بازگشت</a>
-    {% endif %}
-  </div>
-  </div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آزمون آنلاین | {{ exam.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'IranSans';
+            src: url('https://cdn.jsdelivr.net/npm/iran-sans@1.0.0/dist/IranSans.woff2') format('woff2'),
+                 url('https://cdn.jsdelivr.net/npm/iran-sans@1.0.0/dist/IranSans.woff') format('woff');
+            font-weight: normal;
+        }
 
+        @font-face {
+            font-family: 'IranSans';
+            src: url('https://cdn.jsdelivr.net/npm/iran-sans@1.0.0/dist/IranSans-Bold.woff2') format('woff2'),
+                 url('https://cdn.jsdelivr.net/npm/iran-sans@1.0.0/dist/IranSans-Bold.woff') format('woff');
+            font-weight: bold;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IranSans', 'Vazirmatn', sans-serif;
+            background-color: #e9f5ea;
+            direction: rtl;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .exam-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Header */
+        .exam-header {
+            background-color: #87bba2;
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exam-title {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .exam-info {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 20px; 
+            font-weight: 600;
+        }
+
+        .timer {
+            font-size: 28px;
+            font-weight: 700;
+            background-color: #FFD166;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 8px;
+            min-width: 160px;
+            text-align: center;
+            direction: ltr; /* Ensure timer displays correctly */
+        }
+
+        .timer.warning {
+            background-color: #FF6B6B;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            padding: 20px 30px;
+            background-color: #c9e4ca;
+            border-bottom: 2px solid #c9e4ca;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: #87bba2;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: white;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #87bba2;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* Questions Section */
+        .questions-section {
+            padding: 30px;
+            min-height: 400px;
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+        }
+
+        .question-card {
+            margin-bottom: 30px;
+            padding: 25px;
+            background-color: #F9F9F9;
+            border-radius: 8px;
+            border-right: 5px solid #87bba2;
+            transition: all 0.3s ease;
+        }
+
+        .question-card:hover {
+            background-color: #eaf4eb;
+            box-shadow: 0 4px 12px rgba(135, 187, 162, 0.2);
+        }
+
+        .question-number {
+            font-size: 14px;
+            color: #87bba2;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .answer-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .answer-label {
+            font-size: 13px;
+            color: #3F59CF;
+            margin-bottom: 8px; 
+            font-weight: 600;
+        }
+
+        .answer-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #D4F1FF;
+            border-radius: 6px;
+            font-family: 'IranSans', 'Vazirmatn', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            transition: all 0.3s ease;
+            direction: rtl;
+            background-color: white;
+        }
+
+        .answer-textarea:focus {
+            outline: none;
+            border-color: #87bba2;
+            background-color: #F0F8FF; 
+            box-shadow: 0 0 0 3px rgba(135, 187, 162, 0.2);
+        }
+
+        .answer-textarea::placeholder {
+            color: #999;
+        }
+
+        /* MCQ Styles */
+        .mcq-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .mcq-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px;
+            border: 2px solid #D4F1FF;
+            border-radius: 6px;
+            background: #fff;
+            transition: all 0.2s;
+        }
+        .mcq-option:hover {
+            border-color: #87bba2;
+            background: #eaf4eb;
+        }
+        .mcq-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #87bba2;
+        }
+
+        .char-count {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+            text-align: left;
+        }
+
+        /* Sidebar */
+        .exam-sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background-color: #F0F8FF;
+            border-left: 2px solid #D4F1FF;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+
+        .exam-sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #3F59CF; 
+            margin: 0;
+        }
+
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: #3F59CF;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+        }
+
+        .question-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .question-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px solid #D4F1FF;
+            background-color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .question-btn:hover {
+            border-color: #87bba2;
+            color: #87bba2;
+        }
+
+        .question-btn.answered {
+            background-color: #FFD166;
+            border-color: #FFD166;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .question-btn.current {
+            background-color: #87bba2;
+            border-color: #87bba2; 
+            color: white;
+            font-weight: 700;
+        }
+
+        /* Footer */
+        .exam-footer {
+            padding: 20px 30px;
+            background-color: #F9F9F9;
+            border-top: 2px solid #D4F1FF;
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .footer-info {
+            font-size: 13px;
+            color: #87bba2;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'IranSans', 'Vazirmatn', sans-serif;
+        }
+
+        .btn-secondary {
+            background-color: #c9e4ca;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #b0dcb2;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background-color: #87bba2;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #6d9c85;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(135, 187, 162, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0; 
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px; 
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #3F59CF;
+            margin-bottom: 15px;
+        }
+
+        .modal-message {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex; 
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .exam-sidebar {
+                width: 200px;
+            }
+            .question-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .exam-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .exam-info {
+                width: 100%;
+                justify-content: space-around;
+            }
+            /* Sidebar toggling logic might be needed for mobile, or just show it */
+            .questions-section {
+                max-height: none;
+            }
+            .exam-footer {
+                flex-direction: column;
+            }
+            .button-group {
+                width: 100%;
+            }
+            .btn {
+                flex: 1;
+            }
+        }
+        
+        /* Toggle Button for Sidebar */
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #87bba2;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 990; /* Lower z-index so it's behind sidebar if open */
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 10px rgba(63, 89, 207, 0.3);
+        }
+        
+        @media (min-width: 769px) {
+             /* On desktop, sidebar logic might need adjustment if it's overlay */
+             /* Based on provided CSS, sidebar is fixed right. Let's make space for it if open, or keep as overlay */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hidden Form for Submission -->
+    <form id="examForm" method="post" action="{% url 'exam_submit' exam.id %}" style="display:none;">
+        {% csrf_token %}
+    </form>
+
+    <!-- Sidebar -->
+    <div class="exam-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">نقشه سوالات</div>
+            <button class="sidebar-close" onclick="toggleSidebar()">&times;</button>
+        </div>
+        <div class="question-list" id="questionList">
+            <!-- Generated by JS -->
+        </div>
+    </div>
+    
+    <!-- Toggle button for sidebar (optional/custom addition) -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+
+    <div class="exam-container">
+        <!-- Header -->
+        <div class="exam-header">
+            <div class="exam-title">{{ exam.name }}</div>
+            <div class="exam-info">
+                <div class="info-item">
+                    <div class="info-label">تعداد سوالات</div>
+                    <div class="info-value">{{ questions|length }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">نوع سوالات</div>
+                    <div class="info-value">ترکیبی</div>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">زمان باقی‌مانده</div>
+                <div class="timer" id="timer">01:00:00</div>
+            </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-section">
+            <div class="progress-label">
+                <span>پیشرفت آزمون</span>
+                <span id="progressText">0 از {{ questions|length }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- Question Area -->
+        <div class="questions-section" id="questionsSection">
+            <!-- Generated by JS -->
+        </div>
+
+        <!-- Footer -->
+        <div class="exam-footer">
+            <div class="footer-info">
+                <span id="answeredCount">0</span> سوال پاسخ داده شده
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="saveDraft()">ذخیره پیش‌نویس</button>
+                <button class="btn btn-primary" onclick="openModal()">تحویل آزمون</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Modal -->
+    <div class="modal" id="submitModal">
+        <div class="modal-content">
+            <div class="modal-title">تحویل آزمون</div>
+            <p class="modal-message">
+                آیا مطمئن هستید که می‌خواهید آزمون را تحویل دهید؟<br>
+                <span id="unansweredWarning" style="color: #FF6B6B; font-size: 12px;"></span>
+            </p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">انصراف</button>
+                <button class="btn btn-primary" onclick="confirmSubmit()">تحویل نهایی</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data from Django
+        const questionsData = [
+            {% for q in questions %}
+            {
+                id: {{ q.id }},
+                number: {{ forloop.counter }},
+                text: `{{ q.text|escapejs }}`,
+                kind: '{{ q.kind }}',
+                options: {{ q.options|default:"[]"|safe }},
+                answer: '' // Store answer here
+            },
+            {% endfor %}
+        ];
+
+        const timerDuration = {{ exam.duration|default:60 }} * 60; // Convert minutes to seconds
+        let timeRemaining = timerDuration;
+        let timerInterval;
+
+        // DOM Elements
+        const questionsSection = document.getElementById('questionsSection');
+        const questionList = document.getElementById('questionList');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const answeredCountEl = document.getElementById('answeredCount');
+        const timerEl = document.getElementById('timer');
+        const sidebar = document.getElementById('sidebar');
+        const submitModal = document.getElementById('submitModal');
+        const unansweredWarning = document.getElementById('unansweredWarning');
+
+        // Initialization
+        function init() {
+            // Load drafts from localStorage if available (optional feature)
+            const savedDraft = localStorage.getItem('exam_draft_{{ exam.id }}');
+            if (savedDraft) {
+                try {
+                    const draftAnswers = JSON.parse(savedDraft);
+                    questionsData.forEach(q => {
+                        if (draftAnswers[q.id]) {
+                            q.answer = draftAnswers[q.id];
+                        }
+                    });
+                } catch (e) { console.error(e); }
+            }
+
+            renderQuestions();
+            renderSidebar();
+            updateProgress();
+            startTimer();
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    confirmSubmit(); // Auto submit
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const hours = Math.floor(timeRemaining / 3600);
+            const minutes = Math.floor((timeRemaining % 3600) / 60);
+            const seconds = timeRemaining % 60;
+            
+            const hStr = hours.toString().padStart(2, '0');
+            const mStr = minutes.toString().padStart(2, '0');
+            const sStr = seconds.toString().padStart(2, '0');
+            
+            timerEl.textContent = `${hStr}:${mStr}:${sStr}`;
+            
+            if (timeRemaining < 300) { // Last 5 mins
+                timerEl.classList.add('warning');
+            }
+        }
+
+        function renderQuestions() {
+            questionsSection.innerHTML = '';
+            questionsData.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = 'q-card-' + q.id;
+                
+                let inputHtml = '';
+                if (q.kind === 'mcq') {
+                    inputHtml = `<div class="mcq-options">`;
+                    q.options.forEach((opt, i) => {
+                        // Only check if q.answer matches i (and q.answer is not empty string)
+                        const checked = (q.answer !== '' && q.answer == i) ? 'checked' : '';
+                        inputHtml += `
+                            <label class="mcq-option">
+                                <input type="radio" name="q_${q.id}" value="${i}" ${checked} onchange="updateAnswer(${q.id}, '${i}')">
+                                <span>${opt}</span>
+                            </label>
+                        `;
+                    });
+                    inputHtml += `</div>`;
+                } else {
+                    inputHtml = `
+                        <div class="answer-area">
+                            <label class="answer-label">پاسخ شما:</label>
+                            <textarea class="answer-textarea" placeholder="پاسخ خود را اینجا بنویسید..." 
+                                oninput="updateAnswer(${q.id}, this.value)">${q.answer}</textarea>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="question-number">سوال ${q.number}</div>
+                    <div class="question-text">${q.text}</div>
+                    ${inputHtml}
+                `;
+                questionsSection.appendChild(card);
+            });
+        }
+
+        function renderSidebar() {
+            questionList.innerHTML = '';
+            questionsData.forEach((q, index) => {
+                const btn = document.createElement('div');
+                btn.className = `question-btn ${q.answer !== '' ? 'answered' : ''}`;
+                btn.textContent = q.number;
+                btn.onclick = () => scrollToQuestion(q.id);
+                btn.id = 'sidebar-btn-' + q.id;
+                questionList.appendChild(btn);
+            });
+        }
+
+        function scrollToQuestion(qid) {
+            const card = document.getElementById('q-card-' + qid);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Open sidebar if needed or close it on mobile
+                if (window.innerWidth <= 768) toggleSidebar();
+            }
+        }
+
+        window.updateAnswer = function(qid, value) {
+            const q = questionsData.find(x => x.id === qid);
+            if (q) {
+                q.answer = value;
+                updateSidebarStatus(qid, value);
+                updateProgress();
+            }
+        };
+
+        function updateSidebarStatus(qid, value) {
+            const btn = document.getElementById('sidebar-btn-' + qid);
+            if (btn) {
+                if (value !== '') {
+                    btn.classList.add('answered');
+                } else {
+                    btn.classList.remove('answered');
+                }
+            }
+        }
+
+        function updateProgress() {
+            const answered = questionsData.filter(q => q.answer !== '').length;
+            const total = questionsData.length;
+            const percent = total === 0 ? 0 : (answered / total) * 100;
+            
+            progressFill.style.width = percent + '%';
+            progressText.textContent = `${answered} از ${total}`;
+            answeredCountEl.textContent = answered;
+        }
+
+        window.saveDraft = function() {
+            const answersMap = {};
+            questionsData.forEach(q => {
+                if(q.answer !== '') answersMap[q.id] = q.answer;
+            });
+            localStorage.setItem('exam_draft_{{ exam.id }}', JSON.stringify(answersMap));
+            alert('پیش‌نویس با موفقیت ذخیره شد.');
+        };
+
+        window.openModal = function() {
+            const answered = questionsData.filter(q => q.answer !== '').length;
+            const total = questionsData.length;
+            const remaining = total - answered;
+            
+            if (remaining > 0) {
+                unansweredWarning.textContent = `توجه: به ${remaining} سوال پاسخ نداده‌اید.`;
+            } else {
+                unansweredWarning.textContent = '';
+            }
+            submitModal.classList.add('active');
+        };
+
+        window.closeModal = function() {
+            submitModal.classList.remove('active');
+        };
+
+        window.confirmSubmit = function() {
+            // Populate the hidden form
+            const form = document.getElementById('examForm');
+            questionsData.forEach(q => {
+                if (q.answer !== '') {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'q' + q.id;
+                    input.value = q.answer;
+                    form.appendChild(input);
+                }
+            });
+            // Clear draft
+            localStorage.removeItem('exam_draft_{{ exam.id }}');
+            form.submit();
+        };
+
+        window.toggleSidebar = function() {
+            sidebar.classList.toggle('open');
+        };
+
+        // Auto toggle sidebar on large screens? 
+        // CSS says .open { transform: translateX(0) }. 
+        // By default right:0, transform: translateX(100%) => hidden.
+        // Let's show it by default on desktop
+        // if (window.innerWidth > 1024) {
+        //    sidebar.classList.add('open');
+        // }
+
+        init();
+    </script>
+</body>
+</html>

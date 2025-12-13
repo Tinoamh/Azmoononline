@@ -4,6 +4,7 @@ from .views import (
     RegisterView,
     DashboardView,
     ProfileView,
+    ProfileEditView,
     EmailLoginView,
     RecoveryCodeResetView,
     ExamProfileView,
@@ -62,6 +63,7 @@ urlpatterns = [
     # Authenticated pages
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('profile/edit/', ProfileEditView.as_view(), name='profile_edit'),
     path('exam-profile/', ExamProfileView.as_view(), name='exam_profile'),
     path('users/', UsersListView.as_view(), name='users'),
     path('students/', StudentsListView.as_view(), name='students'),

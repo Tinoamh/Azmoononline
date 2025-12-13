@@ -5,6 +5,7 @@
 {% block body_class %}{% if user.is_authenticated and user.role and user.role.code == 'student' %}landing student{% else %}landing{% endif %}{% endblock %}
 
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 <style>
   /* Landing page hero styles aligned to the provided mock */
   body.landing { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
@@ -65,26 +66,112 @@
   .admin-drawer-list a:hover { background:rgba(255,255,255,0.18); }
   .admin-drawer-header a { color:#fff; text-decoration:none; display:block; }
   .admin-drawer-header a:hover { opacity:0.9; }
-  body.landing.student { background: linear-gradient(to right, #5465FF 0%, #899EFF 35%, #97ACFF 58%, #A4BBFF 75%, #BFD7FF 93%); }
+
+  /* STUDENT PAGE STYLES */
+  body.landing.student {
+     font-family: 'Vazirmatn', sans-serif;
+     margin: 0;
+     padding: 0;
+     background: linear-gradient(to bottom, #c7f0ff, #fdf6ff);
+     overflow-x: hidden;
+     color: #333;
+  }
+  
   body.landing.student .landing-brand, body.landing.student .landing-actions { display:none; }
   body.landing.student .hero, body.landing.student .info-section { display:none; }
-  body.landing.student .container { width:100%; max-width:1200px; margin:auto; padding:40px; }
-  body.landing.student h1.student-heading { font-size:36px; color:#4253d8; text-align:center; margin-bottom:40px; }
-  body.landing.student .content-box { background:rgba(255,255,255,0.4); padding:30px; border-radius:20px; width:350px; backdrop-filter:blur(10px); }
-  body.landing.student .flex { display:flex; align-items:center; justify-content:space-between; gap:40px; }
-  body.landing.student .hero-img { width:350px; border-radius:20px; overflow:hidden; }
-  body.landing.student .student-stage { position:relative; }
-  body.landing.student .sam-title { font-size:56px; font-weight:800; color:#fff; text-align:center; margin:0 0 24px 0; }
-  body.landing.student .student-grid { display:grid; grid-template-columns: 1.2fr 0.8fr; gap:24px; align-items:end; max-width:980px; margin:0 auto; direction:ltr; }
-  body.landing.student .tile { background:linear-gradient(180deg, rgba(84,101,255,0.30) 0%, rgba(141,191,251,0.24) 100%); border-radius:20px; padding:20px; box-shadow:0 30px 60px rgba(58,108,244,0.25); min-height:300px; display:flex; flex-direction:column; justify-content:center; }
-  body.landing.student .tile-title { font-size:36px; font-weight:800; color:#fff; }
-  body.landing.student .tile-chip { display:inline-block; font-size:12px; color:#2d3a6b; background:#e6f0ff; border:1px solid #cfe3ff; border-radius:999px; padding:4px 10px; margin-bottom:12px; }
-  body.landing.student .image-card { border-radius:20px; background:linear-gradient(180deg, rgba(84,101,255,0.30) 0%, rgba(141,191,251,0.24) 100%); box-shadow:0 30px 60px rgba(58,108,244,0.25); min-height:300px; display:flex; align-items:center; justify-content:center; padding:0; overflow:hidden; }
-  body.landing.student .image-card img { width:100%; height:100%; object-fit:cover; object-position:bottom; border-radius:18px; }
-  body.landing.student .bubble { position:absolute; border-radius:50%; filter:drop-shadow(0 20px 30px rgba(0,0,0,0.15)); }
-  body.landing.student .bubble.left { left:-40px; top:160px; width:160px; height:160px; background:radial-gradient(circle at 30% 30%, #6ce0c7, #8dbffb); opacity:0.7; }
-  body.landing.student .bubble.right { right:40px; top:120px; width:120px; height:120px; background:radial-gradient(circle at 30% 30%, #8dbffb, #b0d5ff); opacity:0.8; }
-  body.landing.student .bubble.right.small { right:20px; top:220px; width:80px; height:80px; background:radial-gradient(circle at 30% 30%, #8dbffb, #c6e1ff); opacity:0.85; }
+
+  /* New Student Components */
+  body.landing.student .hero-section {
+     text-align: center;
+     padding: 60px 20px;
+     margin: 40px auto;
+     max-width: 1000px;
+     background: #ffe0f0;
+     border-radius: 30px;
+     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+     position: relative;
+     overflow: hidden;
+  }
+  body.landing.student .hero-section h2 { font-size: 2.8rem; color: #3F59CF; margin-bottom: 20px; }
+  body.landing.student .hero-section p { font-size: 1.2rem; color: #555; line-height: 1.7; }
+  body.landing.student .hero-section::before { content: "☁️🌈"; position: absolute; top: 20px; right: 5%; font-size: 2rem; animation: float 5s ease-in-out infinite; }
+  body.landing.student .hero-section::after { content: "🎓✨"; position: absolute; top: 20px; left: 5%; font-size: 2.5rem; animation: float-opposite 3s ease-in-out infinite; }
+  
+  body.landing.student .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto 60px auto; }
+  body.landing.student .card-item {
+     background: transparent;
+     padding: 30px 20px;
+     border-radius: 25px;
+     box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+     text-align: center;
+     transition: all 0.5s ease;
+     position: relative;
+     overflow: hidden;
+     cursor: pointer;
+  }
+  body.landing.student .card-item::before {
+     content: "";
+     position: absolute;
+     width: 120%;
+     height: 120%;
+     background: #bfd7ff;
+     top: -10%;
+     left: -10%;
+     transform: rotate(25deg);
+     z-index: 0;
+     transition: 0.4s;
+  }
+  body.landing.student .card-item:hover::before { transform: rotate(0deg); background: #8c9cff; }
+  body.landing.student .card-item:hover { transform: translateY(-10px) scale(1.05) rotate(-1deg); animation: bounce 0.5s; }
+  
+  body.landing.student .card-item h3 { color: #3F59CF; font-size: 1.5rem; margin-bottom: 15px; position: relative; z-index: 1; }
+  body.landing.student .card-item p { font-size: 1rem; color: #555; position: relative; z-index: 1; }
+  body.landing.student .btn-action {
+     display: inline-block;
+     margin-top: 20px;
+     background: #ffd166;
+     color: #333;
+     padding: 12px 25px;
+     border-radius: 25px;
+     font-weight: 700;
+     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+     transition: all 0.3s;
+     position: relative; z-index: 1;
+     text-decoration: none;
+  }
+  body.landing.student .btn-action:hover { transform: translateY(-5px) scale(1.05); background: #ffc857; }
+
+  /* Cloud line animation */
+  .cloud-line-container {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 40px;
+      opacity: 0.9;
+      user-select: none;
+      white-space: nowrap;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+  }
+  .cloud-item {
+      display: inline-block;
+      animation: float-cloud 4s ease-in-out infinite;
+  }
+  .cloud-item:nth-child(even) {
+      animation-name: float-cloud-opposite;
+  }
+  @keyframes float-cloud { 0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);} }
+  @keyframes float-cloud-opposite { 0%,100%{transform:translateY(0);}50%{transform:translateY(8px);} }
+  .stars, .confetti { position:absolute; width:100%; height:100%; top:0; left:0; overflow:hidden; z-index:0; pointer-events:none; }
+  .star, .conf { position:absolute; border-radius:50%; }
+  .star { width:6px; height:6px; background:#ffd700; animation: twinkle 2s infinite alternate; }
+  @keyframes twinkle {0%{opacity:0.3;transform:scale(1);}50%{opacity:1;transform:scale(1.3);}100%{opacity:0.3;transform:scale(1);} }
+  .conf { width:8px; height:8px; background: #ff4da6; animation: fall 3s linear infinite; }
+  @keyframes fall { 0%{transform:translateY(-10px) rotate(0deg);}100%{transform:translateY(800px) rotate(360deg);} }
+  @keyframes float { 0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);} }
+  @keyframes float-opposite { 0%,100%{transform:translateY(0);}50%{transform:translateY(15px);} }
+  @keyframes bounce { 0%,100%{transform:translateY(-10px) scale(1.05);}50%{transform:translateY(-20px) scale(1.08);} }
 </style>
 {% endblock %}
 
@@ -302,22 +389,92 @@
 
 {% block content %}
   {% if user.is_authenticated and user.role and user.role.code == 'student' %}
-</br>
-   <h1 class="sam-title">سامانه آزمون آنلاین صمصامیان</h1>
-    <div class="container student-stage">
-     
-      <div class="student-grid">
-        
-        <div class="tile">
-          <div class="tile-chip">online Website</div>
-          <div class="tile-title">Sam Exam</div>
-        </div>
-        <div class="image-card"><img class="hero-img" src="{% static 'main image.svg' %}" alt="Main image" /></div>
-      </div>
-   
-      <div class="bubble right"></div>
-      <div class="bubble right small"></div>
+    <div class="stars" id="stars"></div>
+    <div class="confetti" id="confetti"></div>
+
+    <div class="hero-section">
+        <h2>🌟 یادگیری و آزمون با دنیای رنگارنگ 🌈</h2>
+        <p> آزمون تستی و تشریحی   دریافت کارنامه   ارسال تکالیف   تجربه محیط جذاب رنگارنگ مخصوص دانش‌آموزان</p>
     </div>
+
+    <!-- Spacer (4 lines approx) -->
+    <div style="height: 60px;"></div>
+    
+    <!-- Cloud Line -->
+    <div class="cloud-line-container">
+        {% for i in "12345678901234" %}
+        <span class="cloud-item" style="animation-delay: -{{ forloop.counter }}s;">☁️</span>
+        {% endfor %}
+    </div>
+ <div style="height: 60px;"></div>
+    <div class="cards-grid">
+        <div class="card-item">
+            <h3>📝 آزمون ساز هوشمند</h3>
+            <p>ساخت و مدیریت آزمون‌ها با چند کلیک ساده</p>
+            <a href="#" class="btn-action">شروع آزمون</a>
+        </div>
+        <div class="card-item">
+            <h3>📚 بانک سوال و کارنامه</h3>
+            <p>دسترسی به بانک سوالات و مشاهده انواع کارنامه‌ها</p>
+            <a href="#" class="btn-action">مشاهده بانک سوال</a>
+        </div>
+        <div class="card-item">
+            <h3>✅ آزمون تشریحی و تستی</h3>
+            <p>برگزاری آنلاین یا حضوری هر نوع آزمون</p>
+            <a href="#" class="btn-action">ایجاد آزمون</a>
+        </div>
+        <div class="card-item">
+            <h3>💰 یادگیری سریع و آسان</h3>
+            <p>با آزمون‌های آزمایشی توانایی خود را افزایش دهید</p>
+            <a href="#" class="btn-action">بیشتر بدانید</a>
+        </div>
+        
+    </div>
+    
+    <!-- Spacer (4 lines approx) -->
+    <div style="height: 60px;"></div>
+    
+    <!-- Cloud Line -->
+    <div class="cloud-line-container">
+        {% for i in "12345678901234" %}
+        <span class="cloud-item" style="animation-delay: -{{ forloop.counter }}s;">🎓</span>
+        {% endfor %}
+    </div>
+ <div style="height: 60px;"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Stars
+        const starsContainer = document.getElementById('stars');
+        if(starsContainer) {
+            for(let i=0;i<50;i++){
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.top = Math.random()*100 + '%';
+                star.style.left = Math.random()*100 + '%';
+                star.style.width = Math.random()*4 + 4 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDuration = (Math.random()*3+2)+'s';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Confetti
+        const confettiContainer = document.getElementById('confetti');
+        if(confettiContainer) {
+            for(let i=0;i<40;i++){
+                const c = document.createElement('div');
+                c.classList.add('conf');
+                c.style.left = Math.random()*100 + '%';
+                c.style.width = Math.random()*6+4 + 'px';
+                c.style.height = c.style.width;
+                c.style.background = ['#ff4da6','#ffde59','#4da6ff','#00ff99'][Math.floor(Math.random()*4)];
+                c.style.animationDuration = (Math.random()*3+2)+'s';
+                confettiContainer.appendChild(c);
+            }
+        }
+    });
+    </script>
   {% else %}
     <section class="hero">
       <div class="hero-card">

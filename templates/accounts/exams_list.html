@@ -6,13 +6,102 @@
   body.exams-list{background:linear-gradient(180deg,#f5f8ff 0%, #eef3ff 100%)}
   .wrap{max-width:900px;margin:24px auto;padding:0 16px}
   .card{background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:16px}
+  
+  {% if is_student_view %}
+  .card { background-color: #e2fdff; border: none; position: relative; z-index: 1; }
+  .cloud-line-container-small {
+      text-align: center;
+      font-size: 1.25rem;
+      margin: 5px 0;
+      opacity: 0.9;
+      user-select: none;
+      white-space: nowrap;
+      overflow: hidden;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 40px;
+      gap: 8px;
+  }
+  .cloud-item-small {
+      display: inline-block;
+      animation: float-cloud 4s ease-in-out infinite;
+  }
+  .cloud-item-small:nth-child(even) {
+      animation-name: float-cloud-opposite;
+  }
+  @keyframes float-cloud { 0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);} }
+  @keyframes float-cloud-opposite { 0%,100%{transform:translateY(0);}50%{transform:translateY(4px);} }
+
+  /* Background Effects */
+  .stars, .confetti { position:fixed; width:100%; height:100%; top:0; left:0; overflow:hidden; z-index:0; pointer-events:none; }
+  .star, .conf { position:absolute; border-radius:50%; }
+  .star { width:6px; height:6px; background:#ffd700; animation: twinkle 4s infinite alternate; }
+  @keyframes twinkle {0%{opacity:0.3;transform:scale(1);}50%{opacity:1;transform:scale(1.3);}100%{opacity:0.3;transform:scale(1);} }
+  .conf { width:8px; height:8px; background: #ff4da6; animation: fall 6s linear infinite; }
+  @keyframes fall { 0%{transform:translateY(-10px) rotate(0deg);}100%{transform:translateY(100vh) rotate(360deg);} }
+  /* Button and Text Colors for Student View */
+  .btn-start, .btn-report {
+      background-color: #bfd7ff !important;
+      color: #3f59cf !important;
+      border: none !important;
+      box-shadow: 0 4px 10px rgba(58,108,244,0.1);
+      transition: transform 0.2s;
+  }
+  .btn-start:hover, .btn-report:hover {
+      background-color: #a6c5ff !important;
+      transform: translateY(-2px);
+  }
+  .status-finished {
+      color: #ffb8d1 !important;
+      font-weight: 800 !important;
+      font-size: 14px !important;
+  }
+  {% endif %}
+
   .grid{display:grid;grid-template-columns:1fr;gap:12px}
-  .item{border:1px solid #eaf1ff;border-radius:12px;padding:12px}
+  .item{border:1px solid #eaf1ff;border-radius:12px;padding:12px;background: rgba(255,255,255,0.6);}
   .title{font-weight:800;color:#3A6CF4}
   .meta{display:flex;gap:12px;color:#6b7aa6;font-size:12px}
 </style>
 {% endblock %}
 {% block content %}
+{% if is_student_view %}
+    <div class="stars" id="stars"></div>
+    <div class="confetti" id="confetti"></div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Stars
+        const starsContainer = document.getElementById('stars');
+        if(starsContainer) {
+            for(let i=0;i<30;i++){
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.top = Math.random()*100 + '%';
+                star.style.left = Math.random()*100 + '%';
+                star.style.width = Math.random()*4 + 4 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDuration = (Math.random()*5+4)+'s';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Confetti
+        const confettiContainer = document.getElementById('confetti');
+        if(confettiContainer) {
+            for(let i=0;i<20;i++){
+                const c = document.createElement('div');
+                c.classList.add('conf');
+                c.style.left = Math.random()*100 + '%';
+                c.style.width = Math.random()*6+4 + 'px';
+                c.style.height = c.style.width;
+                c.style.background = ['#ff4da6','#ffde59','#4da6ff','#00ff99'][Math.floor(Math.random()*4)];
+                c.style.animationDuration = (Math.random()*5+6)+'s';
+                confettiContainer.appendChild(c);
+            }
+        }
+    });
+    </script>
+{% endif %}
 <div class="wrap">
   <div class="card">
     <h2 class="title">آزمون‌های فعال</h2>
@@ -24,8 +113,8 @@
           {% if is_student_view %}
             {% if e.id in completed_exam_ids %}
                 <div style="display:flex;gap:8px;align-items:center;">
-                    <span style="color:#6b7aa6;font-size:13px;font-weight:bold;">تمام شد</span>
-                    <a href="{% url 'exam_result' e.id %}" style="color:#3A6CF4;text-decoration:none;font-size:13px;border:1px solid #3A6CF4;padding:4px 8px;border-radius:6px;">کارنامه</a>
+                    <span class="status-finished">تمام شد</span>
+                    <a href="{% url 'exam_result' e.id %}" class="btn-report" style="text-decoration:none;font-size:13px;padding:6px 12px;border-radius:10px;font-weight:700;">کارنامه</a>
                 </div>
             {% else %}
                 <a href="/accounts/exams/{{ e.id }}/start/" class="btn-start" title="شروع آزمون">شروع</a>
@@ -38,6 +127,13 @@
           <span>ایجاد: {{ e.created_at|date:"Y/m/d H:i" }}</span>
         </div>
       </div>
+      {% if is_student_view and not forloop.last %}
+      <div class="cloud-line-container-small">
+        {% for i in "12345" %}
+        <span class="cloud-item-small" style="animation-delay: -{{ forloop.counter }}s;">☁️</span>
+        {% endfor %}
+      </div>
+      {% endif %}
       {% empty %}
       <div class="item">هنوز آزمونی تعریف نشده است</div>
       {% endfor %}

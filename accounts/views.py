@@ -6,7 +6,7 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.views.generic import FormView, TemplateView, View
 from .forms import RegisterForm, EmailAuthenticationForm
-from .forms import ExamProfileForm
+from .forms import ExamProfileForm, SimpleProfileEditForm
 from .models import Role
 from .models import Profile
 from .models import Classroom, Exam, Question, ExamAssignment
@@ -60,6 +60,22 @@ class ProfileView(TemplateView):
         return ctx
 
     # No inline edit on profile page per latest requirements
+
+
+@method_decorator(login_required, name="dispatch")
+class ProfileEditView(FormView):
+    template_name = "accounts/profile_edit.html"
+    form_class = SimpleProfileEditForm
+    success_url = reverse_lazy("profile")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save(self.request.user)
+        return super().form_valid(form)
 
 
 class EmailLoginView(FormView):
@@ -440,7 +456,20 @@ class ExamDefineView(TemplateView):
                 src = Exam.objects.get(pk=src_id, created_by=u)
             except Exam.DoesNotExist:
                 src = None
-        exam = Exam.objects.create(name=(name or classroom.name), classroom=classroom, num_questions=numq, created_by=u, source_exam=src)
+        
+        try:
+            duration = int(request.POST.get('duration', '60'))
+        except ValueError:
+            duration = 60
+
+        exam = Exam.objects.create(
+            name=(name or classroom.name), 
+            classroom=classroom, 
+            num_questions=numq, 
+            created_by=u, 
+            source_exam=src,
+            duration=duration
+        )
         exam.students.set(classroom.students.all())
 
         # Random selection per student from source exam if provided
