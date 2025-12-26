@@ -398,6 +398,7 @@ class ExamsListView(TemplateView):
             exams = Exam.objects.filter(Q(students=u) | Q(assignments__student=u)).distinct().order_by('-created_at')
             ctx['exams'] = exams
             ctx['is_student_view'] = True
+            ctx['now'] = timezone.now()
             
             # Find completed exams
             completed_ids = ExamAssignment.objects.filter(
@@ -708,6 +709,12 @@ class ExamTakeView(TemplateView):
         has_assignment = ExamAssignment.objects.filter(exam=exam, student=u).exists()
         if not (has_membership or has_assignment):
             return redirect('exams_list')
+
+        # Check if exam has started
+        if exam.start_time and timezone.now() < exam.start_time:
+             # You might want to show a specific error page or message
+             # For now, redirecting back to list is safest as the list will show the timer
+             return redirect('exams_list')
 
         self.exam = exam
         return super().dispatch(request, *args, **kwargs)

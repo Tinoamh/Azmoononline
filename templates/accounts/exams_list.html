@@ -117,7 +117,15 @@
                     <a href="{% url 'exam_result' e.id %}" class="btn-report" style="text-decoration:none;font-size:13px;padding:6px 12px;border-radius:10px;font-weight:700;">کارنامه</a>
                 </div>
             {% else %}
-                <a href="/accounts/exams/{{ e.id }}/start/" class="btn-start" title="شروع آزمون">شروع</a>
+                {% if e.start_time and e.start_time > now %}
+                    <div class="countdown-timer" data-start="{{ e.start_time|date:'U' }}" data-exam-id="{{ e.id }}">
+                        <span class="timer-text">شروع تا: </span>
+                        <span class="timer-value">...</span>
+                    </div>
+                    <a href="/accounts/exams/{{ e.id }}/start/" id="btn-start-{{ e.id }}" class="btn-start" title="شروع آزمون" style="display:none;">شروع</a>
+                {% else %}
+                    <a href="/accounts/exams/{{ e.id }}/start/" class="btn-start" title="شروع آزمون">شروع</a>
+                {% endif %}
             {% endif %}
           {% endif %}
         </div>
@@ -144,5 +152,59 @@
 <style>
   .btn-start{display:inline-block;padding:8px 14px;border-radius:10px;background:#3A6CF4;color:#fff;text-decoration:none;font-weight:700}
   .btn-start:hover{background:#2E56D0}
+  
+  .countdown-timer {
+      font-family: 'Vazirmatn', sans-serif;
+      background: #fff3cd;
+      color: #856404;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #ffeeba;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-block;
+  }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timers = document.querySelectorAll('.countdown-timer');
+    
+    function updateTimers() {
+        const now = Date.now();
+        
+        timers.forEach(timer => {
+            const startTime = parseInt(timer.dataset.start) * 1000;
+            const examId = timer.dataset.examId;
+            const diff = startTime - now;
+            
+            if (diff <= 0) {
+                // Time passed, show button
+                timer.style.display = 'none';
+                const btn = document.getElementById('btn-start-' + examId);
+                if (btn) btn.style.display = 'inline-block';
+            } else {
+                // Format time remaining
+                const seconds = Math.floor((diff / 1000) % 60);
+                const minutes = Math.floor((diff / (1000 * 60)) % 60);
+                const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                
+                let text = '';
+                if (days > 0) text += days + ' روز و ';
+                text += hours.toString().padStart(2, '0') + ':' + 
+                        minutes.toString().padStart(2, '0') + ':' + 
+                        seconds.toString().padStart(2, '0');
+                
+                timer.querySelector('.timer-value').textContent = text;
+            }
+        });
+    }
+    
+    if (timers.length > 0) {
+        setInterval(updateTimers, 1000);
+        updateTimers(); // Initial call
+    }
+});
+</script>
 {% endblock %}
