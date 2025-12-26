@@ -123,8 +123,9 @@
         </div>
         <div class="meta">
           <span>تعداد سوالات: {{ e.num_questions }}</span>
+          {% if e.start_time %}<span>شروع: {{ e.start_time|date:"Y/m/d H:i" }}</span>{% endif %}
+          {% if e.end_time %}<span>پایان: {{ e.end_time|date:"Y/m/d H:i" }}</span>{% endif %}
           {% if not is_student_view %}<span>تعداد شرکت‌کنندگان: {{ e.students.count }}</span>{% endif %}
-          <span>ایجاد: {{ e.created_at|date:"Y/m/d H:i" }}</span>
         </div>
       </div>
       {% if is_student_view and not forloop.last %}

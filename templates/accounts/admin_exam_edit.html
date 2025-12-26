@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ویرایش آزمون{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: #f8fafc; }
+    .edit-container {
+        max-width: 800px;
+        margin: 40px auto;
+        background: white;
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .page-title {
+        color: #1e293b;
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .form-group {
+        margin-bottom: 24px;
+    }
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #475569;
+    }
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+    }
+    .form-input:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+    
+    .student-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px;
+    }
+    .student-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .student-item:last-child { border-bottom: none; }
+    .student-item label {
+        margin-right: 10px;
+        cursor: pointer;
+        flex: 1;
+    }
+    
+    .btn-save {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 14px 30px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 20px;
+    }
+    .btn-save:hover {
+        background: #2563eb;
+    }
+    .btn-back {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <a href="{% url 'admin_exam_list' %}" class="btn-back">بازگشت به لیست</a>
+    <h1 class="page-title">ویرایش آزمون: {{ exam.name }}</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label class="form-label">نام آزمون</label>
+            <input type="text" name="name" class="form-input" value="{{ exam.name }}">
+        </div>
+        
+        <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div>
+                <label class="form-label">تاریخ شروع</label>
+                <input type="datetime-local" name="start_time" class="form-input" 
+                       value="{{ exam.start_time|date:'Y-m-d\TH:i' }}">
+            </div>
+            <div>
+                <label class="form-label">تاریخ پایان</label>
+                <input type="datetime-local" name="end_time" class="form-input" 
+                       value="{{ exam.end_time|date:'Y-m-d\TH:i' }}">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">مدت زمان (دقیقه)</label>
+            <input type="number" name="duration" class="form-input" value="{{ exam.duration }}">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">دانشجویان شرکت‌کننده</label>
+            <div class="student-list">
+                {% for s in all_students %}
+                <div class="student-item">
+                    <input type="checkbox" name="student_ids" value="{{ s.id }}" id="st_{{ s.id }}"
+                           {% if s.id in exam_student_ids %}checked{% endif %}>
+                    <label for="st_{{ s.id }}">{{ s.first_name }} {{ s.last_name }} ({{ s.email }})</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <button type="submit" class="btn-save">ذخیره تغییرات</button>
+    </form>
+</div>
+{% endblock %}

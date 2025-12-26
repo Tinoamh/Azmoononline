@@ -68,7 +68,7 @@
           <li><a href="/"><span>خانه</span></a></li>
           {% if user.role and user.role.code == 'admin' %}
             <li><a href="/accounts/users/"><span>لیست کاربران</span></a></li>
-            <li><a href="/accounts/dashboard/"><span>لیست کلاس‌ها</span></a></li>
+            <li><a href="/accounts/admin/exams/"><span>لیست کلاس‌ها</span></a></li>
           {% elif user.role and user.role.code == 'student' %}
             <li><a href="/accounts/exams/"><span>لیست آزمون‌ها</span></a></li>
             <li><a href="{% url 'student_scores' %}"><span>لیست نمرات</span></a></li>

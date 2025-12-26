@@ -462,13 +462,31 @@ class ExamDefineView(TemplateView):
         except ValueError:
             duration = 60
 
+        from datetime import datetime
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+        start_time = None
+        end_time = None
+        if start_time_str:
+            try:
+                start_time = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
+        if end_time_str:
+            try:
+                end_time = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
+
         exam = Exam.objects.create(
             name=(name or classroom.name), 
             classroom=classroom, 
             num_questions=numq, 
             created_by=u, 
             source_exam=src,
-            duration=duration
+            duration=duration,
+            start_time=start_time,
+            end_time=end_time
         )
         exam.students.set(classroom.students.all())
 
@@ -960,3 +978,145 @@ class StudentScoresView(TemplateView):
         ).select_related('exam').order_by('-completed_at')
         ctx['assignments'] = assignments
         return ctx
+
+@login_required
+def admin_exam_list_view(request):
+    u = request.user
+    is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+    if not is_admin:
+        return redirect('profile')
+    
+    from django.utils import timezone
+    now = timezone.now()
+    
+    exams = Exam.objects.select_related('created_by').all().order_by('-created_at')
+    
+    total_count = exams.count()
+    completed_count = 0
+    not_completed_count = 0
+    
+    exams_data = []
+    
+    for e in exams:
+        is_completed = False
+        if e.end_time and e.end_time < now:
+            is_completed = True
+        
+        if is_completed:
+            completed_count += 1
+        else:
+            not_completed_count += 1
+            
+        exams_data.append({
+            'obj': e,
+            'is_completed': is_completed,
+            'instructor_name': f"{e.created_by.first_name} {e.created_by.last_name}" if e.created_by else "-",
+            'student_count': e.students.count()
+        })
+        
+    context = {
+        'total_count': total_count,
+        'completed_count': completed_count,
+        'not_completed_count': not_completed_count,
+        'exams': exams_data
+    }
+    return render(request, 'accounts/admin_exam_list.html', context)
+
+@login_required
+def admin_exam_edit_view(request, pk):
+    u = request.user
+    is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+    if not is_admin:
+        return redirect('profile')
+        
+    from django.shortcuts import get_object_or_404
+    exam = get_object_or_404(Exam, pk=pk)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+        duration = request.POST.get('duration')
+        
+        if name:
+            exam.name = name
+        
+        from datetime import datetime
+        if start_time_str:
+            try:
+                exam.start_time = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
+        else:
+            exam.start_time = None
+            
+        if end_time_str:
+            try:
+                exam.end_time = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
+        else:
+            exam.end_time = None
+            
+        if duration:
+            try:
+                exam.duration = int(duration)
+            except ValueError:
+                pass
+        
+        exam.save()
+        
+        selected_student_ids = request.POST.getlist('student_ids')
+        students = User.objects.filter(pk__in=selected_student_ids)
+        exam.students.set(students)
+        
+        # Sync assignments
+        current_students = set(exam.students.values_list('id', flat=True))
+        for s in students:
+            ExamAssignment.objects.get_or_create(exam=exam, student=s)
+            
+        # Optional: remove assignments for removed students
+        ExamAssignment.objects.filter(exam=exam).exclude(student__in=students).delete()
+        
+        return redirect('admin_exam_list')
+    
+    all_students = User.objects.filter(role__code='student')
+    exam_student_ids = set(exam.students.values_list('id', flat=True))
+    
+    return render(request, 'accounts/admin_exam_edit.html', {
+        'exam': exam,
+        'all_students': all_students,
+        'exam_student_ids': exam_student_ids
+    })
+@login_required
+def admin_exam_report_view(request, exam_id):
+    u = request.user
+    is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+    if not is_admin:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+        
+    from django.shortcuts import get_object_or_404
+    exam = get_object_or_404(Exam, pk=exam_id)
+    
+    assignments = ExamAssignment.objects.filter(exam=exam, completed_at__isnull=False).select_related('student').order_by('-score')
+    
+    results = []
+    rank = 1
+    for a in assignments:
+        score_percent = a.score if a.score is not None else 0
+        # Assuming max score is 20 for display purposes as per screenshot "18/20"
+        # If score is percent (0-100), then score/5 is out of 20.
+        score_20 = (score_percent / 100) * 20
+        
+        results.append({
+            'rank': rank,
+            'student_name': f"{a.student.first_name} {a.student.last_name}",
+            'score_percent': round(score_percent, 1),
+            'score_20': round(score_20, 2)
+        })
+        rank += 1
+        
+    return render(request, 'accounts/admin_exam_report_partial.html', {
+        'exam': exam,
+        'results': results
+    })

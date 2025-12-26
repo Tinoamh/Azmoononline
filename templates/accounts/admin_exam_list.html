@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}گزارش ادمین - آزمون‌ها{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: #f8fafc; }
+    .admin-header {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 40px 20px;
+        border-radius: 20px;
+        margin-bottom: 40px;
+        text-align: right;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+    }
+    .admin-header h1 {
+        font-size: 32px;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+    }
+    .admin-header p {
+        font-size: 16px;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .stat-label {
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    .stat-value {
+        color: #3b82f6;
+        font-size: 36px;
+        font-weight: 800;
+    }
+    
+    .tabs {
+        display: flex;
+        gap: 20px;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 20px;
+    }
+    .tab-btn {
+        padding: 10px 20px;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+    }
+    .tab-btn.active {
+        color: #3b82f6;
+        border-bottom-color: #3b82f6;
+    }
+    
+    .exam-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .exam-table th {
+        background: #eff6ff;
+        color: #3b82f6;
+        font-weight: 700;
+        padding: 16px;
+        text-align: right;
+        font-size: 14px;
+    }
+    .exam-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        font-size: 14px;
+    }
+    .exam-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .btn-edit {
+        background: #f59e0b;
+        color: white;
+        padding: 6px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .btn-edit:hover {
+        background: #d97706;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    
+    <div class="admin-header">
+        <h1>گزارش ادمین - آزمون‌ها</h1>
+        <p>مدیریت و نظارت بر آزمون‌های انجام شده و انجام نشده</p>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">کل آزمون‌ها</div>
+            <div class="stat-value">{{ total_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">آزمون‌های انجام شده</div>
+            <div class="stat-value">{{ completed_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">آزمون‌های انجام نشده</div>
+            <div class="stat-value">{{ not_completed_count }}</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab-btn active" onclick="showTab('not-completed')">آزمون‌های انجام نشده</div>
+        <div class="tab-btn" onclick="showTab('completed')">آزمون‌های انجام شده</div>
+    </div>
+
+    <div id="tab-not-completed" class="tab-content">
+        <table class="exam-table">
+            <thead>
+                <tr>
+                    <th>نام آزمون</th>
+                    <th>نام استاد</th>
+                    <th>تاریخ شروع</th>
+                    <th>تاریخ پایان</th>
+                    <th>تعداد آزمون‌دهندگان</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in exams %}
+                    {% if not item.is_completed %}
+                    <tr>
+                        <td>{{ item.obj.name }}</td>
+                        <td>{{ item.instructor_name }}</td>
+                        <td dir="ltr" style="text-align:right">{{ item.obj.start_time|date:"Y/m/d H:i"|default:"-" }}</td>
+                        <td dir="ltr" style="text-align:right">{{ item.obj.end_time|date:"Y/m/d H:i"|default:"-" }}</td>
+                        <td>{{ item.student_count }}</td>
+                        <td>
+                            <a href="{% url 'admin_exam_edit' item.obj.id %}" class="btn-edit">ویرایش</a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tab-completed" class="tab-content" style="display:none;">
+        <table class="exam-table">
+            <thead>
+                <tr>
+                    <th>نام آزمون</th>
+                    <th>نام استاد</th>
+                    <th>تاریخ شروع</th>
+                    <th>تاریخ پایان</th>
+                    <th>تعداد آزمون‌دهندگان</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in exams %}
+                    {% if item.is_completed %}
+                    <tr>
+                        <td>{{ item.obj.name }}</td>
+                        <td>{{ item.instructor_name }}</td>
+                        <td dir="ltr" style="text-align:right">{{ item.obj.start_time|date:"Y/m/d H:i"|default:"-" }}</td>
+                        <td dir="ltr" style="text-align:right">{{ item.obj.end_time|date:"Y/m/d H:i"|default:"-" }}</td>
+                        <td>{{ item.student_count }}</td>
+                        <td style="display:flex; gap:8px;">
+                            <a href="{% url 'admin_exam_edit' item.obj.id %}" class="btn-edit">ویرایش</a>
+                            <button onclick="showReport({{ item.obj.id }})" class="btn-report">مشاهده کارنامه</button>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- Modal Structure -->
+<div id="reportModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div id="modalBody">
+            <p style="text-align:center;">در حال بارگذاری...</p>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal()">بستن</button>
+    </div>
+</div>
+
+<style>
+    .btn-report {
+        background: #3b82f6;
+        color: white;
+        padding: 6px 16px;
+        border-radius: 8px;
+        border: none;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .btn-report:hover {
+        background: #2563eb;
+    }
+    
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+    }
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        left: 15px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #64748b;
+    }
+    .modal-close-btn {
+        background: #3b82f6;
+        color: white;
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        margin-top: 20px;
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById('tab-' + tabName).style.display = 'block';
+        if(tabName === 'not-completed') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        }
+    }
+    
+    function showReport(examId) {
+        document.getElementById('reportModal').style.display = 'flex';
+        document.getElementById('modalBody').innerHTML = '<p style="text-align:center;">در حال بارگذاری...</p>';
+        
+        fetch(`/accounts/admin/exams/${examId}/report/`)
+            .then(response => {
+                if(response.status === 403) return '<p style="text-align:center;color:red;">دسترسی غیرمجاز</p>';
+                return response.text();
+            })
+            .then(html => {
+                document.getElementById('modalBody').innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('modalBody').innerHTML = '<p style="text-align:center;color:red;">خطا در دریافت اطلاعات</p>';
+            });
+    }
+    
+    function closeModal() {
+        document.getElementById('reportModal').style.display = 'none';
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('reportModal')) {
+            closeModal();
+        }
+    }
+</script>
+{% endblock %}

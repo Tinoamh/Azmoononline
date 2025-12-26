@@ -1,0 +1,31 @@
+<div style="direction: rtl; text-align: right;">
+    <h3 style="color: #3b82f6; font-weight: 800; margin-bottom: 5px;">{{ exam.name }}</h3>
+    <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">استاد: {{ exam.created_by.first_name }} {{ exam.created_by.last_name }}</p>
+
+    <h4 style="font-weight: 700; margin-bottom: 15px;">نتایج دانش‌آموزان</h4>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f1f5f9; color: #475569;">
+                <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; text-align: center;">رتبه</th>
+                <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; text-align: right;">نام دانش‌آموز</th>
+                <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; text-align: center;">درصد</th>
+                <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; text-align: center;">نمره (از ۲۰)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in results %}
+            <tr style="border-bottom: 1px solid #f8fafc;">
+                <td style="padding: 12px; text-align: center; font-weight: bold;">{{ r.rank }}</td>
+                <td style="padding: 12px;">{{ r.student_name }}</td>
+                <td style="padding: 12px; text-align: center; color: #3b82f6;">{{ r.score_percent }}%</td>
+                <td style="padding: 12px; text-align: center;">{{ r.score_20 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8;">هنوز هیچ دانش‌آموزی در این آزمون شرکت نکرده است.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
