@@ -918,13 +918,27 @@ class ExamResultView(TemplateView):
         # History Statistics
         history_qs = ExamAssignment.objects.filter(student=u, completed_at__isnull=False).order_by('completed_at')
         history_data = []
+        best_assign = None
+        worst_assign = None
+
+        if history_qs.exists():
+            # We use a helper list to find max/min easily
+            # Filter out None scores just in case
+            valid_assignments = [h for h in history_qs if h.score is not None]
+            if valid_assignments:
+                best_assign = max(valid_assignments, key=lambda x: x.score)
+                worst_assign = min(valid_assignments, key=lambda x: x.score)
+
         for h in history_qs:
             history_data.append({
                 'exam_name': h.exam.name,
                 'score': h.score if h.score is not None else 0,
                 'date': h.completed_at.strftime('%Y-%m-%d')
             })
+        
         ctx['history_data'] = history_data
+        ctx['best_exam'] = best_assign
+        ctx['worst_exam'] = worst_assign
 
         return ctx
 

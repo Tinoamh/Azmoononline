@@ -297,6 +297,29 @@
     <div style="position:relative; height:400px; width:100%;">
       <canvas id="historyChart"></canvas>
     </div>
+
+    {% if best_exam and worst_exam %}
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:40px; text-align:right;">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:20px;">
+            <div style="color:#166534; font-weight:bold; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+              بهترین عملکرد
+            </div>
+            <div style="font-size:14px; color:#14532d; margin-bottom:4px;">{{ best_exam.exam.name }}</div>
+            <div style="font-size:24px; font-weight:800; color:#16a34a;">{{ best_exam.score|floatformat:1 }}%</div>
+            <div style="font-size:12px; color:#86efac;">{{ best_exam.completed_at|date:"Y/m/d" }}</div>
+        </div>
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:20px;">
+            <div style="color:#991b1b; font-weight:bold; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              ضعیف‌ترین عملکرد
+            </div>
+            <div style="font-size:14px; color:#7f1d1d; margin-bottom:4px;">{{ worst_exam.exam.name }}</div>
+            <div style="font-size:24px; font-weight:800; color:#dc2626;">{{ worst_exam.score|floatformat:1 }}%</div>
+            <div style="font-size:12px; color:#fca5a5;">{{ worst_exam.completed_at|date:"Y/m/d" }}</div>
+        </div>
+    </div>
+    {% endif %}
   </div>
 
 </div>
