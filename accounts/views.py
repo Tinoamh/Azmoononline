@@ -855,6 +855,8 @@ class ExamResultView(TemplateView):
         # Prepare detailed results
         results = []
         correct_count = 0
+        incorrect_count = 0
+        unanswered_count = 0
         total_questions = 0
         
         answers = assignment.student_answers or {}
@@ -871,9 +873,20 @@ class ExamResultView(TemplateView):
                     except:
                         pass
                 
-                if q.correct_index is not None and user_ans == q.correct_index:
-                    is_correct = True
-                    correct_count += 1
+                    if q.correct_index is not None and user_ans == q.correct_index:
+                        is_correct = True
+                        correct_count += 1
+                    else:
+                        incorrect_count += 1
+                else:
+                    unanswered_count += 1
+            else:
+                # For non-MCQ, if answer exists but logic not defined, treat as answered
+                if user_ans:
+                    # We don't increment correct_count unless we have logic
+                    incorrect_count += 1 
+                else:
+                    unanswered_count += 1
             
             results.append({
                 'question': q,
@@ -886,8 +899,33 @@ class ExamResultView(TemplateView):
         ctx['exam'] = exam
         ctx['score_percent'] = assignment.score
         ctx['correct_count'] = correct_count
+        ctx['incorrect_count'] = incorrect_count
+        ctx['unanswered_count'] = unanswered_count
         ctx['total_questions'] = total_questions
         ctx['results'] = results
+
+        # Class Statistics
+        all_assignments = ExamAssignment.objects.filter(exam=exam, completed_at__isnull=False)
+        scores = [a.score for a in all_assignments if a.score is not None]
+        class_avg = sum(scores) / len(scores) if scores else 0
+        class_max = max(scores) if scores else 0
+        class_min = min(scores) if scores else 0
+        
+        ctx['class_avg'] = class_avg
+        ctx['class_max'] = class_max
+        ctx['class_min'] = class_min
+        
+        # History Statistics
+        history_qs = ExamAssignment.objects.filter(student=u, completed_at__isnull=False).order_by('completed_at')
+        history_data = []
+        for h in history_qs:
+            history_data.append({
+                'exam_name': h.exam.name,
+                'score': h.score if h.score is not None else 0,
+                'date': h.completed_at.strftime('%Y-%m-%d')
+            })
+        ctx['history_data'] = history_data
+
         return ctx
 
 @method_decorator(login_required, name="dispatch")

@@ -1,60 +1,396 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}کارنامه آزمون{% endblock %}
-{% block content %}
-<div style="max-width:800px;margin:30px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-  <h2 style="text-align:center;color:#3d66ff;">کارنامه: {{ exam.name }}</h2>
+
+{% block extra_css %}
+<style>
+  body {
+    background: linear-gradient(180deg, #E0E7FF 0%, #F5F3FF 100%);
+    min-height: 100vh;
+  }
+  .report-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    font-family: inherit;
+    padding: 0 20px;
+  }
+  .page-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #3A6CF4;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
   
-  <div style="text-align:center;margin:20px 0;padding:20px;background:#f0f4ff;border-radius:12px;">
-    <h3>نمره شما: {{ score_percent|floatformat:1 }}%</h3>
-    <p>تعداد پاسخ صحیح: {{ correct_count }} از {{ total_questions }}</p>
+  /* Tabs */
+  .tabs-wrapper {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  .tab-btn {
+    padding: 10px 24px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid #c7d2fe;
+    color: #4338ca;
+    font-weight: 700;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  }
+  .tab-btn.active {
+    background: #3A6CF4;
+    color: #fff;
+    border-color: #3A6CF4;
+    box-shadow: 0 6px 16px rgba(58, 108, 244, 0.3);
+  }
+  .tab-btn:hover:not(.active) {
+    background: #e0e7ff;
+    transform: translateY(-2px);
+  }
+  
+  .tab-content {
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Main Card */
+  .main-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(58, 108, 244, 0.1);
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .main-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, #3A6CF4, #818cf8);
+  }
+  
+  .exam-name {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 40px;
+  }
+
+  /* Circular Score */
+  .score-section {
+    margin-bottom: 50px;
+    display: flex;
+    justify-content: center;
+  }
+  .score-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: conic-gradient(#3A6CF4 {{ score_percent }}%, #e2e8f0 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(58, 108, 244, 0.2);
+  }
+  .score-inner {
+    width: 130px;
+    height: 130px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+  }
+  .score-val {
+    font-size: 36px;
+    font-weight: 900;
+    color: #3A6CF4;
+    line-height: 1;
+  }
+  .score-label {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  
+  .stat-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: transform 0.2s;
+  }
+  .stat-box:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  }
+  
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+  
+  .stat-correct .stat-icon { background: #d1fae5; color: #10b981; }
+  .stat-incorrect .stat-icon { background: #fee2e2; color: #ef4444; }
+  .stat-unanswered .stat-icon { background: #fef3c7; color: #f59e0b; }
+  .stat-total .stat-icon { background: #e0e7ff; color: #4338ca; }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #334155;
+  }
+  .stat-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 600;
+  }
+  
+  .action-row {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+  .btn-outline {
+    display: inline-block;
+    padding: 12px 28px;
+    border: 2px solid #3A6CF4;
+    color: #3A6CF4;
+    border-radius: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-outline:hover {
+    background: #3A6CF4;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(58, 108, 244, 0.25);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+  
+  <div class="page-header">
+    <div class="page-title">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M7 7h10v2H7zm0 4h10v2H7zm0 4h7v2H7z"/></svg>
+      کارنامه اصلی
+    </div>
   </div>
 
-  <div style="text-align:center;">
-    <button id="toggleDetails" style="padding:10px 20px;background:#3d66ff;color:#fff;border:none;border-radius:8px;cursor:pointer;">
-      مشاهده بیشتر (جزئیات سوالات)
-    </button>
-    <a href="{% url 'exams_list' %}" style="display:inline-block;margin-right:10px;padding:10px 20px;background:#fff;color:#3d66ff;border:1px solid #3d66ff;border-radius:8px;text-decoration:none;">بازگشت به لیست آزمون‌ها</a>
+  <div class="tabs-wrapper">
+    <div class="tab-btn active" data-tab="main">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+      کارنامه اصلی
+    </div>
+    <div class="tab-btn" data-tab="class">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+      تراز در کلاس
+    </div>
+    <div class="tab-btn" data-tab="history">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+      تراز نسبت به گذشته
+    </div>
   </div>
 
-  <div id="details" style="display:none;margin-top:20px;">
-    {% for item in results %}
-      <div style="border:1px solid #ddd;padding:15px;border-radius:8px;margin-bottom:15px;">
-        <p><strong>سوال {{ forloop.counter }}:</strong> {{ item.question.text }}</p>
-        
-        {% if item.question.kind == 'mcq' %}
-          <div style="display:flex;flex-direction:column;gap:5px;">
-          {% for opt in item.options %}
-            {% with idx=forloop.counter0 %}
-            <div style="padding:8px;border-radius:6px;
-              {% if idx == item.correct_index %}background-color:#d1fae5;border:1px solid #10b981;{% endif %}
-              {% if idx == item.user_answer and idx != item.correct_index %}background-color:#fee2e2;border:1px solid #ef4444;{% endif %}
-            ">
-              {{ opt }}
-              {% if idx == item.correct_index %} <span style="color:#059669;font-weight:bold;">(صحیح)</span> {% endif %}
-              {% if idx == item.user_answer %} <span style="font-weight:bold;">(انتخاب شما)</span> {% endif %}
-            </div>
-            {% endwith %}
-          {% endfor %}
-          </div>
-        {% else %}
-           <p>پاسخ شما: {{ item.user_answer|default:"-" }}</p>
-           <p>پاسخ صحیح: {{ item.question.answer_text }}</p>
-        {% endif %}
+  <!-- Tab Content: Main Report -->
+  <div id="tab-main" class="tab-content main-card">
+    <div class="exam-name">نتیجه آزمون: {{ exam.name }}</div>
+    
+    <div class="score-section">
+      <div class="score-circle">
+        <div class="score-inner">
+          <span class="score-val">{{ score_percent|floatformat:0 }}%</span>
+          <span class="score-label">نمره کل</span>
+        </div>
       </div>
-    {% endfor %}
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box stat-correct">
+        <div class="stat-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <span class="stat-value">{{ correct_count }}</span>
+        <span class="stat-label">پاسخ صحیح</span>
+      </div>
+      
+      <div class="stat-box stat-incorrect">
+        <div class="stat-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+        </div>
+        <span class="stat-value">{{ incorrect_count }}</span>
+        <span class="stat-label">پاسخ غلط</span>
+      </div>
+      
+      <div class="stat-box stat-unanswered">
+        <div class="stat-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <span class="stat-value">{{ unanswered_count }}</span>
+        <span class="stat-label">بدون پاسخ</span>
+      </div>
+      
+      <div class="stat-box stat-total">
+        <div class="stat-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+        </div>
+        <span class="stat-value">{{ total_questions }}</span>
+        <span class="stat-label">کل سوالات</span>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <a href="{% url 'exams_list' %}" class="btn-outline">بازگشت به لیست آزمون‌ها</a>
+    </div>
+
   </div>
+
+  <!-- Tab Content: Class Rank -->
+  <div id="tab-class" class="tab-content main-card" style="display:none;">
+    <h3 style="margin-bottom:20px;color:#1e293b;">مقایسه با کلاس</h3>
+    <div style="position:relative; height:400px; width:100%;">
+      <canvas id="classChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Tab Content: History Rank -->
+  <div id="tab-history" class="tab-content main-card" style="display:none;">
+    <h3 style="margin-bottom:20px;color:#1e293b;">روند پیشرفت تحصیلی</h3>
+    <div style="position:relative; height:400px; width:100%;">
+      <canvas id="historyChart"></canvas>
+    </div>
+  </div>
+
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  document.getElementById('toggleDetails').addEventListener('click', function() {
-    var d = document.getElementById('details');
-    if(d.style.display === 'none') {
-      d.style.display = 'block';
-      this.textContent = 'بستن جزئیات';
-    } else {
-      d.style.display = 'none';
-      this.textContent = 'مشاهده بیشتر (جزئیات سوالات)';
-    }
+  // Tabs Logic
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      
+      btn.classList.add('active');
+      const tabId = btn.getAttribute('data-tab');
+      document.getElementById('tab-' + tabId).style.display = 'block';
+    });
+  });
+
+  // Chart Logic
+  document.addEventListener('DOMContentLoaded', function() {
+    // Class Chart
+    const ctxClass = document.getElementById('classChart').getContext('2d');
+    new Chart(ctxClass, {
+      type: 'bar',
+      data: {
+        labels: ['نمره شما', 'میانگین کلاس', 'بالاترین نمره', 'پایین‌ترین نمره'],
+        datasets: [{
+          label: 'نمره (درصد)',
+          data: [{{ score_percent|floatformat:1 }}, {{ class_avg|floatformat:1 }}, {{ class_max|floatformat:1 }}, {{ class_min|floatformat:1 }}],
+          backgroundColor: [
+            '#3A6CF4',
+            '#818cf8',
+            '#34d399',
+            '#f87171'
+          ],
+          borderRadius: 8,
+          barThickness: 50
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100
+          }
+        }
+      }
+    });
+
+    // History Chart
+    const historyData = [
+      {% for h in history_data %}
+        { x: '{{ h.exam_name }}', y: {{ h.score|floatformat:1 }} },
+      {% endfor %}
+    ];
+    
+    const ctxHistory = document.getElementById('historyChart').getContext('2d');
+    new Chart(ctxHistory, {
+      type: 'line',
+      data: {
+        labels: historyData.map(d => d.x),
+        datasets: [{
+          label: 'نمره',
+          data: historyData.map(d => d.y),
+          borderColor: '#3A6CF4',
+          backgroundColor: 'rgba(58, 108, 244, 0.1)',
+          borderWidth: 3,
+          tension: 0.3,
+          fill: true,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#3A6CF4',
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100
+          }
+        }
+      }
+    });
   });
 </script>
 {% endblock %}
