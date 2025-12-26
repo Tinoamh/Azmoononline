@@ -38,6 +38,7 @@ from .views import (
     admin_exam_list_view,
     admin_exam_edit_view,
     admin_exam_report_view,
+    instructor_exam_report_view,
 )
 from .forms import AzmonPasswordResetForm
 
@@ -95,6 +96,7 @@ urlpatterns = [
     path('api/exams/<int:exam_id>/questions/', api_exam_questions, name='api_exam_questions'),
     path('api/questions/<int:question_id>/delete/', api_question_delete, name='api_question_delete'),
     path('api/questions/<int:question_id>/update/', api_question_update, name='api_question_update'),
+    path('instructor/exams/<int:exam_id>/report/', instructor_exam_report_view, name='instructor_exam_report'),
     path('question-bank/', question_bank, name='question_bank'),
     path('question-bank/new/', question_bank_new, name='question_bank_new'),
     path('question-bank/create/', question_bank_create, name='question_bank_create'),

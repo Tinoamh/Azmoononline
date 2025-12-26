@@ -127,6 +127,15 @@
                     <a href="/accounts/exams/{{ e.id }}/start/" class="btn-start" title="شروع آزمون">شروع</a>
                 {% endif %}
             {% endif %}
+          {% else %}
+            <!-- Instructor View Logic -->
+            {% if e.end_time and e.end_time < now %}
+                <a href="{% url 'instructor_exam_report' e.id %}" class="btn-start" style="background:#10b981 !important;">نتایج</a>
+            {% elif e.start_time and e.start_time > now %}
+                <span style="color:#f59e0b; font-weight:700; font-size:14px;">در انتظار شروع آزمون</span>
+            {% else %}
+                <span style="color:#3b82f6; font-weight:700; font-size:14px;">در حال اجرا</span>
+            {% endif %}
           {% endif %}
         </div>
         <div class="meta">
