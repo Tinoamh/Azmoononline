@@ -518,6 +518,26 @@
     <!-- Toggle button for sidebar (optional/custom addition) -->
     <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
 
+    <!-- Security Overlays -->
+    <div id="securityStartOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.98);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#333;text-align:center;">
+        <h1 style="color:#3F59CF;margin-bottom:20px;">قوانین امنیتی آزمون</h1>
+        <p style="font-size:16px;margin-bottom:10px;">برای شرکت در آزمون، سیستم باید وارد حالت تمام‌صفحه شود.</p>
+        <p style="font-size:14px;color:#666;margin-bottom:30px;">
+            ⚠️ خروج از حالت تمام‌صفحه، تغییر تب، یا باز کردن برنامه دیگر به عنوان تقلب ثبت می‌شود.<br>
+            کلیک راست و کپی/پیست در این صفحه غیرفعال است.
+        </p>
+        <button class="btn btn-primary" onclick="startExamSecurity()" style="font-size:18px;padding:15px 40px;">شروع آزمون و قفل صفحه</button>
+    </div>
+
+    <div id="securityViolationOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,0,0,0.95);z-index:10000;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;">
+        <h1 style="font-size:32px;margin-bottom:20px;">⛔ خطای امنیتی!</h1>
+        <p style="font-size:18px;margin-bottom:30px;">
+            شما از محیط آزمون خارج شدید یا حالت تمام‌صفحه را غیرفعال کردید.<br>
+            لطفاً سریعاً به آزمون بازگردید.
+        </p>
+        <button class="btn" onclick="returnToExam()" style="background:white;color:red;font-size:16px;padding:12px 30px;border:none;">بازگشت به آزمون</button>
+    </div>
+
     <div class="exam-container">
         <!-- Header -->
         <div class="exam-header">
@@ -610,6 +630,108 @@
         const sidebar = document.getElementById('sidebar');
         const submitModal = document.getElementById('submitModal');
         const unansweredWarning = document.getElementById('unansweredWarning');
+
+        // Security Variables
+        let isExamActive = false;
+        let securityViolations = 0;
+
+        // Security Functions
+        window.startExamSecurity = function() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().then(() => {
+                    activateSecurity();
+                }).catch(err => {
+                    alert("لطفا برای شروع آزمون اجازه دسترسی تمام‌صفحه را بدهید.");
+                });
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+                activateSecurity();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+                activateSecurity();
+            } else {
+                // Fallback for browsers that don't support fullscreen API
+                activateSecurity();
+            }
+        };
+
+        function activateSecurity() {
+            document.getElementById('securityStartOverlay').style.display = 'none';
+            isExamActive = true;
+            // Prevent context menu
+            document.addEventListener('contextmenu', preventDefaultHandler);
+            // Prevent copy/paste shortcuts
+            document.addEventListener('keydown', preventKeyShortcuts);
+            // Prevent selection
+            document.body.style.userSelect = 'none';
+        }
+
+        window.returnToExam = function() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(() => {});
+            }
+            document.getElementById('securityViolationOverlay').style.display = 'none';
+        };
+
+        function preventDefaultHandler(e) {
+            e.preventDefault();
+        }
+
+        function preventKeyShortcuts(e) {
+            // Block Ctrl+C, Ctrl+V, Ctrl+P, Alt+Tab (hard to block Alt+Tab but we can try blocking Alt)
+            if ((e.ctrlKey || e.metaKey) && (['c', 'v', 'p', 's', 'u'].includes(e.key.toLowerCase()))) {
+                e.preventDefault();
+                return false;
+            }
+            // Block F12, F11, etc.
+            if (e.key.startsWith('F') && e.key !== 'F5') { // Allow refresh? Maybe not.
+                // e.preventDefault(); 
+            }
+        }
+
+        // Monitoring Events
+        document.addEventListener('fullscreenchange', () => {
+            if (isExamActive && !document.fullscreenElement) {
+                showViolation();
+            }
+        });
+        
+        // Webkit fallback
+        document.addEventListener('webkitfullscreenchange', () => {
+            if (isExamActive && !document.webkitFullscreenElement) {
+                showViolation();
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (isExamActive && document.hidden) {
+                showViolation();
+            }
+        });
+
+        window.addEventListener('blur', () => {
+            if (isExamActive) {
+               showViolation();
+            }
+        });
+
+        function showViolation() {
+            if (!isExamActive) return;
+            securityViolations++;
+            document.getElementById('securityViolationOverlay').style.display = 'flex';
+        }
+
+        function disableSecurity() {
+            isExamActive = false;
+            document.removeEventListener('contextmenu', preventDefaultHandler);
+            document.removeEventListener('keydown', preventKeyShortcuts);
+            document.body.style.userSelect = 'auto';
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
 
         // Initialization
         function init() {
@@ -778,6 +900,9 @@
         };
 
         window.confirmSubmit = function() {
+            // Disable security before submitting
+            disableSecurity();
+
             // Populate the hidden form
             const form = document.getElementById('examForm');
             questionsData.forEach(q => {
