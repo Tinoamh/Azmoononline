@@ -47,6 +47,10 @@
     </div>
     <div class="section">
       <h2 class="title">دانشجویان</h2>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <input type="checkbox" id="selectAllStudents">
+        <label for="selectAllStudents" style="color:#3A6CF4;font-weight:700;">انتخاب همه</label>
+      </div>
       <table class="table">
         <thead><tr><th>نام</th><th>نام خانوادگی</th><th class="chk">شرکت در آزمون</th></tr></thead>
         <tbody>
@@ -105,6 +109,20 @@
         if(v) url.searchParams.set('class_id', v); else url.searchParams.delete('class_id');
         window.location.href = url.toString();
       });
+    }
+    var master = document.getElementById('selectAllStudents');
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('input[name="student_ids"]'));
+    function syncMaster(){
+      if(boxes.length===0){ master.checked=false; return; }
+      master.checked = boxes.every(function(b){ return b.checked; });
+      master.indeterminate = !master.checked && boxes.some(function(b){ return b.checked; });
+    }
+    if(master){
+      master.addEventListener('change', function(){
+        boxes.forEach(function(b){ b.checked = master.checked; });
+      });
+      boxes.forEach(function(b){ b.addEventListener('change', syncMaster); });
+      syncMaster();
     }
   })();
 </script>
