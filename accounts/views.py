@@ -1246,6 +1246,19 @@ def admin_exam_edit_view(request, pk):
         'all_students': all_students,
         'exam_student_ids': exam_student_ids
     })
+
+@login_required
+@require_POST
+def admin_exam_delete_view(request, pk):
+    u = request.user
+    is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+    if not is_admin:
+        return redirect('profile')
+
+    from django.shortcuts import get_object_or_404
+    exam = get_object_or_404(Exam, pk=pk)
+    exam.delete()
+    return redirect('admin_exam_list')
 @login_required
 def admin_exam_report_view(request, exam_id):
     u = request.user

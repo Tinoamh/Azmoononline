@@ -38,6 +38,7 @@ from .views import (
     admin_exam_list_view,
     admin_exam_edit_view,
     admin_exam_report_view,
+    admin_exam_delete_view,
     instructor_exam_report_view,
     instructor_results_list_view,
     admin_class_list_view,
@@ -83,6 +84,7 @@ urlpatterns = [
     
     path('admin/exams/', admin_exam_list_view, name='admin_exam_list'),
     path('admin/exams/<int:pk>/edit/', admin_exam_edit_view, name='admin_exam_edit'),
+    path('admin/exams/<int:pk>/delete/', admin_exam_delete_view, name='admin_exam_delete'),
     path('admin/exams/<int:exam_id>/report/', admin_exam_report_view, name='admin_exam_report'),
     
     path('admin/classes/', admin_class_list_view, name='admin_class_list'),
