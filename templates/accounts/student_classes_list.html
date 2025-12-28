@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}کلاس‌های من{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: #f8fafc; }
+    .page-header {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 40px 20px;
+        border-radius: 20px;
+        margin-bottom: 40px;
+        text-align: right;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+    }
+    .page-title h1 {
+        font-size: 32px;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+    }
+    
+    .class-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+    }
+    .class-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+    }
+    .class-name {
+        font-size: 20px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+    .instructor-name {
+        color: #64748b;
+        font-size: 14px;
+    }
+    
+    .exam-list {
+        display: grid;
+        gap: 16px;
+    }
+    .exam-item {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: 0.2s;
+    }
+    .exam-item:hover {
+        background: #eff6ff;
+    }
+    .exam-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .exam-name {
+        font-weight: 700;
+        color: #334155;
+    }
+    .exam-meta {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+    
+    .btn-action {
+        padding: 8px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+    }
+    .btn-start {
+        background: #3b82f6;
+        color: white;
+    }
+    .btn-start:hover { background: #2563eb; }
+    
+    .btn-result {
+        background: #10b981;
+        color: white;
+    }
+    .btn-result:hover { background: #059669; }
+    
+    .btn-disabled {
+        background: #cbd5e1;
+        color: #64748b;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+    
+    <div class="page-header">
+        <div class="page-title">
+            <h1>کلاس‌های من</h1>
+            <p>لیست کلاس‌ها و آزمون‌های فعال شما</p>
+        </div>
+    </div>
+
+    {% for item in classes_data %}
+    <div class="class-card">
+        <div class="class-header">
+            <div>
+                <div class="class-name">{{ item.classroom.name }}</div>
+                <div class="instructor-name">استاد: {{ item.classroom.instructor.first_name }} {{ item.classroom.instructor.last_name }}</div>
+            </div>
+            <div style="background:#e0f2fe; color:#0284c7; padding:4px 12px; border-radius:99px; font-size:12px; font-weight:700;">
+                {{ item.exams|length }} آزمون
+            </div>
+        </div>
+        
+        <div class="exam-list">
+            {% for ex in item.exams %}
+            <div class="exam-item">
+                <div class="exam-info">
+                    <div class="exam-name">{{ ex.exam.name }}</div>
+                    <div class="exam-meta">
+                        {% if ex.exam.start_time %}
+                            زمان شروع: {{ ex.exam.start_time|date:"Y/m/d H:i" }}
+                        {% else %}
+                            بدون محدودیت زمانی
+                        {% endif %}
+                        | مدت: {{ ex.exam.duration }} دقیقه
+                    </div>
+                </div>
+                <div>
+                    {% if ex.status == 'completed' %}
+                        <a href="{% url 'exam_result' ex.exam.id %}" class="btn-action btn-result">مشاهده کارنامه</a>
+                    {% elif ex.status == 'in_progress' %}
+                        <a href="{% url 'exam_start' ex.exam.id %}" class="btn-action btn-start">ادامه آزمون</a>
+                    {% else %}
+                        {% if ex.is_active %}
+                            <a href="{% url 'exam_start' ex.exam.id %}" class="btn-action btn-start">شروع آزمون</a>
+                        {% else %}
+                            <span class="btn-action btn-disabled">غیرفعال</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align:center; color:#94a3b8; padding:20px;">هیچ آزمونی برای این کلاس تعریف نشده است.</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align:center; padding:60px; background:white; border-radius:16px; color:#64748b;">
+        شما هنوز در هیچ کلاسی عضو نشده‌اید.
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

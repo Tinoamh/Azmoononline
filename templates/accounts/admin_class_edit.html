@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}ویرایش آزمون{% endblock %}
+{% block title %}{% if classroom.pk %}ویرایش کلاس{% else %}تعریف کلاس جدید{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -75,7 +75,6 @@
     }
     .checkbox-col { width: 40px; text-align: center !important; }
 
-    
     .btn-save {
         background: #3b82f6;
         color: white;
@@ -103,37 +102,31 @@
 
 {% block content %}
 <div class="edit-container">
-    <a href="{% url 'admin_exam_list' %}" class="btn-back">بازگشت به لیست</a>
-    <h1 class="page-title">ویرایش آزمون: {{ exam.name }}</h1>
+    <a href="{% url 'admin_class_list' %}" class="btn-back">بازگشت به لیست</a>
+    <h1 class="page-title">{% if classroom.pk %}ویرایش کلاس: {{ classroom.name }}{% else %}تعریف کلاس جدید{% endif %}</h1>
     
     <form method="post">
         {% csrf_token %}
         
         <div class="form-group">
-            <label class="form-label">نام آزمون</label>
-            <input type="text" name="name" class="form-input" value="{{ exam.name }}">
-        </div>
-        
-        <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
-            <div>
-                <label class="form-label">تاریخ شروع</label>
-                <input type="datetime-local" name="start_time" class="form-input" 
-                       value="{{ exam.start_time|date:'Y-m-d\TH:i' }}">
-            </div>
-            <div>
-                <label class="form-label">تاریخ پایان</label>
-                <input type="datetime-local" name="end_time" class="form-input" 
-                       value="{{ exam.end_time|date:'Y-m-d\TH:i' }}">
-            </div>
+            <label class="form-label">نام کلاس</label>
+            <input type="text" name="name" class="form-input" value="{{ classroom.name|default:'' }}" required>
         </div>
         
         <div class="form-group">
-            <label class="form-label">مدت زمان (دقیقه)</label>
-            <input type="number" name="duration" class="form-input" value="{{ exam.duration }}">
+            <label class="form-label">استاد مربوطه</label>
+            <select name="instructor_id" class="form-input" required>
+                <option value="">انتخاب استاد...</option>
+                {% for i in instructors %}
+                <option value="{{ i.id }}" {% if classroom.instructor_id == i.id %}selected{% endif %}>
+                    {{ i.first_name }} {{ i.last_name }} ({{ i.email }})
+                </option>
+                {% endfor %}
+            </select>
         </div>
         
         <div class="form-group">
-            <label class="form-label">دانشجویان شرکت‌کننده</label>
+            <label class="form-label">دانشجویان عضو کلاس</label>
             <div class="student-list">
                 <table class="student-table">
                     <thead>
@@ -150,7 +143,7 @@
                         <tr>
                             <td class="checkbox-col">
                                 <input type="checkbox" name="student_ids" value="{{ s.id }}" id="st_{{ s.id }}"
-                                       {% if s.id in exam_student_ids %}checked{% endif %}>
+                                       {% if s.id in current_student_ids %}checked{% endif %}>
                             </td>
                             <td>
                                 <label for="st_{{ s.id }}" style="cursor:pointer; display:block;">
@@ -174,7 +167,7 @@
             }
         </script>
         
-        <button type="submit" class="btn-save">ذخیره تغییرات</button>
+        <button type="submit" class="btn-save">ذخیره کلاس</button>
     </form>
 </div>
 {% endblock %}

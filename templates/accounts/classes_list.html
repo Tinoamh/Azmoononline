@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}کلاس‌های من{% endblock %}
+{% block body_class %}classes-list{% endblock %}
+{% block extra_css %}
+<style>
+  body.classes-list{background:linear-gradient(180deg,#f5f8ff 0%, #eef3ff 100%)}
+  .wrap{max-width:900px;margin:24px auto;padding:0 16px}
+  .card{background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:16px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .item{border:1px solid #eaf1ff;border-radius:12px;padding:12px;background: rgba(255,255,255,0.6);}
+  .title{font-weight:800;color:#3A6CF4}
+  .meta{display:flex;gap:12px;color:#6b7aa6;font-size:12px}
+  .btn{display:inline-block;padding:8px 14px;border-radius:10px;background:#3A6CF4;color:#fff;text-decoration:none;font-weight:700}
+  .btn:hover{background:#2E56D0}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="card">
+    <h2 class="title">کلاس‌های شما</h2>
+    <div class="grid">
+      {% for c in classes %}
+      <div class="item" style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div><strong>{{ c.name }}</strong></div>
+          <div class="meta"><span>دانش‌آموزان: {{ c.students.count }}</span></div>
+        </div>
+        <div>
+          <a class="btn" href="/accounts/students/?class_id={{ c.id }}">مشاهده دانش‌آموزان</a>
+        </div>
+      </div>
+      {% empty %}
+      <div class="item">هنوز کلاسی برای شما ثبت نشده است</div>
+      {% endfor %}
+    </div>
+  </div>
+  <div style="margin-top:16px; text-align:center;">
+    <a class="btn" href="/accounts/exam-define/">تعریف آزمون</a>
+  </div>
+{% endblock %}

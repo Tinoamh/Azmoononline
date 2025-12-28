@@ -39,6 +39,10 @@ from .views import (
     admin_exam_edit_view,
     admin_exam_report_view,
     instructor_exam_report_view,
+    instructor_results_list_view,
+    admin_class_list_view,
+    admin_class_edit_view,
+    student_class_list_view,
 )
 from .forms import AzmonPasswordResetForm
 
@@ -74,12 +78,17 @@ urlpatterns = [
     path('classroom/', ClassroomManageView.as_view(), name='classroom'),
     path('exam-define/', ExamDefineView.as_view(), name='exam_define'),
     path('classes/', ClassesListView.as_view(), name='classes_list'),
+    path('my-classes/', student_class_list_view, name='student_classes_list'),
     path('exams/', ExamsListView.as_view(), name='exams_list'),
     
     path('admin/exams/', admin_exam_list_view, name='admin_exam_list'),
     path('admin/exams/<int:pk>/edit/', admin_exam_edit_view, name='admin_exam_edit'),
     path('admin/exams/<int:exam_id>/report/', admin_exam_report_view, name='admin_exam_report'),
     
+    path('admin/classes/', admin_class_list_view, name='admin_class_list'),
+    path('admin/classes/new/', admin_class_edit_view, name='admin_class_new'),
+    path('admin/classes/<int:pk>/edit/', admin_class_edit_view, name='admin_class_edit'),
+
     path('exams/<int:exam_id>/start/', ExamTakeView.as_view(), name='exam_start'),
     path('exams/<int:exam_id>/submit/', ExamSubmitView.as_view(), name='exam_submit'),
     path('exams/<int:exam_id>/result/', ExamResultView.as_view(), name='exam_result'),
@@ -96,6 +105,7 @@ urlpatterns = [
     path('api/exams/<int:exam_id>/questions/', api_exam_questions, name='api_exam_questions'),
     path('api/questions/<int:question_id>/delete/', api_question_delete, name='api_question_delete'),
     path('api/questions/<int:question_id>/update/', api_question_update, name='api_question_update'),
+    path('instructor/results/', instructor_results_list_view, name='instructor_results_list'),
     path('instructor/exams/<int:exam_id>/report/', instructor_exam_report_view, name='instructor_exam_report'),
     path('question-bank/', question_bank, name='question_bank'),
     path('question-bank/new/', question_bank_new, name='question_bank_new'),

@@ -193,7 +193,6 @@
                         <td dir="ltr" style="text-align:right">{{ item.obj.end_time|date:"Y/m/d H:i"|default:"-" }}</td>
                         <td>{{ item.student_count }}</td>
                         <td style="display:flex; gap:8px;">
-                            <a href="{% url 'admin_exam_edit' item.obj.id %}" class="btn-edit">ویرایش</a>
                             <button onclick="showReport({{ item.obj.id }})" class="btn-report">مشاهده کارنامه</button>
                         </td>
                     </tr>

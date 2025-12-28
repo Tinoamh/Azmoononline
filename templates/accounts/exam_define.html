@@ -27,9 +27,23 @@
 <div class="wrap">
   <form method="post" class="card">
     {% csrf_token %}
+    {% if error_message %}
+    <div style="background:#fee2e2; border:1px solid #ef4444; color:#b91c1c; padding:12px; border-radius:10px; margin-bottom:16px; text-align:center; font-weight:700;">
+        {{ error_message }}
+    </div>
+    {% endif %}
     <div class="section">
       <h2 class="title">نام آزمون</h2>
       <input class="input" type="text" name="exam_name" placeholder="نام آزمون" />
+    </div>
+    <div class="section">
+      <h2 class="title">انتخاب کلاس</h2>
+      <select class="input" name="class_id" id="classSelect">
+        <option value="">بدون کلاس (انتخاب دستی دانشجویان)</option>
+        {% for c in classes %}
+          <option value="{{ c.id }}" {% if selected_class_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
     </div>
     <div class="section">
       <h2 class="title">دانشجویان</h2>
@@ -81,4 +95,17 @@
     </div>
   </form>
 </div>
+<script>
+  (function(){
+    var sel = document.getElementById('classSelect');
+    if(sel){
+      sel.addEventListener('change', function(){
+        var v = sel.value;
+        var url = new URL(window.location.href);
+        if(v) url.searchParams.set('class_id', v); else url.searchParams.delete('class_id');
+        window.location.href = url.toString();
+      });
+    }
+  })();
+</script>
 {% endblock %}

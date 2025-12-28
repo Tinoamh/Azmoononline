@@ -126,6 +126,82 @@ def api_csrf(request):
     return JsonResponse({'csrfToken': token})
 
 @login_required
+def student_class_list_view(request):
+    u = request.user
+    role_code = getattr(getattr(u, 'role', None), 'code', '')
+    if role_code != 'student':
+        return redirect('profile')
+
+    # Get classes where student is enrolled
+    # Only show 'real' classes (not staging)
+    classes = Classroom.objects.filter(students=u, is_staging=False).select_related('instructor').order_by('-id')
+    
+    # For each class, find relevant exams
+    # Exams that are assigned to this class
+    # AND where the student has an assignment or is eligible
+    
+    classes_data = []
+    for c in classes:
+        # Find exams for this class
+        # An exam is relevant if it's linked to this classroom
+        # AND (student is in exam.students OR exam assignment exists)
+        # Usually exam.students.set(classroom.students.all()) is done, so checking exam.classroom should be enough + assignment check
+        
+        # Actually, let's find exams where:
+        # 1. exam.classroom = c
+        # 2. exam has an assignment for this student OR is available to take
+        
+        exams_qs = Exam.objects.filter(classroom=c).order_by('-created_at')
+        
+        class_exams = []
+        for e in exams_qs:
+            # Check assignment
+            assignment = ExamAssignment.objects.filter(exam=e, student=u).first()
+            
+            status = 'pending'
+            score = None
+            if assignment:
+                if assignment.completed_at:
+                    status = 'completed'
+                    score = assignment.score
+                else:
+                    status = 'in_progress' # or just assigned
+            else:
+                # If no assignment, check if student is in exam.students
+                if e.students.filter(pk=u.pk).exists():
+                     status = 'not_started'
+                else:
+                    continue # Not for this student
+            
+            # Helper for frontend
+            is_active = False
+            now = timezone.now()
+            if e.start_time and e.end_time:
+                if e.start_time <= now <= e.end_time:
+                    is_active = True
+            elif e.start_time:
+                if now >= e.start_time:
+                    is_active = True
+            else:
+                is_active = True # No time limit?
+
+            class_exams.append({
+                'exam': e,
+                'assignment': assignment,
+                'status': status,
+                'score': score,
+                'is_active': is_active
+            })
+            
+        classes_data.append({
+            'classroom': c,
+            'exams': class_exams
+        })
+
+    return render(request, 'accounts/student_classes_list.html', {
+        'classes_data': classes_data
+    })
+@login_required
 def question_bank(request):
     u = request.user
     is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
@@ -288,7 +364,15 @@ class StudentsListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['users'] = User.objects.select_related('role', 'profile').filter(role__code='student')
+        u = self.request.user
+        qs = User.objects.select_related('role', 'profile').filter(role__code='student')
+        
+        is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+        if is_instructor:
+            # Filter students that are in classes owned by this instructor
+            qs = qs.filter(classes__instructor=u).distinct()
+            
+        ctx['users'] = qs
         ctx['roles'] = list(Role.objects.filter(code__in=['admin','student','instructor']))
         ctx['listing_students_only'] = True
         return ctx
@@ -306,6 +390,8 @@ class ClassroomManageView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        if self.request.GET.get('error') == 'not_enough_questions':
+             ctx['error_message'] = 'تعداد سوالات درخواستی بیشتر از موجودی بانک سوال است.'
         u = self.request.user
         classroom, _ = Classroom.objects.get_or_create(instructor=u, is_staging=True, defaults={'name': 'کلاس موقت'})
         if self.request.GET.get('reset') == '1':
@@ -365,8 +451,10 @@ class ClassesListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        if self.request.GET.get('error') == 'not_enough_questions':
+             ctx['error_message'] = 'تعداد سوالات درخواستی بیشتر از موجودی بانک سوال است.'
         u = self.request.user
-        ctx['classes'] = Classroom.objects.filter(instructor=u).order_by('name')
+        ctx['classes'] = Classroom.objects.filter(instructor=u, is_staging=False).order_by('name')
         return ctx
 
 @method_decorator(login_required, name="dispatch")
@@ -389,6 +477,8 @@ class ExamsListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        if self.request.GET.get('error') == 'not_enough_questions':
+             ctx['error_message'] = 'تعداد سوالات درخواستی بیشتر از موجودی بانک سوال است.'
         u = self.request.user
         role_code = getattr(getattr(u, 'role', None), 'code', '')
         if role_code == 'instructor':
@@ -426,8 +516,25 @@ class ExamDefineView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        if self.request.GET.get('error') == 'not_enough_questions':
+             ctx['error_message'] = 'تعداد سوالات درخواستی بیشتر از موجودی بانک سوال است.'
         u = self.request.user
+        # Instructor classes list
+        classes = Classroom.objects.filter(instructor=u, is_staging=False).order_by('name')
+        ctx['classes'] = classes
+        # Filter students: only show students enrolled in selected class (if any)
         students = User.objects.select_related('role').filter(role__code='student')
+        class_id = self.request.GET.get('class_id')
+        if class_id:
+            try:
+                cls = classes.get(pk=int(class_id))
+                students = students.filter(classes=cls).distinct()
+                ctx['selected_class_id'] = cls.id
+            except (Classroom.DoesNotExist, ValueError):
+                students = students.filter(classes__instructor=u).distinct()
+        else:
+            students = students.filter(classes__instructor=u).distinct()
+        
         from django.db.models import Count
         banks = (Exam.objects
                  .filter(created_by=u, source_exam__isnull=True)
@@ -446,11 +553,28 @@ class ExamDefineView(TemplateView):
             numq = 0
         src_id = request.POST.get('source_exam_id')
         sel_ids = request.POST.getlist('student_ids')
+        class_id = request.POST.get('class_id')
 
-        # Build classroom specific to this exam
-        classroom = Classroom.objects.create(instructor=u, name=(name or 'آزمون جدید'), is_staging=False)
-        students = User.objects.filter(id__in=sel_ids)
-        classroom.students.set(students)
+        # Choose classroom: use selected class if provided; otherwise create a dedicated one
+        classroom = None
+        if class_id:
+            try:
+                classroom = Classroom.objects.get(pk=int(class_id), instructor=u, is_staging=False)
+            except (Classroom.DoesNotExist, ValueError):
+                classroom = None
+        if classroom is None:
+            # Mark as staging (hidden) so it doesn't pollute the class lists
+            classroom = Classroom.objects.create(instructor=u, name=(name or 'آزمون جدید'), is_staging=True)
+            students = User.objects.filter(id__in=sel_ids, role__code='student')
+            classroom.students.set(students)
+        else:
+            # Intersect selection with classroom members; if none selected, use all members
+            member_ids = set(classroom.students.values_list('id', flat=True))
+            valid_ids = [int(sid) for sid in sel_ids if sid and sid.isdigit() and int(sid) in member_ids]
+            if valid_ids:
+                students = User.objects.filter(id__in=valid_ids, role__code='student')
+            else:
+                students = classroom.students.all()
 
         src = None
         if src_id:
@@ -458,7 +582,17 @@ class ExamDefineView(TemplateView):
                 src = Exam.objects.get(pk=src_id, created_by=u)
             except Exam.DoesNotExist:
                 src = None
-        
+
+        if src:
+            total_available = src.questions.count()
+            if numq > total_available:
+                # You might want to pass an error message to the template instead of redirecting
+                # But since the view is generic TemplateView handling POST manually, 
+                # we'll just clamp it or return error. 
+                # Per user request "give error", let's return a simple HttpResponseBadRequest or redirect with error param
+                # For better UX, let's redirect back with error param
+                return redirect(reverse_lazy('exam_define') + '?error=not_enough_questions')
+
         try:
             duration = int(request.POST.get('duration', '60'))
         except ValueError:
@@ -490,13 +624,13 @@ class ExamDefineView(TemplateView):
             start_time=start_time,
             end_time=end_time
         )
-        exam.students.set(classroom.students.all())
+        exam.students.set(students)
 
         # Random selection per student from source exam if provided
         if src:
             import random
             src_qs = list(src.questions.values_list('id', flat=True))
-            for s in classroom.students.all():
+            for s in students:
                 sel = src_qs[:]
                 random.shuffle(sel)
                 if numq and numq > 0:
@@ -1080,8 +1214,24 @@ def admin_exam_edit_view(request, pk):
         
         # Sync assignments
         current_students = set(exam.students.values_list('id', flat=True))
+        
+        import random
+        source_qs_ids = []
+        if exam.source_exam:
+             source_qs_ids = list(exam.source_exam.questions.values_list('id', flat=True))
+
         for s in students:
-            ExamAssignment.objects.get_or_create(exam=exam, student=s)
+            defaults = {}
+            if exam.source_exam:
+                sel = source_qs_ids[:]
+                random.shuffle(sel)
+                if exam.num_questions and exam.num_questions > 0:
+                    sel = sel[:exam.num_questions]
+                defaults['selected_question_ids'] = sel
+            else:
+                defaults['selected_question_ids'] = []
+
+            ExamAssignment.objects.get_or_create(exam=exam, student=s, defaults=defaults)
             
         # Optional: remove assignments for removed students
         ExamAssignment.objects.filter(exam=exam).exclude(student__in=students).delete()
@@ -1184,3 +1334,167 @@ def instructor_exam_report_view(request, exam_id):
         'chart_data': chart_data
     }
     return render(request, 'accounts/instructor_exam_report.html', context)
+
+@login_required
+def instructor_results_list_view(request):
+    u = request.user
+    role_code = getattr(getattr(u, 'role', None), 'code', '')
+    if role_code != 'instructor':
+        return redirect('profile')
+
+    # Get all exams created by this instructor that are NOT question banks (source_exam__isnull=False or have assignments)
+    # Actually, any exam created by instructor that is not just a source template.
+    # We defined question banks as source_exam__isnull=True.
+    # But normal exams also have source_exam__isnull=True if created from scratch without bank?
+    # No, question banks are exams created in question_bank_create view.
+    # Normal exams are created in ExamDefineView.
+    # Let's list all exams created by user, and maybe filter out those that have 0 assignments?
+    # Or better: check how we distinguish.
+    # In ExamDefineView, we create exam. In question_bank_create, we create exam.
+    # The distinction is usually usage.
+    # Let's list all exams, but maybe annotate with participant count.
+    
+    from django.db.models import Count, Q
+    
+    # We want exams that are "Real Exams", not just banks.
+    # Usually banks are not assigned to students? Or they are assigned to a dummy class?
+    # Let's just list all exams and show stats.
+    
+    exams = Exam.objects.filter(created_by=u).annotate(
+        participant_count=Count('assignments', filter=Q(assignments__completed_at__isnull=False)),
+        total_assigned=Count('assignments')
+    ).order_by('-created_at')
+    
+    # Filter out exams that are likely just question banks (e.g. 0 assigned students, or name like 'بانک...')
+    # But user might have defined an exam and nobody took it yet.
+    # Let's just show all, but maybe mark them.
+    
+    return render(request, 'accounts/instructor_results_list.html', {
+        'exams': exams
+    })
+
+@login_required
+def admin_class_list_view(request):
+    u = request.user
+    is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+    if not is_admin:
+        return redirect('profile')
+    
+    from django.db.models import Count
+    classes = Classroom.objects.filter(is_staging=False).select_related('instructor').annotate(student_count=Count('students')).order_by('-id')
+    
+    return render(request, 'accounts/admin_class_list.html', {
+        'classes': classes
+    })
+
+
+
+@login_required
+
+def admin_class_edit_view(request, pk=None):
+
+    u = request.user
+
+    is_admin = (getattr(getattr(u, 'role', None), 'code', '') == 'admin')
+
+    if not is_admin:
+
+        return redirect('profile')
+
+    
+
+    if pk:
+
+        from django.shortcuts import get_object_or_404
+
+        classroom = get_object_or_404(Classroom, pk=pk)
+
+    else:
+
+        classroom = Classroom()
+
+        
+
+    if request.method == 'POST':
+
+        name = request.POST.get('name')
+
+        instructor_id = request.POST.get('instructor_id')
+
+        student_ids = request.POST.getlist('student_ids')
+
+        
+
+        if name:
+
+            classroom.name = name
+
+        
+
+        if instructor_id:
+
+            try:
+
+                instructor = User.objects.get(pk=instructor_id, role__code='instructor')
+
+                classroom.instructor = instructor
+
+            except User.DoesNotExist:
+
+                pass
+
+        elif not classroom.instructor_id:
+
+            # If creating new and no instructor selected, maybe default to admin or require it?
+
+            # Assuming required, but for now let's skip if missing to avoid crash
+
+            pass
+
+            
+
+        if not classroom.instructor_id:
+
+             # Basic validation failure
+
+             pass 
+
+        else:
+
+            classroom.save()
+
+            students = User.objects.filter(pk__in=student_ids, role__code='student')
+
+            classroom.students.set(students)
+
+            return redirect('admin_class_list')
+
+
+
+    # Context data
+
+    instructors = User.objects.filter(role__code='instructor')
+
+    all_students = User.objects.filter(role__code='student')
+
+    
+
+    current_student_ids = []
+
+    if classroom.pk:
+
+        current_student_ids = set(classroom.students.values_list('id', flat=True))
+
+        
+
+    return render(request, 'accounts/admin_class_edit.html', {
+
+        'classroom': classroom,
+
+        'instructors': instructors,
+
+        'all_students': all_students,
+
+        'current_student_ids': current_student_ids
+
+    })

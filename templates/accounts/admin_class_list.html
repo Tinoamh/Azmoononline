@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}مدیریت کلاس‌ها{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: #f8fafc; }
+    .page-header {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 40px 20px;
+        border-radius: 20px;
+        margin-bottom: 40px;
+        text-align: right;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .page-title h1 {
+        font-size: 32px;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+    }
+    .page-title p {
+        font-size: 16px;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .btn-new {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 700;
+        transition: 0.2s;
+    }
+    .btn-new:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .class-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .class-table th {
+        background: #eff6ff;
+        color: #3b82f6;
+        font-weight: 700;
+        padding: 16px;
+        text-align: right;
+        font-size: 14px;
+    }
+    .class-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        font-size: 14px;
+    }
+    .class-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .btn-edit {
+        background: #f59e0b;
+        color: white;
+        padding: 6px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .btn-edit:hover {
+        background: #d97706;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    
+    <div class="page-header">
+        <div class="page-title">
+            <h1>مدیریت کلاس‌ها</h1>
+            <p>تعریف و ویرایش کلاس‌های درسی</p>
+        </div>
+        <a href="{% url 'admin_class_new' %}" class="btn-new">+ تعریف کلاس جدید</a>
+    </div>
+
+    <table class="class-table">
+        <thead>
+            <tr>
+                <th>نام کلاس</th>
+                <th>استاد</th>
+                <th>تعداد دانش‌آموزان</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in classes %}
+            {% if not c.is_staging %}
+            <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.instructor.first_name }} {{ c.instructor.last_name }}</td>
+                <td>{{ c.student_count }}</td>
+                <td>
+                    <a href="{% url 'admin_class_edit' c.id %}" class="btn-edit">ویرایش</a>
+                </td>
+            </tr>
+            {% endif %}
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align:center; padding:30px; color:#94a3b8;">هنوز کلاسی تعریف نشده است.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}

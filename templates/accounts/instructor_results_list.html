@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}نتایج آزمون‌ها{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: #f8fafc; }
+    .page-header {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 40px 20px;
+        border-radius: 20px;
+        margin-bottom: 40px;
+        text-align: right;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+    }
+    .page-title h1 {
+        font-size: 32px;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+    }
+    
+    .results-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .results-table th {
+        background: #eff6ff;
+        color: #3b82f6;
+        font-weight: 700;
+        padding: 16px;
+        text-align: right;
+        font-size: 14px;
+    }
+    .results-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        font-size: 14px;
+    }
+    .results-table tr:last-child td {
+        border-bottom: none;
+    }
+    .results-table tr:hover td {
+        background: #f8fafc;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef9c3; color: #854d0e; }
+    
+    .btn-view {
+        background: #3b82f6;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-block;
+        transition: 0.2s;
+    }
+    .btn-view:hover {
+        background: #2563eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    
+    <div class="page-header">
+        <div class="page-title">
+            <h1>نتایج آزمون‌ها</h1>
+            <p>لیست تمام آزمون‌ها و وضعیت مشارکت دانشجویان</p>
+        </div>
+    </div>
+
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th>نام آزمون</th>
+                <th>کلاس مربوطه</th>
+                <th>تعداد شرکت‌کنندگان</th>
+                <th>تاریخ ایجاد</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exam in exams %}
+            <tr>
+                <td>{{ exam.name }}</td>
+                <td>{{ exam.classroom.name }}</td>
+                <td>
+                    <span class="badge {% if exam.participant_count > 0 %}badge-success{% else %}badge-warning{% endif %}">
+                        {{ exam.participant_count }} از {{ exam.total_assigned }}
+                    </span>
+                </td>
+                <td>{{ exam.created_at|date:"Y/m/d" }}</td>
+                <td>
+                    <a href="{% url 'instructor_exam_report' exam.id %}" class="btn-view">مشاهده نتایج</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">
+                    هنوز آزمونی تعریف نکرده‌اید.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}
