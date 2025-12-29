@@ -1,3 +1,8 @@
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.db import models
+from .models import Classroom, User
+
 @login_required
 def admin_class_list_view(request):
     u = request.user

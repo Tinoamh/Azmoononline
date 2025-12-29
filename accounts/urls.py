@@ -35,16 +35,15 @@ from .views import (
     api_exam_questions,
     api_question_delete,
     api_question_update,
-    admin_exam_list_view,
-    admin_exam_edit_view,
-    admin_exam_report_view,
+    # Added minimal implementations in views.py
     admin_exam_delete_view,
-    instructor_exam_report_view,
     instructor_results_list_view,
-    admin_class_list_view,
-    admin_class_edit_view,
     student_class_list_view,
 )
+from .admin_views_temp import admin_exam_list_view, admin_exam_edit_view
+from .admin_report_view_temp import admin_exam_report_view
+from .admin_class_views_temp import admin_class_list_view, admin_class_edit_view
+from .instructor_report_view_temp import instructor_exam_report_view
 from .forms import AzmonPasswordResetForm
 
 urlpatterns = [

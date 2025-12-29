@@ -42,6 +42,9 @@ class Classroom(models.Model):
     instructor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_classes')
     students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='classes', blank=True)
     is_staging = models.BooleanField(default=False)
+    # Marks classrooms that are auto-created per exam definition and should
+    # not appear in the general classes listing/selectors.
+    is_exam_room = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "کلاس"

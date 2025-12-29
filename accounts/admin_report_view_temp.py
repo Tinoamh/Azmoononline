@@ -1,3 +1,8 @@
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Exam, ExamAssignment
+
 @login_required
 def admin_exam_report_view(request, exam_id):
     u = request.user

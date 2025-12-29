@@ -80,17 +80,17 @@
     </div>
     <div class="section">
       <h2 class="title">مدت زمان آزمون (دقیقه)</h2>
-      <input class="input" type="number" min="1" name="duration" value="60" />
+      <input class="input" type="number" min="1" name="duration" value="60" required />
     </div>
     <div class="section">
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
         <div>
           <h2 class="title">تاریخ و ساعت شروع</h2>
-          <input class="input" type="datetime-local" name="start_time" />
+          <input class="input" type="datetime-local" name="start_time" required />
         </div>
         <div>
           <h2 class="title">تاریخ و ساعت پایان</h2>
-          <input class="input" type="datetime-local" name="end_time" />
+          <input class="input" type="datetime-local" name="end_time" required />
         </div>
       </div>
     </div>
@@ -124,6 +124,35 @@
       boxes.forEach(function(b){ b.addEventListener('change', syncMaster); });
       syncMaster();
     }
+
+    // Auto-set end_time: start_time + duration (minutes)
+    function computeEndTime(){
+      var durEl = document.querySelector('input[name="duration"]');
+      var startEl = document.querySelector('input[name="start_time"]');
+      var endEl = document.querySelector('input[name="end_time"]');
+      if(!durEl || !startEl || !endEl) return;
+      var dur = parseInt(durEl.value, 10);
+      var startVal = startEl.value;
+      if(!isNaN(dur) && dur > 0 && startVal){
+        // startVal format: YYYY-MM-DDTHH:MM
+        var d = new Date(startVal);
+        if(!isNaN(d.getTime())){
+          d.setMinutes(d.getMinutes() + dur);
+          var yyyy = d.getFullYear();
+          var mm = String(d.getMonth()+1).padStart(2,'0');
+          var dd = String(d.getDate()).padStart(2,'0');
+          var HH = String(d.getHours()).padStart(2,'0');
+          var MM = String(d.getMinutes()).padStart(2,'0');
+          endEl.value = yyyy + '-' + mm + '-' + dd + 'T' + HH + ':' + MM;
+        }
+      }
+    }
+    var durEl2 = document.querySelector('input[name="duration"]');
+    var startEl2 = document.querySelector('input[name="start_time"]');
+    if(durEl2) durEl2.addEventListener('input', computeEndTime);
+    if(startEl2) startEl2.addEventListener('input', computeEndTime);
+    // Initialize once in case defaults exist
+    computeEndTime();
   })();
 </script>
 {% endblock %}
