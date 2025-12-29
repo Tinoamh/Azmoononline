@@ -21,6 +21,9 @@
   .input{width:100%;height:40px;border:1.6px solid #cfe3ff;border-radius:10px;padding:8px 10px}
   .btn{padding:12px 24px;border-radius:12px;background:#3A6CF4;color:#fff;border:none;cursor:pointer;font-size:16px}
   .bank-item input[type="radio"]{width:16px;height:16px;accent-color:#22c55e}
+  /* Select-all header control styling */
+  .sel-all{display:inline-flex;align-items:center;justify-content:center;gap:8px;color:#3A6CF4;font-weight:700}
+  .sel-all input[type="checkbox"]{width:16px;height:16px;accent-color:#3A6CF4}
 </style>
 {% endblock %}
 {% block content %}
@@ -47,12 +50,19 @@
     </div>
     <div class="section">
       <h2 class="title">دانشجویان</h2>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <input type="checkbox" id="selectAllStudents">
-        <label for="selectAllStudents" style="color:#3A6CF4;font-weight:700;">انتخاب همه</label>
-      </div>
       <table class="table">
-        <thead><tr><th>نام</th><th>نام خانوادگی</th><th class="chk">شرکت در آزمون</th></tr></thead>
+        <thead>
+          <tr>
+            <th>نام</th>
+            <th>نام خانوادگی</th>
+            <th class="chk">
+              <label class="sel-all" for="selectAllStudents">
+                <input type="checkbox" id="selectAllStudents">
+                <span>انتخاب همه</span>
+              </label>
+            </th>
+          </tr>
+        </thead>
         <tbody>
           {% for s in students %}
           <tr>
