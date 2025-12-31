@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پنل ادمین</title>
+
+<style>
+@font-face {
+    font-family: IranSans;
+    src: url("IranSans.woff2") format("woff2");
+}
+
+body {
+    margin: 0;
+    font-family: IranSans, sans-serif;
+    background: linear-gradient(180deg,#E7CEE3,#E2FDFF,#9CADCE);
+    min-height: 100vh;
+}
+
+/* ===== هدر ===== */
+.header {
+    height: 60px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #5465FF;
+}
+
+/* دکمه سه خط */
+.menu-btn {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    width: 30px;
+    height: 22px;
+    cursor: pointer;
+}
+
+.menu-btn span {
+    display: block;
+    height: 4px;
+    background: #5465FF;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+/* ===== سایدبار ===== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: -290px;
+    width: 260px;
+    height: 100%;
+    background: linear-gradient(180deg,#5465FF,#9BB1FF);
+    padding: 25px 15px;
+    color: white;
+    transition: 0.35s;
+    z-index: 1000;
+}
+
+.sidebar.open {
+    right: 0;
+}
+
+.sidebar h3 {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.sidebar a {
+    display: block;
+    padding: 12px;
+    border-radius: 12px;
+    color: white;
+    text-decoration: none;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+
+.sidebar a:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+/* overlay */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    z-index: 900;
+}
+
+.overlay.show {
+    display: block;
+}
+
+/* ===== محتوا ===== */
+.container {
+    width: 85%;
+    margin: 600px auto;
+}
+
+/* کارت‌ها */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 22px;
+}
+
+.admin-card {
+    background: white;
+    padding: 25px;
+    border-radius: 22px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.admin-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 14px 26px rgba(0,0,0,0.2);
+}
+
+.admin-icon {
+    font-size: 42px;
+    margin-bottom: 12px;
+}
+
+.admin-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #5465FF;
+}
+
+.admin-desc {
+    font-size: 15px;
+    color: #555;
+    margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- هدر -->
+<div class="header">
+    <div class="header-title">🛠 پنل مدیریت</div>
+
+    <div class="menu-btn" id="menuBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</div>
+
+<!-- سایدبار -->
+<aside class="sidebar" id="sidebar">
+    <h3>👤 منوی ادمین</h3>
+    <a href="#">📊 نمایش نتایج</a>
+    <a href="#">👩‍🏫 تعریف استاد</a>
+    <a href="#">📝 آزمون‌ها</a>
+    <a href="#">📚 دروس</a>
+    <a href="#">👥 کاربران</a>
+    <a href="#">📢 اطلاعیه‌ها</a>
+    <a href="#">📈 گزارش‌ها</a>
+    <a href="#">🗂 آرشیو</a>
+    <a href="#">⚙️ تنظیمات</a>
+    <a href="#">🔒 خروج</a>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- محتوا -->
+<div class="container">
+    <div class="cards">
+
+        <!-- ۱۰ کارت کاملاً هم‌شکل -->
+        <div class="admin-card"><div class="admin-icon">📊</div><div class="admin-title">نتایج</div><div class="admin-desc">مشاهده</div></div>
+        <div class="admin-card"><div class="admin-icon">👩‍🏫</div><div class="admin-title">اساتید</div><div class="admin-desc">مدیریت</div></div>
+        <div class="admin-card"><div class="admin-icon">📝</div><div class="admin-title">آزمون‌ها</div><div class="admin-desc">ویرایش</div></div>
+        <div class="admin-card"><div class="admin-icon">📚</div><div class="admin-title">دروس</div><div class="admin-desc">تعریف</div></div>
+<div class="admin-card"><div class="admin-icon">👥</div><div class="admin-title">دانش‌آموزان</div><div class="admin-desc">کاربران</div></div>
+        <div class="admin-card"><div class="admin-icon">⚙️</div><div class="admin-title">تنظیمات</div><div class="admin-desc">سیستم</div></div>
+        <div class="admin-card"><div class="admin-icon">📢</div><div class="admin-title">اطلاعیه‌ها</div><div class="admin-desc">ارسال</div></div>
+        <div class="admin-card"><div class="admin-icon">📈</div><div class="admin-title">گزارش‌ها</div><div class="admin-desc">تحلیل</div></div>
+        <div class="admin-card"><div class="admin-icon">🗂</div><div class="admin-title">آرشیو</div><div class="admin-desc">داده‌ها</div></div>
+        <div class="admin-card"><div class="admin-icon">🔒</div><div class="admin-title">خروج</div><div class="admin-desc">پایان</div></div>
+
+    </div>
+</div>
+
+<script>
+const menuBtn = document.getElementById("menuBtn");
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+
+menuBtn.onclick = () => {
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("show");
+};
+
+overlay.onclick = () => {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("show");
+};
+</script>
+
+</body>
+</html>
+
