@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پنل استاد</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* --- ریست و فونت --- */
+* { box-sizing: border-box; margin:0; padding:0; }
+body { font-family: 'Vazirmatn', sans-serif; background: linear-gradient(135deg, #c7f0ff, #fdf6ff); }
+
+/* --- هدر --- */
+header { position: sticky; top:0; background: #2d3ab0; color: #fff; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.header-right { display: flex; align-items: center; gap: 15px; }
+nav.desktop { display: flex; gap: 10px; }
+nav.desktop a { color:#fff; text-decoration:none; padding:8px 16px; background: rgba(255,255,255,0.3); border-radius:12px; font-weight:600; transition:0.3s; cursor:pointer;}
+nav.desktop a:hover{background: rgba(255,255,255,0.6);}
+.hamburger { width: 30px; height: 24px; display:none; flex-direction: column; justify-content: space-between; cursor:pointer; z-index:101; }
+.hamburger div { width: 100%; height: 4px; background: #fff; border-radius:3px; transition:0.3s; }
+
+/* --- منوی همبرگر --- */
+#overlayMenu { position: fixed; top:0; right:0; width:0; height:100%; background: rgba(45,58,176,0.95); overflow-x:hidden; transition:0.5s; display:flex; flex-direction:column; padding-top:60px; z-index:200; }
+#overlayMenu a { padding:15px 30px; text-decoration:none; font-size:1.3rem; color:#fff; display:block; transition:0.3s; cursor:pointer; }
+#overlayMenu a:hover { background: rgba(255,255,255,0.2); border-radius:12px; }
+#overlayMenu .closeBtn { position:absolute; top:15px; left:20px; font-size:2rem; color:#fff; cursor:pointer; font-weight:bold; }
+
+/* --- کارت‌ها و بخش‌ها --- */
+.container { padding:20px; max-width:1200px; margin:auto; }
+.card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px; margin:20px auto; box-shadow: 0 8px 25px rgba(0,0,0,0.15); transition: 0.3s; }
+.card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.2); }
+.card a { display:block; margin:15px 0; text-decoration:none; font-weight:700; font-size:1.2rem; color:#2d3ab0; }
+.card a:hover { color:#4c5fd7; }
+
+/* --- صفحه اصلی استاد --- */
+#home { text-align:center; }
+#home h2 { font-size:3rem; margin-bottom:15px; color:#fff; background: linear-gradient(135deg,#4c5fd7,#2d3ab0); padding:25px; border-radius:30px; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+#home p { font-size:1.2rem; margin-bottom:40px; color:#2d3ab0; }
+.home-buttons { display:flex; justify-content:center; flex-wrap:wrap; gap:25px; }
+.home-buttons a { flex:1 1 220px; text-align:center; padding:35px 20px; background: linear-gradient(135deg,#4c5fd7,#2d3ab0); color:#fff; border-radius:30px; font-size:1.4rem; font-weight:700; transition:0.4s; box-shadow:0 10px 25px rgba(0,0,0,0.25); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.home-buttons a:hover { background: linear-gradient(135deg,#2d3ab0,#4c5fd7); transform: translateY(-7px); box-shadow:0 14px 30px rgba(0,0,0,0.35); }
+.home-buttons span { display:block; font-size:3rem; margin-bottom:15px; }
+
+/* --- جدول نمرات --- */
+.table-container { overflow-x:auto; margin-top:15px; }
+table { width:100%; border-collapse: separate; border-spacing:0 8px; font-size:1.15rem; }
+thead th { background: linear-gradient(to right, #2d3ab0, #4c5fd7); color:#fff; font-weight:700; padding:14px; text-align:center; border-radius:10px 10px 0 0; }
+tbody td { background:#fff; padding:12px; text-align:center; border-radius:8px; transition:0.3s; }
+tbody tr:nth-child(even) td { background:#f0f4ff; }
+tbody tr:hover td { transform: translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.12); cursor:pointer; }
+
+/* --- نمودار ستونی --- */
+.chart-container { background: rgba(255,255,255,0.7); padding:20px; border-radius:15px; box-shadow:0 8px 25px rgba(0,0,0,0.15); margin-top:20px; }
+.chart-container h2 { margin-bottom:30px; color:#2d3ab0; }
+.chart { display:flex; align-items:flex-end; justify-content:space-around; height:300px; border-left:2px solid #333; border-bottom:2px solid #333; padding-bottom:20px; position:relative; overflow-x:auto; }
+.bar { width:50px; text-align:center; border-radius:5px 5px 0 0; transition:height 1s, background 0.5s; position:relative; cursor:pointer; }
+.bar span { display:block; margin-top:5px; font-weight:600; opacity:0; transition:0.3s; }
+.tooltip { position:absolute; padding:5px 10px; background:#333; color:#fff; border-radius:6px; font-size:0.9rem; pointer-events:none; opacity:0; transition:0.3s; z-index:10; }
+.y-labels { position:absolute; left:-45px; bottom:0; display:flex; flex-direction:column; justify-content:space-between; height:100%; font-weight:600; }
+.x-labels { display:flex; justify-content:space-around; margin-top:10px; }
+.x-labels div { width:50px; text-align:center; font-weight:600; }
+
+/* --- نمودارهای Chart.js --- */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+.chart-wrapper { background: rgba(255,255,255,0.7); padding: 20px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+.chart-wrapper h3 { color: #2d3ab0; margin-bottom: 20px; font-size: 1.3rem; }
+.chart-wrapper canvas { max-height: 300px; }
+
+/* --- تحلیل وضعیت --- */
+.status-list { display:flex; gap:20px; margin-top:20px; flex-wrap:wrap; }
+.good,.bad { flex:1; border-radius:20px; padding:15px; box-shadow:0 5px 20px rgba(0,0,0,0.15); position:relative; }
+.good { background:#d4f7dc; }
+.bad { background:#ffd6d6; }
+ul { list-style:none; padding:0; }
+li { background:#fff; padding:10px; border-radius:10px; margin-bottom:8px; font-weight:600; text-align:center; }
+
+/* --- آمار کلی --- */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+.stat-card { background: linear-gradient(135deg, #4c5fd7, #2d3ab0); color: #fff; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
+.stat-card .number { font-size: 2.5rem; font-weight: 700; }
+.stat-card .label { font-size: 1rem; margin-top: 10px; opacity: 0.9; }
+
+/* --- تقویم --- */
+.calendar-container { margin-top: 20px; }
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.calendar-nav { display: flex; gap: 10px; }
+.calendar-nav button { background: #4c5fd7; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.calendar-day { background: white; padding: 10px; text-align: center; border-radius: 8px; min-height: 80px; }
+.calendar-day.other-month { opacity: 0.3; }
+.calendar-day.today { background: #e3f2fd; border: 2px solid #2d3ab0; }
+.calendar-event { background: #4c5fd7; color: white; padding: 3px 6px; border-radius: 4px; font-size: 0.8rem; margin-top: 5px; }
+
+/* --- پیام‌ها --- */
+.messages-container { margin-top: 20px; }
+.message { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-right: 4px solid #4c5fd7; }
+.message-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.message-sender { font-weight: bold; color: #2d3ab0; }
+.message-time { color: #666; font-size: 0.9rem; }
+.message-content { color: #333; }
+.message-actions { display: flex; gap: 10px; margin-top: 10px; }
+.message-btn { padding: 5px 15px; border: none; border-radius: 5px; cursor: pointer; }
+.reply-btn { background: #4c5fd7; color: white; }
+.delete-btn { background: #ff6b6b; color: white; }
+
+/* --- تنظیمات --- */
+.settings-container { margin-top: 20px; }
+.setting-item { background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+.setting-info h4 { color: #2d3ab0; margin-bottom: 5px; }
+.setting-info p { color: #666; font-size: 0.9rem; }
+.toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+.toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .toggle-slider { background-color: #4c5fd7; }
+input:checked + .toggle-slider:before { transform: translateX(26px); }
+
+/* --- مخفی کردن بخش‌ها --- */
+.hidden { display:none; }
+
+@media(max-width:768px){ 
+    .hamburger { display: flex; }
+    nav.desktop { display: none; }
+    .chart { height:200px; } 
+    .bar { width:30px; } 
+    .x-labels div { width:30px; font-size:0.9rem; } 
+    .home-buttons { flex-direction:column; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .calendar-grid { grid-template-columns: repeat(7, 1fr); }
+    .calendar-day { min-height: 60px; padding: 5px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <div class="header-right">
+        <div class="hamburger" id="hamburger"><div></div><div></div><div></div></div>
+        <h1>پنل استاد</h1>
+    </div>
+    <nav class="desktop">
+        <a onclick="showSection('home')">خانه</a>
+        <a onclick="showSection('courses')">دروس</a>
+        <a onclick="showSection('students')">دانش‌آموزان</a>
+        <a onclick="showSection('grades')">نمرات</a>
+        <a onclick="showSection('chart')">نمودار ستونی</a>
+        <a onclick="showSection('analytics')">تحلیل‌ها</a>
+        <!-- لینک‌های جدید -->
+        <a onclick="showSection('calendar')">تقویم</a>
+        <a onclick="showSection('messages')">پیام‌ها</a>
+        <a onclick="showSection('settings')">تنظیمات</a>
+    </nav>
+</header>
+
+<div id="overlayMenu">
+    <span class="closeBtn" id="closeBtn">&times;</span>
+    <a onclick="showSection('home')">صفحه اصلی</a>
+    <a onclick="showSection('courses')">لیست دروس</a>
+    <a onclick="showSection('students')">لیست دانش‌آموزان</a>
+    <a onclick="showSection('grades')">لیست نمرات</a>
+    <a onclick="showSection('chart')">نمودار ستونی</a>
+    <a onclick="showSection('analytics')">تحلیل‌ها</a>
+    <!-- لینک‌های جدید -->
+    <a onclick="showSection('calendar')">تقویم</a>
+    <a onclick="showSection('messages')">پیام‌ها</a>
+    <a onclick="showSection('settings')">تنظیمات</a>
+    <a href="#">خروج</a>
+</div>
+
+<div class="container">
+
+<!-- صفحه اصلی استاد -->
+<div id="home" class="card">
+    <h2>👋 خوش آمدید استاد!</h2>
+    <p>از طریق کارت‌های زیر می‌توانید سریع به بخش مورد نظر دسترسی پیدا کنید.</p>
+    <div class="home-buttons">
+        <a onclick="showSection('courses')"><span>📚</span>دروس</a>
+        <a onclick="showSection('students')"><span>🎓</span>دانش‌آموزان</a>
+        <a onclick="showSection('grades')"><span>📋</span>نمرات</a>
+        <a onclick="showSection('chart')"><span>📈</span>نمودار ستونی</a>
+        <a onclick="showSection('analytics')"><span>📊</span>تحلیل‌ها</a>
+        <!-- کارت‌های جدید -->
+        <a onclick="showSection('calendar')"><span>📅</span>تقویم</a>
+        <a onclick="showSection('messages')"><span>💬</span>پیام‌ها</a>
+        <a onclick="showSection('settings')"><span>⚙️</span>تنظیمات</a>
+    </div>
+</div>
+
+<!-- دروس -->
+<div id="courses" class="card hidden">
+    <h2>📚 لیست دروس</h2>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>نام درس</th><th>کد درس</th><th>تعداد واحد</th><th>نوع</th><th>استاد</th></tr></thead>
+            <tbody>
+                <tr><td>ریاضی ۱</td><td>MTH-101</td><td>3</td><td>اجباری</td><td>دکتر احمدی</td></tr>
+                <tr><td>فیزیک ۱</td><td>PHY-101</td><td>4</td><td>اجباری</td><td>دکتر علوی</td></tr>
+                <tr><td>شیمی عمومی</td><td>CHM-101</td><td>3</td><td>اجباری</td><td>دکتر محمدی</td></tr>
+                <tr><td>زبان انگلیسی</td><td>ENG-101</td><td>2</td><td>اجباری</td><td>خانم حسنی</td></tr>
+                <tr><td>برنامه‌نویسی ۱</td><td>CS-101</td><td>3</td><td>اجباری</td><td>دکتر رحیمی</td></tr>
+                <tr><td>تاریخ و تمدن</td><td>HIS-101</td><td>2</td><td>اختیاری</td><td>دکتر کریمی</td></tr>
+                <tr><td>فلسفه</td><td>PHI-101</td><td>2</td><td>اختیاری</td><td>دکتر نوری</td></tr>
+                <tr><td>ورزش</td><td>SPT-101</td><td>1</td><td>اختیاری</td><td>آقای رضایی</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- آمار دروس -->
+    <div class="stats-grid" style="margin-top: 30px;">
+        <div class="stat-card">
+            <div class="number">8</div>
+            <div class="label">تعداد دروس</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">5</div>
+            <div class="label">دروس اجباری</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">3</div>
+            <div class="label">دروس اختیاری</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">20</div>
+            <div class="label">کل واحدها</div>
+        </div>
+    </div>
+</div>
+
+<!-- دانش‌آموزان -->
+<div id="students" class="card hidden">
+    <h2>دانش‌آموزان کلاس</h2>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>نام</th><th>نام خانوادگی</th></tr></thead>
+            <tbody>
+                <tr><td>مینا</td><td>احمدی</td></tr>
+                <tr><td>ساره</td><td>قربانی</td></tr>
+                <tr><td>نبات</td><td>امیری</td></tr>
+                <tr><td>رویا</td><td>اسکندری</td></tr>
+                <tr><td>مونا</td><td>باقری</td></tr>
+                <tr><td>نسیم</td><td>کشاورز</td></tr>
+                <tr><td>هستی</td><td>حسنی</td></tr>
+                <tr><td>ریما</td><td>حمیدی</td></tr>
+                <tr><td>دنیا</td><td>طهماسبی</td></tr>
+                <tr><td>ملینا</td><td>هادی</td></tr>
+                <tr><td>لیدا</td><td>داوری</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- نمرات -->
+<div id="grades" class="card hidden">
+    <h2>لیست نمرات دانش‌آموزان</h2>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>نام</th><th>نام خانوادگی</th><th>نمره</th></tr></thead>
+            <tbody>
+                <tr><td>مینا</td><td>احمدی</td><td class="score">18.5</td></tr>
+                <tr><td>ساره</td><td>قربانی</td><td class="score">17</td></tr>
+                <tr><td>نبات</td><td>امیری</td><td class="score">16.5</td></tr>
+                <tr><td>رویا</td><td>اسکندری</td><td class="score">19</td></tr>
+                <tr><td>مونا</td><td>باقری</td><td class="score">15.5</td></tr>
+                <tr><td>نسیم</td><td>کشاورز</td><td class="score">18</td></tr>
+                <tr><td>هستی</td><td>حسنی</td><td class="score">17.8</td></tr>
+                <tr><td>ریما</td><td>حمیدی</td><td class="score">16.2</td></tr>
+                <tr><td>دنیا</td><td>طهماسبی</td><td class="score">19.3</td></tr>
+                <tr><td>ملینا</td><td>هادی</td><td class="score">15.8</td></tr>
+                <tr><td>لیدا</td><td>داوری</td><td class="score">18.1</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- تحلیل وضعیت کلاس -->
+    <div class="status-list">
+        <div class="good"><h3>بالای میانگین</h3><ul id="aboveAvg"></ul></div>
+        <div class="bad"><h3>زیر میانگین</h3><ul id="belowAvg"></ul></div>
+    </div>
+</div>
+
+<!-- نمودار ستونی -->
+<div id="chart" class="card hidden">
+    <h2>نمودار ستونی نمرات</h2>
+    <div class="chart-container">
+        <div class="chart" id="chartOnly">
+            <div class="y-labels">
+                <div>20</div><div>18</div><div>16</div><div>14</div><div>12</div><div>10</div>
+            </div>
+        </div>
+        <div class="x-labels" id="xLabelsOnly"></div>
+        <div class="tooltip" id="tooltipOnly"></div>
+    </div>
+    <!-- تحلیل وضعیت کلاس -->
+    <div class="status-list">
+        <div class="good"><h3>بالای میانگین</h3><ul id="aboveAvgChart"></ul></div>
+        <div class="bad"><h3>زیر میانگین</h3><ul id="belowAvgChart"></ul></div>
+    </div>
+</div>
+
+<!-- تحلیل‌ها و نمودارهای متنوع -->
+<div id="analytics" class="card hidden">
+    <h2>📊 تحلیل‌های جامع</h2>
+    
+    <!-- آمار کلی -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="number" id="totalStudents">11</div>
+            <div class="label">تعداد دانش‌آموزان</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="avgScore">17.5</div>
+            <div class="label">میانگین نمرات</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="maxScore">19.3</div>
+            <div class="label">بالاترین نمره</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="minScore">15.5</div>
+            <div class="label">پایین‌ترین نمره</div>
+        </div>
+    </div>
+
+    <!-- نمودارهای Chart.js -->
+    <div class="charts-grid">
+        <!-- نمودار دایره‌ای توزیع نمرات -->
+        <div class="chart-wrapper">
+            <h3>توزیع دسته‌بندی نمرات</h3>
+            <canvas id="pieChart"></canvas>
+        </div>
+
+        <!-- نمودار خطی روند نمرات -->
+        <div class="chart-wrapper">
+            <h3>نمودار خطی نمرات</h3>
+            <canvas id="lineChart"></canvas>
+        </div>
+
+        <!-- نمودار میله‌ای افقی -->
+        <div class="chart-wrapper">
+            <h3>مقایسه نمرات دانش‌آموزان</h3>
+            <canvas id="barChart"></canvas>
+        </div>
+
+        <!-- نمودار رادار -->
+        <div class="chart-wrapper">
+            <h3>توزیع نمرات</h3>
+            <canvas id="radarChart"></canvas>
+        </div>
+    </div>
+
+    <!-- تحلیل وضعیت کلاس -->
+    <div class="status-list" style="margin-top: 30px;">
+        <div class="good"><h3>دانش‌آموزان ممتاز</h3><ul id="excellentStudents"></ul></div>
+        <div class="bad"><h3>دانش‌آموزان نیازمند توجه</h3><ul id="needAttention"></ul></div>
+    </div>
+</div>
+
+<!-- بخش جدید: تقویم -->
+<div id="calendar" class="card hidden">
+    <h2>📅 تقویم آموزشی</h2>
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <h3 id="currentMonth">اسفند ۱۴۰۳</h3>
+            <div class="calendar-nav">
+                <button onclick="changeMonth(-1)">‹ ماه قبل</button>
+                <button onclick="goToToday()">امروز</button>
+                <button onclick="changeMonth(1)">ماه بعد ›</button>
+            </div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- روزهای هفته -->
+            <div class="calendar-day" style="background:#4c5fd7; color:white;">شنبه</div>
+            <div class="calendar-day" style="background:#4c5fd7; color:white;">یکشنبه</div>
+            <div class="calendar-day" style="background:#4c5fd7; color:white;">دوشنبه</div>
+            <div class="calendar-day" style="background:#4c5fd7; color:white;">سه‌شنبه</div>
+            <div class="calendar-day" style="background:#4c5fd7; color:white;">چهارشنبه</div>
+            <div class="calendar-day" style="background:#4c5fd7; color:white;">پنجشنبه</div>
+            <div class="calendar-day" style="background:#4c5fd7; color:white;">جمعه</div>
+            <!-- روزها توسط جاوااسکریپت پر می‌شوند -->
+        </div>
+    </div>
+    
+    <!-- رویدادهای پیش‌رو -->
+    <div style="margin-top: 30px;">
+        <h3>رویدادهای پیش‌رو</h3>
+        <div class="status-list">
+            <div class="good">
+                <h4>📝 آزمون میان‌ترم ریاضی</h4>
+                <p>تاریخ: ۱۵ اسفند ۱۴۰۳</p>
+                <p>ساعت: ۱۰:۰۰ - ۱۲:۰۰</p>
+            </div>
+            <div class="good">
+                <h4>🎤 جلسه دفاع پروژه‌ها</h4>
+                <p>تاریخ: ۲۵ اسفند ۱۴۰۳</p>
+                <p>ساعت: ۱۴:۰۰ - ۱۸:۰۰</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- بخش جدید: پیام‌ها -->
+<div id="messages" class="card hidden">
+    <h2>💬 پیام‌ها</h2>
+    <div class="messages-container">
+        <div class="message">
+            <div class="message-header">
+                <div class="message-sender">مینا احمدی</div>
+                <div class="message-time">۲ ساعت پیش</div>
+            </div>
+            <div class="message-content">
+                سلام استاد، لطفاً در مورد تمرین فصل ۴ ریاضی راهنمایی بفرمایید.
+            </div>
+            <div class="message-actions">
+                <button class="message-btn reply-btn" onclick="replyMessage('مینا احمدی')">پاسخ</button>
+                <button class="message-btn delete-btn" onclick="deleteMessage(this)">حذف</button>
+            </div>
+        </div>
+        
+        <div class="message">
+            <div class="message-header">
+                <div class="message-sender">ساره قربانی</div>
+                <div class="message-time">دیروز</div>
+            </div>
+            <div class="message-content">
+                با سلام، آیا می‌توانم وقت مشاوره برای انتخاب واحد ترم آینده بگیرم؟
+            </div>
+            <div class="message-actions">
+                <button class="message-btn reply-btn" onclick="replyMessage('ساره قربانی')">پاسخ</button>
+                <button class="message-btn delete-btn" onclick="deleteMessage(this)">حذف</button>
+            </div>
+        </div>
+        
+        <div class="message">
+            <div class="message-header">
+                <div class="message-sender">رویا اسکندری</div>
+                <div class="message-time">۳ روز پیش</div>
+            </div>
+            <div class="message-content">
+                سلام استاد، ممنون از تدریس عالی‌تون. لطفاً اسلایدهای جلسه قبل را به اشتراک بگذارید.
+            </div>
+            <div class="message-actions">
+                <button class="message-btn reply-btn" onclick="replyMessage('رویا اسکندری')">پاسخ</button>
+                <button class="message-btn delete-btn" onclick="deleteMessage(this)">حذف</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ارسال پیام جدید -->
+    <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 10px;">
+        <h3>ارسال پیام جدید</h3>
+        <div style="margin-top: 15px;">
+            <input type="text" placeholder="گیرنده" style="width:100%; padding:10px; margin-bottom:10px; border-radius:5px; border:1px solid #ddd;">
+            <textarea placeholder="متن پیام..." rows="4" style="width:100%; padding:10px; margin-bottom:10px; border-radius:5px; border:1px solid #ddd;"></textarea>
+            <button style="background:#4c5fd7; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">ارسال پیام</button>
+        </div>
+    </div>
+</div>
+
+<!-- بخش جدید: تنظیمات -->
+<div id="settings" class="card hidden">
+    <h2>⚙️ تنظیمات پنل</h2>
+    <div class="settings-container">
+        <div class="setting-item">
+            <div class="setting-info">
+                <h4>اعلان‌های ایمیلی</h4>
+                <p>دریافت ایمیل برای نمرات جدید و رویدادها</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="setting-item">
+            <div class="setting-info">
+                <h4>اعلان‌های پیامکی</h4>
+                <p>دریافت پیامک برای اطلاع‌رسانی فوری</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="setting-item">
+            <div class="setting-info">
+                <h4>نمایش نمودارها به صورت واقعی</h4>
+                <p>نمایش انیمیشن در نمودارها</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="setting-item">
+            <div class="setting-info">
+                <h4>تم تیره</h4>
+                <p>فعال کردن حالت تاریک پنل</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+    
+    <!-- اطلاعات شخصی -->
+    <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 10px;">
+        <h3>اطلاعات شخصی</h3>
+        <div style="margin-top: 15px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label>نام</label>
+                    <input type="text" value="دکتر علوی" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
+                </div>
+                <div>
+                    <label>نام خانوادگی</label>
+                    <input type="text" value="احمدی" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
+                </div>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>ایمیل</label>
+                <input type="email" value="dr.alavi@university.edu" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
+            </div>
+            <button style="background:#4c5fd7; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">ذخیره تغییرات</button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// نمایش بخش‌ها
+function showSection(id){
+    document.querySelectorAll('.card').forEach(div=>div.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    overlayMenu.style.width='0';
+    
+    // اگر بخش تحلیل‌ها باز شد، نمودارها را رسم کن
+    if(id === 'analytics') {
+        setTimeout(() => {
+            createPieChart();
+            createLineChart();
+            createBarChart();
+            createRadarChart();
+        }, 100);
+    }
+    
+    // اگر بخش تقویم باز شد، تقویم را ایجاد کن
+    if(id === 'calendar') {
+        setTimeout(() => {
+            generateCalendar();
+        }, 100);
+    }
+}
+
+// منوی همبرگر
+const hamburger=document.getElementById('hamburger');
+const overlayMenu=document.getElementById('overlayMenu');
+const closeBtn=document.getElementById('closeBtn');
+hamburger.addEventListener('click',()=>{ overlayMenu.style.width='250px'; });
+closeBtn.addEventListener('click',()=>{ overlayMenu.style.width='0'; });
+
+// رنگ نمرات جدول
+document.querySelectorAll('td.score').forEach(td=>{
+    const val=parseFloat(td.textContent);
+    if(val>18){ td.style.color='#28a745'; }
+    else if(val>=16){ td.style.color='#ffc107'; }
+    else { td.style.color='#dc3545'; }
+});
+
+// داده‌ها
+const students=[
+{name:'مینا',lastname:'احمدی',score:18.5},
+{name:'ساره',lastname:'قربانی',score:17},
+{name:'نبات',lastname:'امیری',score:16.5},
+{name:'رویا',lastname:'اسکندری',score:19},
+{name:'مونا',lastname:'باقری',score:15.5},
+{name:'نسیم',lastname:'کشاورز',score:18},
+{name:'هستی',lastname:'حسنی',score:17.8},
+{name:'ریما',lastname:'حمیدی',score:16.2},
+{name:'دنیا',lastname:'طهماسبی',score:19.3},
+{name:'ملینا',lastname:'هادی',score:15.8},
+{name:'لیدا',lastname:'داوری',score:18.1}
+];
+
+// میانگین و تحلیل
+const avg = students.reduce((a,b)=>a+b.score,0)/students.length;
+const above = students.filter(s=>s.score>=avg);
+const below = students.filter(s=>s.score<avg);
+const excellent = students.filter(s=>s.score>18);
+const needAttention = students.filter(s=>s.score<16.5);
+const maxScore = Math.max(...students.map(s=>s.score));
+const minScore = Math.min(...students.map(s=>s.score));
+
+// به‌روزرسانی آمار
+document.getElementById('avgScore').textContent = avg.toFixed(2);
+document.getElementById('maxScore').textContent = maxScore.toFixed(1);
+document.getElementById('minScore').textContent = minScore.toFixed(1);
+
+const aboveAvg=document.getElementById('aboveAvg');
+const belowAvg=document.getElementById('belowAvg');
+above.forEach(s=>{ const li=document.createElement('li'); li.textContent=`${s.name} ${s.lastname}`; aboveAvg.appendChild(li); });
+below.forEach(s=>{ const li=document.createElement('li'); li.textContent=`${s.name} ${s.lastname}`; belowAvg.appendChild(li); });
+
+const aboveAvgChart=document.getElementById('aboveAvgChart');
+const belowAvgChart=document.getElementById('belowAvgChart');
+above.forEach(s=>{ const li=document.createElement('li'); li.textContent=`${s.name} ${s.lastname}`; aboveAvgChart.appendChild(li); });
+below.forEach(s=>{ const li=document.createElement('li'); li.textContent=`${s.name} ${s.lastname}`; belowAvgChart.appendChild(li); });
+
+const excellentStudentsEl=document.getElementById('excellentStudents');
+const needAttentionEl=document.getElementById('needAttention');
+excellent.forEach(s=>{ const li=document.createElement('li'); li.textContent=`${s.name} ${s.lastname} (${s.score})`; excellentStudentsEl.appendChild(li); });
+needAttention.forEach(s=>{ const li=document.createElement('li'); li.textContent=`${s.name} ${s.lastname} (${s.score})`; needAttentionEl.appendChild(li); });
+
+// رسم نمودار ستونی
+function createChart(chartId,labelId,tooltipId){
+    const chart=document.getElementById(chartId);
+    const xLabels=document.getElementById(labelId);
+    const tooltip=document.getElementById(tooltipId);
+    students.forEach(s=>{
+        const bar=document.createElement('div');
+        bar.className='bar';
+        bar.style.height='0%';
+        if(s.score>18) bar.style.background='linear-gradient(to top, #28a745, #7CFC00)';
+        else if(s.score>=16) bar.style.background='linear-gradient(to top, #ffc107, #ffeb3b)';
+        else bar.style.background='linear-gradient(to top, #dc3545, #ff6b6b)';
+        bar.innerHTML=`<span>${s.score}</span>`;
+        chart.appendChild(bar);
+        const label=document.createElement('div'); label.textContent=s.name; xLabels.appendChild(label);
+        setTimeout(()=>{ bar.style.height=(s.score*5)+'%'; bar.querySelector('span').style.opacity='1'; },100);
+        bar.addEventListener('mousemove',e=>{
+            tooltip.style.left=e.pageX+10+'px';
+            tooltip.style.top=e.pageY-30+'px';
+            tooltip.innerHTML=`${s.name} ${s.lastname}: ${s.score}`;
+            tooltip.style.opacity=1;
+        });
+        bar.addEventListener('mouseleave',()=>{ tooltip.style.opacity=0; });
+    });
+}
+
+createChart('chartOnly','xLabelsOnly','tooltipOnly');
+
+// نمودار دایره‌ای
+function createPieChart() {
+    const excellent = students.filter(s=>s.score>18).length;
+    const good = students.filter(s=>s.score>=16 && s.score<=18).length;
+    const needsImprovement = students.filter(s=>s.score<16).length;
+    
+    const ctx = document.getElementById('pieChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['ممتاز (بالای 18)', 'خوب (16-18)', 'نیازمند بهبود (زیر 16)'],
+            datasets: [{
+                data: [excellent, good, needsImprovement],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                borderColor: ['#fff', '#fff', '#fff'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 12, family: "'Vazirmatn', sans-serif" },
+                        padding: 15
+                    }
+                }
+            }
+        }
+    });
+}
+
+// نمودار خطی
+function createLineChart() {
+    const ctx = document.getElementById('lineChart').getContext('2d');
+    const sortedStudents = [...students].sort((a,b) => a.score - b.score);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedStudents.map(s => s.name),
+            datasets: [{
+                label: 'نمرات',
+                data: sortedStudents.map(s => s.score),
+                borderColor: '#4c5fd7',
+                backgroundColor: 'rgba(76, 95, 215, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#2d3ab0',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: { size: 12, family: "'Vazirmatn', sans-serif" }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 14,
+                    max: 20,
+                    ticks: {
+                        font: { family: "'Vazirmatn', sans-serif" }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { family: "'Vazirmatn', sans-serif" }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// نمودار میله‌ای افقی
+function createBarChart() {
+    const ctx = document.getElementById('barChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: students.map(s => s.name),
+            datasets: [{
+                label: 'نمرات',
+                data: students.map(s => s.score),
+                backgroundColor: students.map(s => {
+                    if(s.score > 18) return '#28a745';
+                    else if(s.score >= 16) return '#ffc107';
+                    else return '#dc3545';
+                }),
+                borderColor: '#2d3ab0',
+                borderWidth: 1,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: { size: 12, family: "'Vazirmatn', sans-serif" }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 20,
+                    ticks: {
+                        font: { family: "'Vazirmatn', sans-serif" }
+                    }
+                },
+                y: {
+                    ticks: {
+                        font: { family: "'Vazirmatn', sans-serif" }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// نمودار رادار
+function createRadarChart() {
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    const sortedStudents = [...students].sort((a,b) => b.score - a.score).slice(0, 8);
+    
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: sortedStudents.map(s => s.name),
+            datasets: [{
+                label: 'نمرات',
+                data: sortedStudents.map(s => s.score),
+                borderColor: '#4c5fd7',
+                backgroundColor: 'rgba(76, 95, 215, 0.2)',
+                borderWidth: 2,
+                pointBackgroundColor: '#2d3ab0',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: { size: 12, family: "'Vazirmatn', sans-serif" }
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 20,
+                    ticks: {
+                        font: { family: "'Vazirmatn', sans-serif" }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// -------- بخش جدید: مدیریت تقویم --------
+let currentMonth = 11; // اسفند (ماه 12 شمسی)
+let currentYear = 1403;
+
+function generateCalendar() {
+    const calendarGrid = document.getElementById('calendarGrid');
+    const currentMonthElement = document.getElementById('currentMonth');
+    
+    // ماه‌های شمسی
+    const persianMonths = [
+        'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+        'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+    ];
+    
+    // روزهای ماه
+    const daysInMonth = currentMonth === 11 ? 30 : 31; // اسفند 30 روز
+    
+    // اولین روز ماه
+    const firstDay = 5; // فرض: اسفند از پنجشنبه شروع می‌شود
+    
+    // پاک کردن تقویم
+    calendarGrid.innerHTML = '';
+    
+    // اضافه کردن روزهای هفته
+    const weekdays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
+    weekdays.forEach(day => {
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day';
+        dayElement.style.background = '#4c5fd7';
+        dayElement.style.color = 'white';
+        dayElement.textContent = day;
+        calendarGrid.appendChild(dayElement);
+    });
+    
+    // اضافه کردن روزهای خالی قبل از شروع ماه
+    for (let i = 0; i < firstDay; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'calendar-day other-month';
+        emptyDay.textContent = '';
+        calendarGrid.appendChild(emptyDay);
+    }
+    
+    // اضافه کردن روزهای ماه
+    const today = new Date().getDate(); // روز امروز
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day';
+        dayElement.textContent = day;
+        
+        // مشخص کردن روز امروز
+        if (day === 15) { // فرض: امروز 15 اسفند است
+            dayElement.classList.add('today');
+        }
+        
+        // اضافه کردن رویدادها
+        if (day === 15) {
+            const event = document.createElement('div');
+            event.className = 'calendar-event';
+            event.textContent = 'آزمون ریاضی';
+            dayElement.appendChild(event);
+        }
+        
+        if (day === 25) {
+            const event = document.createElement('div');
+            event.className = 'calendar-event';
+            event.textContent = 'دفاع پروژه';
+            dayElement.appendChild(event);
+        }
+        
+        calendarGrid.appendChild(dayElement);
+    }
+    
+    // به‌روزرسانی عنوان ماه
+    currentMonthElement.textContent = `${persianMonths[currentMonth]} ${currentYear}`;
+}
+
+function changeMonth(direction) {
+    currentMonth += direction;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    } else if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+    generateCalendar();
+}
+
+function goToToday() {
+    // اینجا می‌توان تاریخ امروز را محاسبه کرد
+    // برای سادگی، به اسفند ۱۴۰۳ برمی‌گردیم
+    currentMonth = 11;
+    currentYear = 1403;
+    generateCalendar();
+}
+
+// -------- بخش جدید: مدیریت پیام‌ها --------
+function replyMessage(sender) {
+    alert(`پاسخ به پیام ${sender}`);
+    // در حالت واقعی می‌توان یک فرم پاسخ باز کرد
+}
+
+function deleteMessage(button) {
+    const message = button.closest('.message');
+    if (confirm('آیا از حذف این پیام اطمینان دارید؟')) {
+        message.remove();
+    }
+}
+
+// -------- بخش جدید: مدیریت تنظیمات --------
+document.querySelectorAll('.toggle-switch input').forEach(switchElement => {
+    switchElement.addEventListener('change', function() {
+        const settingName = this.closest('.setting-item').querySelector('h4').textContent;
+        if (this.checked) {
+            console.log(`${settingName} فعال شد`);
+        } else {
+            console.log(`${settingName} غیرفعال شد`);
+        }
+    });
+});
+
+// بارگذاری اولیه
+generateCalendar();
+</script>
+
+</body>
+</html>
