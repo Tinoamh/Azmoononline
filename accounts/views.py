@@ -232,10 +232,47 @@ class StudentsListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['users'] = User.objects.select_related('role', 'profile').filter(role__code='student')
+        u = self.request.user
+        
+        # Populate classes for the filter tabs
+        is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+        if is_instructor:
+            ctx['classes'] = Classroom.objects.filter(instructor=u, is_staging=False, is_exam_room=False).order_by('name')
+        
+        class_id = self.request.GET.get('class_id')
+        selected_class = None
+        if class_id and is_instructor:
+            try:
+                selected_class = Classroom.objects.get(pk=class_id, instructor=u)
+                ctx['users'] = selected_class.students.select_related('role', 'profile').all()
+                ctx['current_class'] = selected_class
+                ctx['selected_class_id'] = int(class_id)
+            except (ValueError, Classroom.DoesNotExist):
+                # Fallback to all students if invalid class
+                ctx['users'] = User.objects.select_related('role', 'profile').filter(role__code='student')
+        else:
+            ctx['users'] = User.objects.select_related('role', 'profile').filter(role__code='student')
+
         ctx['roles'] = list(Role.objects.filter(code__in=['admin','student','instructor']))
         ctx['listing_students_only'] = True
         return ctx
+
+@login_required
+@require_POST
+def classroom_remove_student(request, class_id: int, student_id: int):
+    u = request.user
+    is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
+    if not is_instructor:
+        return redirect('dashboard')
+    
+    try:
+        classroom = Classroom.objects.get(pk=class_id, instructor=u)
+        student = User.objects.get(pk=student_id)
+        classroom.students.remove(student)
+    except (Classroom.DoesNotExist, User.DoesNotExist):
+        pass
+        
+    return redirect(f'/accounts/students/?class_id={class_id}')
 
 @method_decorator(login_required, name="dispatch")
 class ClassroomManageView(TemplateView):

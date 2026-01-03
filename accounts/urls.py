@@ -20,6 +20,7 @@ from .views import (
     ExamsListView,
     ExamDefineView,
     classroom_toggle_member,
+    classroom_remove_student,
     user_update_role,
     user_delete,
     api_create_exam,
@@ -95,6 +96,7 @@ urlpatterns = [
     path('exams/<int:exam_id>/result/', ExamResultView.as_view(), name='exam_result'),
     path('student/scores/', StudentScoresView.as_view(), name='student_scores'),
     path('classroom/toggle-member/', classroom_toggle_member, name='classroom_toggle_member'),
+    path('classroom/<int:class_id>/remove-student/<int:student_id>/', classroom_remove_student, name='classroom_remove_student'),
     path('users/<int:pk>/role/', user_update_role, name='user_update_role'),
     path('users/<int:pk>/delete/', user_delete, name='user_delete'),
     # API endpoints for exam and questions
