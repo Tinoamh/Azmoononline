@@ -1,7 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600&display=swap');
-body { font-family: "Vazirmatn", sans-serif; direction: rtl; margin: 0; padding: 0; }
-header nav { display: flex; gap: 12px; background: #f5f5f5; padding: 10px; }
-main { padding: 0; }
+body { font-family: tahoma, sans-serif; direction: rtl; margin: 0; padding: 0; background: linear-gradient(135deg, #007BFF, #00BFFF); min-height: 100vh; }
+/* Topbar redesigned to match auth theme */
+.topbar { background: linear-gradient(135deg, #007BFF, #00BFFF); color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.topbar .nav-container { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+.topbar .brand { color: #fff; text-decoration: none; font-weight: 700; }
+.topbar .main-nav { display: flex; gap: 12px; }
+.topbar .nav-link { color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 10px; font-weight: 600; }
+.topbar .nav-link:hover { background: rgba(255,255,255,0.18); }
+main { padding: 16px; }
 .messages { list-style: none; padding: 0; }
 .messages li { background: #fffbcc; border: 1px solid #eee08a; margin: 6px 0; padding: 8px; }
 
@@ -42,25 +47,15 @@ form input { width: 100%; height: 44px; padding: 0 12px; }
 .dash-right .menu li a { display: block; padding: 10px 12px; border-radius: 8px; color: #2d3a6b; text-decoration: none; }
 .dash-right .menu li a:hover { background: #f0f4ff; }
 
-/* Footer (site-wide) */
-.site-footer { background: #eef3ff; color: #2d3a6b; padding: 28px 0; margin-top: 2em; }
-.site-footer .footer-wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
-.site-footer .footer-top { display: grid; grid-template-columns: 1.2fr repeat(3, 1fr); gap: 32px; align-items: start; }
-.site-footer .brand-title { font-weight: 800; color: #3A6CF4; font-size: 24px; margin-bottom: 8px; }
-.site-footer .brand-desc { color: #667; font-size: 13px; line-height: 1.7; }
-.site-footer .footer-col h4 { margin: 0 0 10px 0; font-size: 14px; color: #2d3a6b; font-weight: 800; }
-.site-footer .footer-col ul { list-style: none; margin: 0; padding: 0; }
-.site-footer .footer-col ul li { margin: 6px 0; }
-.site-footer .footer-col ul li a { color: #4b5c82; text-decoration: none; font-size: 13px; }
-.site-footer .footer-col ul li a:hover { color: #3A6CF4; text-decoration: underline; }
-.site-footer .footer-divider { height: 1px; background: #cfd8ea; margin: 18px 0; }
-.site-footer .footer-bottom { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.site-footer .copyright { font-size: 12px; color: #6b7aa6; }
-.site-footer .social { display: flex; gap: 10px; }
-.site-footer .social .ico { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: #e6f0ff; color: #3A6CF4; text-decoration: none; border: 1px solid #cfe3ff; }
-.site-footer .social .ico:hover { background: #dbe8ff; }
-
-@media (max-width: 900px){
-  .site-footer .footer-top { grid-template-columns: 1fr; }
-  .site-footer .footer-bottom { flex-direction: column; align-items: flex-start; }
-}
+/* Examinee Profile page */
+.exam-profile { display: flex; justify-content: center; padding: 24px; }
+.profile-frame { width: 920px; max-width: 95vw; border: none; border-radius: 16px; background: transparent; padding: 24px; }
+.profile-card { background: #fff; border-radius: 15px; padding: 30px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+.profile-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.field { display:flex; flex-direction:column; gap: 10px; }
+.field label { font-size: 13px; color:#5b6b8f; }
+.field input, .field select, .field textarea { height: 44px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; background: #fff; text-align: right; }
+.actions { display:flex; justify-content:center; margin-top: 24px; }
+.btn-save { background:#3d5afe; color:#fff; border:none; padding: 10px 22px; border-radius: 8px; cursor:pointer; font-weight:700; }
+.btn-save:hover { background:#2f49d1; }
+@media (max-width: 768px){ .profile-grid { grid-template-columns: 1fr; } }

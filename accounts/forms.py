@@ -71,16 +71,10 @@ class RegisterForm(UserCreationForm):
                 suffix += 1
                 candidate = f"{base}{suffix}"
             user.username = candidate
-        # تعیین نقش بر اساس ایمیل ادمین، در غیر این‌صورت دانشجو
-        admin_email = 'tinahmohammadi82@gmail.com'
-        if user.email and user.email.lower() == admin_email:
-            admin_role = Role.objects.filter(code='admin').first()
-            if admin_role:
-                user.role = admin_role
-        else:
-            student_role = Role.objects.filter(code='student').first()
-            if student_role:
-                user.role = student_role
+        # نقش پیش‌فرض: دانشجو
+        student_role = Role.objects.filter(code='student').first()
+        if student_role:
+            user.role = student_role
         if commit:
             user.save()
             Profile.objects.update_or_create(user=user, defaults={
@@ -204,89 +198,3 @@ class RecoveryCodeResetForm(SetPasswordForm):
         self.user = user
         self.cleaned_data['recovery_code_obj'] = match
         return cleaned
-
-
-class ExamProfileForm(forms.Form):
-    first_name = forms.CharField(max_length=150, required=False, label="نام")
-    last_name = forms.CharField(max_length=150, required=False, label="نام خانوادگی")
-    email = forms.EmailField(required=True, label="ایمیل")
-    phone = forms.CharField(max_length=20, required=False, label="شماره تماس")
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        self._user = user
-        # Style placeholders
-        self.fields['first_name'].widget.attrs.update({'placeholder': 'نام', 'class': 'input'})
-        self.fields['last_name'].widget.attrs.update({'placeholder': 'نام خانوادگی', 'class': 'input'})
-        self.fields['email'].widget.attrs.update({'placeholder': 'ایمیل', 'class': 'input'})
-        self.fields['phone'].widget.attrs.update({'placeholder': 'شماره تماس', 'class': 'input'})
-
-        if user is not None:
-            profile = getattr(user, 'profile', None)
-            self.initial.update({
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'email': user.email,
-                'phone': getattr(profile, 'phone', ''),
-            })
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if not email:
-            return email
-        qs = User.objects.filter(email=email)
-        if self._user is not None:
-            qs = qs.exclude(pk=self._user.pk)
-        if qs.exists():
-            raise forms.ValidationError("این ایمیل قبلاً ثبت شده است.")
-        return email
-
-    def save(self, user: User):
-        cleaned = self.cleaned_data
-        user.first_name = cleaned.get('first_name', '')
-        user.last_name = cleaned.get('last_name', '')
-        user.email = cleaned.get('email', user.email)
-        user.save()
-        Profile.objects.update_or_create(user=user, defaults={
-            'phone': cleaned.get('phone', ''),
-        })
-
-class SimpleProfileEditForm(forms.Form):
-    first_name = forms.CharField(max_length=150, required=True, label="نام")
-    last_name = forms.CharField(max_length=150, required=True, label="نام خانوادگی")
-    username = forms.CharField(max_length=150, required=True, label="نام کاربری")
-    phone = forms.CharField(max_length=20, required=False, label="شماره تماس")
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        self.user = user
-        self.fields['first_name'].widget.attrs.update({'placeholder': 'نام', 'class': 'prof-box prof-input'})
-        self.fields['last_name'].widget.attrs.update({'placeholder': 'نام خانوادگی', 'class': 'prof-box prof-input'})
-        self.fields['username'].widget.attrs.update({'placeholder': 'نام کاربری', 'class': 'prof-box prof-input'})
-        self.fields['phone'].widget.attrs.update({'placeholder': 'شماره تماس', 'class': 'prof-box prof-input'})
-        
-        if user is not None:
-            profile = getattr(user, 'profile', None)
-            self.initial.update({
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'username': user.username,
-                'phone': getattr(profile, 'phone', ''),
-            })
-
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if User.objects.filter(username=username).exclude(pk=self.user.pk).exists():
-            raise forms.ValidationError("این نام کاربری قبلاً گرفته شده است.")
-        return username
-
-    def save(self, user: User):
-        user.first_name = self.cleaned_data.get('first_name', '')
-        user.last_name = self.cleaned_data.get('last_name', '')
-        user.username = self.cleaned_data.get('username')
-        user.save()
-        Profile.objects.update_or_create(user=user, defaults={
-            'phone': self.cleaned_data.get('phone', ''),
-        })

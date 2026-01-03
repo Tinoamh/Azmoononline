@@ -23,9 +23,6 @@
 
       <form method="post">
         {% csrf_token %}
-        {% if request.GET.next %}
-          <input type="hidden" name="next" value="{{ request.GET.next }}" />
-        {% endif %}
         {{ form.email }}
         {{ form.password }}
         <button type="submit" class="login-btn">ورود</button>
