@@ -8,14 +8,16 @@ from .forms import RegisterForm, EmailAuthenticationForm
 from .forms import ExamProfileForm
 from .models import Role
 from .models import Profile
-from .models import Classroom, Exam, Question, ExamAssignment
+from .models import Classroom, Exam, Question, ExamAssignment, QuestionOptionImage
 from .forms import RecoveryCodeResetForm
 from .models import RecoveryCode
 from .models import User
+from .utils import compress_image
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.middleware.csrf import get_token
 from django.db.models import Count
+from django.utils import timezone
 
 
 class RegisterView(FormView):
@@ -321,7 +323,7 @@ class ClassroomManageView(TemplateView):
             except Exam.DoesNotExist:
                 src = None
         if src:
-            exam = Exam.objects.create(name=(name or new_class.name), classroom=new_class, num_questions=numq, created_by=u, source_exam=src)
+            exam = Exam.objects.create(name=(name or 'آزمون جدید'), classroom=new_class, num_questions=numq, created_by=u, source_exam=src)
             exam.students.set(new_class.students.all())
             import random
             src_qs = list(src.questions.values_list('id', flat=True))
@@ -331,7 +333,7 @@ class ClassroomManageView(TemplateView):
                 if numq and numq > 0:
                     sel = sel[:numq]
                 ExamAssignment.objects.create(exam=exam, student=s, selected_question_ids=sel)
-        return redirect('exams_list')
+        return redirect('exam_list')
 
 @method_decorator(login_required, name="dispatch")
 class ClassesListView(TemplateView):
@@ -353,19 +355,40 @@ class ClassesListView(TemplateView):
 
 @method_decorator(login_required, name="dispatch")
 class ExamsListView(TemplateView):
-    template_name = "accounts/exams_list.html"
+    template_name = "accounts/exam_list.html"
 
     def dispatch(self, request, *args, **kwargs):
         u = request.user
         is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
-        if not is_instructor:
+        is_student = (getattr(getattr(u, 'role', None), 'code', '') == 'student')
+        if not (is_instructor or is_student):
             return redirect('profile')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         u = self.request.user
-        ctx['exams'] = Exam.objects.filter(created_by=u).order_by('-created_at')
+        is_student = (getattr(getattr(u, 'role', None), 'code', '') == 'student')
+        
+        ctx['now'] = timezone.now()
+        
+        if is_student:
+            ctx['is_student_view'] = True
+            # Fetch assigned exams
+            assignments = ExamAssignment.objects.filter(student=u).select_related('exam').order_by('-created_at')
+            exams = []
+            completed_ids = []
+            
+            for asm in assignments:
+                exams.append(asm.exam)
+                if asm.completed_at:
+                    completed_ids.append(asm.exam.id)
+            
+            ctx['exams'] = exams
+            ctx['completed_exam_ids'] = completed_ids
+        else:
+            ctx['exams'] = Exam.objects.filter(created_by=u).order_by('-created_at')
+            
         return ctx
 
 @method_decorator(login_required, name="dispatch")
@@ -509,7 +532,7 @@ class ExamDefineView(TemplateView):
             classroom.students.set(students_qs)
 
         exam = Exam.objects.create(
-            name=(name or classroom.name),
+            name=(name or 'آزمون جدید'),
             classroom=classroom,
             num_questions=numq,
             created_by=u,
@@ -531,7 +554,7 @@ class ExamDefineView(TemplateView):
                     sel = sel[:numq]
                 ExamAssignment.objects.create(exam=exam, student=s, selected_question_ids=sel)
 
-        return redirect('exams_list')
+        return redirect('exam_list')
 
 @login_required
 @require_POST
@@ -595,7 +618,18 @@ def api_create_exam(request):
     is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
     if not is_instructor:
         return JsonResponse({'error': 'forbidden'}, status=403)
-    classroom, _ = Classroom.objects.get_or_create(instructor=u, defaults={'name': 'کلاس جدید'})
+    
+    # Use existing classroom or create one safely (without unique constraints on instructor alone)
+    # We prefer to find a "default" classroom if possible, or create one.
+    # The previous logic used 'get_or_create' which fails if multiple exist.
+    classroom = Classroom.objects.filter(instructor=u, name='کلاس جدید').first()
+    if not classroom:
+        # Try any classroom? Or just create a new one?
+        # Let's create one if not exists to be safe, or pick the first one available.
+        classroom = Classroom.objects.filter(instructor=u).first()
+        if not classroom:
+            classroom = Classroom.objects.create(instructor=u, name='کلاس جدید')
+            
     name = request.POST.get('name', '').strip()
     if not name:
         return JsonResponse({'error': 'invalid_name'}, status=400)
@@ -646,7 +680,13 @@ def api_add_question(request, exam_id: int):
     kind = request.POST.get('kind')
     text = request.POST.get('text', '').strip()
     if not kind or not text:
-        return JsonResponse({'error': 'invalid_payload'}, status=400)
+        # If there's an image, text can be optional (or we can use a placeholder)
+        img_file = request.FILES.get('image')
+        if not img_file and not text:
+             return JsonResponse({'error': 'invalid_payload'}, status=400)
+        if not text:
+             text = "سوال تصویری"
+
     if kind == 'des':
         answer_text = request.POST.get('answer_text', '').strip()
         q = exam.questions.create(kind='des', text=text, answer_text=answer_text)
@@ -662,15 +702,52 @@ def api_add_question(request, exam_id: int):
                 options_list = None
         if options_list is None:
             options_list = request.POST.getlist('options[]')
+        
+        # Allow empty option text if image exists for that index?
+        # The frontend logic sends empty strings.
+        # We need to check if EITHER text OR image exists for at least 2 options.
+        # But here we don't easily know about option images yet (they are processed after).
+        # However, we can check request.FILES for option_image_X.
+        
+        # Let's relax the validation: if options_list has enough entries (even empty), check if they have content OR image.
+        
         try:
             correct_index = int(request.POST.get('correct_index'))
         except (TypeError, ValueError):
             correct_index = None
+            
         if not options_list or correct_index is None or correct_index < 0 or correct_index >= len(options_list):
-            return JsonResponse({'error': 'invalid_options'}, status=400)
+             return JsonResponse({'error': 'invalid_options'}, status=400)
+             
+        # Validate that at least 2 options have content (text or image)
+        valid_opts_count = 0
+        for idx, opt_text in enumerate(options_list):
+            has_text = bool(opt_text.strip())
+            has_img = bool(request.FILES.get(f'option_image_{idx}'))
+            if has_text or has_img:
+                valid_opts_count += 1
+        
+        if valid_opts_count < 2:
+             return JsonResponse({'error': 'invalid_options_count'}, status=400)
+
         q = exam.questions.create(kind='mcq', text=text, options=options_list, correct_index=correct_index)
     else:
         return JsonResponse({'error': 'invalid_kind'}, status=400)
+
+    # Handle Question Image
+    img_file = request.FILES.get('image')
+    if img_file:
+        q.image = compress_image(img_file)
+        q.save(update_fields=['image'])
+
+    # Handle Option Images (for MCQ)
+    if kind == 'mcq' and options_list:
+        for idx in range(len(options_list)):
+            opt_img_file = request.FILES.get(f'option_image_{idx}')
+            if opt_img_file:
+                compressed = compress_image(opt_img_file)
+                QuestionOptionImage.objects.create(question=q, image=compressed, option_index=idx)
+
     # increment exam.num_questions
     exam.num_questions = exam.questions.count()
     exam.save(update_fields=['num_questions'])
@@ -686,15 +763,20 @@ def api_exam_questions(request, exam_id: int):
         exam = Exam.objects.get(pk=exam_id, created_by=u)
     except Exam.DoesNotExist:
         return JsonResponse({'error': 'exam_not_found'}, status=404)
-    qs = exam.questions.order_by('created_at')
+    qs = exam.questions.order_by('created_at').prefetch_related('option_images')
     data = []
     for q in qs:
+        # Map option images: index -> url
+        opt_imgs = {oi.option_index: oi.image.url for oi in q.option_images.all() if oi.image}
+        
         data.append({
             'id': q.id,
             'kind': q.kind,
             'text': q.text,
+            'image': q.image.url if q.image else None,
             'answer_text': q.answer_text,
             'options': q.options or [],
+            'option_images': opt_imgs,
             'correct_index': q.correct_index,
             'created_at': q.created_at.isoformat(),
         })
@@ -753,11 +835,28 @@ def api_question_update(request, question_id: int):
             return JsonResponse({'error': 'invalid_options'}, status=400)
         q.options = options_list
         q.correct_index = correct_index
+    
+    # Update Question Image
+    img_file = request.FILES.get('image')
+    if img_file:
+        q.image = compress_image(img_file)
+    
+    # Update Option Images
+    if q.kind == 'mcq' and (q.options or []):
+        for idx in range(len(q.options)):
+            opt_img_file = request.FILES.get(f'option_image_{idx}')
+            if opt_img_file:
+                # Remove old if exists for this index
+                QuestionOptionImage.objects.filter(question=q, option_index=idx).delete()
+                compressed = compress_image(opt_img_file)
+                QuestionOptionImage.objects.create(question=q, image=compressed, option_index=idx)
+    
     q.save()
     return JsonResponse({'ok': True, 'question': {
         'id': q.id,
         'kind': q.kind,
         'text': q.text,
+        'image': q.image.url if q.image else None,
         'answer_text': q.answer_text,
         'options': q.options or [],
         'correct_index': q.correct_index,
@@ -780,9 +879,29 @@ class ExamTakeView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         exam_id = kwargs.get("exam_id")
         try:
-            Exam.objects.get(pk=exam_id)
+            exam = Exam.objects.get(pk=exam_id)
         except Exam.DoesNotExist:
             return redirect("dashboard")
+        u = request.user
+        now = timezone.now()
+        assignment = ExamAssignment.objects.filter(exam_id=exam_id, student=u).first()
+        if not assignment:
+            if exam.source_exam_id:
+                order_ids = list(exam.questions.values_list("id", flat=True))
+            else:
+                order_ids = list(exam.questions.values_list("id", flat=True))
+            assignment = ExamAssignment.objects.create(exam=exam, student=u, selected_question_ids=order_ids)
+        if exam.start_time and now < exam.start_time:
+            return redirect("exam_result", exam_id=exam.id)
+        if exam.end_time and now > exam.end_time:
+            if not assignment.completed_at:
+                assignment.score = 0
+                assignment.completed_at = exam.end_time
+                assignment.student_answers = {}
+                assignment.save()
+            return redirect("exam_result", exam_id=exam.id)
+        if assignment.completed_at:
+            return redirect("exam_result", exam_id=exam.id)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -792,14 +911,28 @@ class ExamTakeView(TemplateView):
         assignment = ExamAssignment.objects.filter(exam_id=exam_id, student=self.request.user).first()
         ctx["exam"] = exam
         ctx["assignment"] = assignment
+        
+        if assignment:
+            # Fetch questions in the order defined in assignment
+            q_ids = assignment.selected_question_ids
+            # Prefetch option images
+            qs = Question.objects.filter(id__in=q_ids).prefetch_related('option_images')
+            q_map = {q.id: q for q in qs}
+            questions = []
+            for qid in q_ids:
+                if qid in q_map:
+                    questions.append(q_map[qid])
+            ctx["questions"] = questions
+        else:
+            ctx["questions"] = []
+            
         return ctx
 
 @method_decorator(login_required, name="dispatch")
 class ExamSubmitView(TemplateView):
-    template_name = "accounts/exam_result.html"
+    template_name = "accounts/exam_resault.html"
 
     def dispatch(self, request, *args, **kwargs):
-        # Placeholder implementation to allow project to run; submission logic can be added later
         exam_id = kwargs.get("exam_id")
         if not Exam.objects.filter(pk=exam_id).exists():
             return redirect("dashboard")
@@ -811,6 +944,112 @@ class ExamSubmitView(TemplateView):
         ctx["exam"] = Exam.objects.filter(pk=exam_id).first()
         return ctx
 
+    def post(self, request, *args, **kwargs):
+        exam_id = kwargs.get("exam_id")
+        exam = Exam.objects.filter(pk=exam_id).first()
+        if not exam:
+            return redirect("dashboard")
+        assignment = ExamAssignment.objects.filter(exam=exam, student=request.user).first()
+        if not assignment:
+            assignment = ExamAssignment.objects.create(exam=exam, student=request.user, selected_question_ids=list(exam.questions.values_list("id", flat=True)))
+        now = timezone.now()
+        if assignment.completed_at:
+            return redirect("exam_result", exam_id=exam.id)
+        if exam.end_time and now > exam.end_time:
+            assignment.score = 0
+            assignment.completed_at = exam.end_time
+            assignment.student_answers = {}
+            assignment.save()
+            return redirect("exam_result", exam_id=exam.id)
+        answers = {}
+        for k, v in request.POST.items():
+            if k.startswith("q"):
+                try:
+                    qid = int(k[1:])
+                    answers[qid] = v
+                except ValueError:
+                    pass
+        correct = 0
+        incorrect = 0
+        unanswered = 0
+        order_ids = assignment.selected_question_ids or list(exam.questions.values_list("id", flat=True))
+        qs = Question.objects.filter(id__in=order_ids)
+        qmap = {q.id: q for q in qs}
+        question_details = []
+        for qid in order_ids:
+            q = qmap.get(qid)
+            if not q:
+                continue
+            ans = answers.get(qid, "")
+            if q.kind == "mcq":
+                if ans == "":
+                    unanswered += 1
+                else:
+                    try:
+                        ai = int(ans)
+                        if q.correct_index is not None and ai == q.correct_index:
+                            correct += 1
+                        else:
+                            incorrect += 1
+                        question_details.append({
+                            "id": qid,
+                            "text": q.text,
+                            "options": q.options or [],
+                            "correct_index": q.correct_index,
+                            "chosen_index": ai,
+                        })
+                    except ValueError:
+                        incorrect += 1
+                        question_details.append({
+                            "id": qid,
+                            "text": q.text,
+                            "options": q.options or [],
+                            "correct_index": q.correct_index,
+                            "chosen_index": None,
+                        })
+            else:
+                if ans == "":
+                    unanswered += 1
+                question_details.append({
+                    "id": qid,
+                    "text": q.text,
+                    "options": [],
+                    "correct_index": None,
+                    "chosen_index": None,
+                })
+        total = len(order_ids)
+        score = (correct / total * 100) if total else 0
+        assignment.student_answers = answers
+        assignment.score = score
+        assignment.completed_at = timezone.now()
+        assignment.save()
+        class_asms = ExamAssignment.objects.filter(exam=exam, completed_at__isnull=False).exclude(score__isnull=True)
+        import statistics
+        scores = [a.score for a in class_asms]
+        class_avg = statistics.mean(scores) if scores else 0
+        class_max = max(scores) if scores else 0
+        class_min = min(scores) if scores else 0
+        hist = ExamAssignment.objects.filter(student=request.user, completed_at__isnull=False).select_related("exam").order_by("completed_at")
+        history_data = [{"exam_name": h.exam.name, "score": h.score or 0} for h in hist]
+        best_exam = hist.order_by("-score").first()
+        worst_exam = hist.order_by("score").first()
+        ctx = {
+            "exam": exam,
+            "score_percent": score,
+            "correct_count": correct,
+            "incorrect_count": incorrect,
+            "unanswered_count": unanswered,
+            "total_questions": total,
+            "class_avg": class_avg,
+            "class_max": class_max,
+            "class_min": class_min,
+            "history_data": history_data,
+            "best_exam": best_exam,
+            "worst_exam": worst_exam,
+            "question_details": question_details,
+        }
+        return render(request, "accounts/exam_result.html", ctx)
+
 @method_decorator(login_required, name="dispatch")
 class ExamResultView(TemplateView):
     template_name = "accounts/exam_result.html"
@@ -818,7 +1057,99 @@ class ExamResultView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         exam_id = self.kwargs.get("exam_id")
-        ctx["exam"] = Exam.objects.filter(pk=exam_id).first()
+        exam = Exam.objects.filter(pk=exam_id).first()
+        if not exam:
+            return ctx
+        assignment = ExamAssignment.objects.filter(exam=exam, student=self.request.user).first()
+        now = timezone.now()
+        if not assignment and exam.end_time and now > exam.end_time:
+            order_ids = list(exam.questions.values_list("id", flat=True))
+            assignment = ExamAssignment.objects.create(exam=exam, student=self.request.user, selected_question_ids=order_ids, score=0, student_answers={}, completed_at=exam.end_time)
+        correct = 0
+        incorrect = 0
+        unanswered = 0
+        total = 0
+        question_details = []
+        if assignment:
+            order_ids = assignment.selected_question_ids or list(exam.questions.values_list("id", flat=True))
+            qs = Question.objects.filter(id__in=order_ids)
+            qmap = {q.id: q for q in qs}
+            total = len(order_ids)
+            answers = assignment.student_answers or {}
+            for qid in order_ids:
+                q = qmap.get(qid)
+                if not q:
+                    continue
+                ans = answers.get(str(qid), answers.get(qid))
+                if q.kind == "mcq":
+                    if ans in ("", None):
+                        unanswered += 1
+                        question_details.append({
+                            "id": qid,
+                            "text": q.text,
+                            "options": q.options or [],
+                            "correct_index": q.correct_index,
+                            "chosen_index": None,
+                        })
+                    else:
+                        try:
+                            ai = int(ans)
+                            if q.correct_index is not None and ai == q.correct_index:
+                                correct += 1
+                            else:
+                                incorrect += 1
+                            question_details.append({
+                                "id": qid,
+                                "text": q.text,
+                                "options": q.options or [],
+                                "correct_index": q.correct_index,
+                                "chosen_index": ai,
+                            })
+                        except ValueError:
+                            incorrect += 1
+                            question_details.append({
+                                "id": qid,
+                                "text": q.text,
+                                "options": q.options or [],
+                                "correct_index": q.correct_index,
+                                "chosen_index": None,
+                            })
+                else:
+                    if not ans:
+                        unanswered += 1
+                    question_details.append({
+                        "id": qid,
+                        "text": q.text,
+                        "options": [],
+                        "correct_index": None,
+                        "chosen_index": None,
+                    })
+        score = (correct / total * 100) if total else (assignment.score or 0 if assignment else 0)
+        class_asms = ExamAssignment.objects.filter(exam=exam, completed_at__isnull=False).exclude(score__isnull=True)
+        import statistics
+        scores = [a.score for a in class_asms]
+        class_avg = statistics.mean(scores) if scores else 0
+        class_max = max(scores) if scores else 0
+        class_min = min(scores) if scores else 0
+        hist = ExamAssignment.objects.filter(student=self.request.user, completed_at__isnull=False).select_related("exam").order_by("completed_at")
+        history_data = [{"exam_name": h.exam.name, "score": h.score or 0} for h in hist]
+        best_exam = hist.order_by("-score").first()
+        worst_exam = hist.order_by("score").first()
+        ctx.update({
+            "exam": exam,
+            "score_percent": score,
+            "correct_count": correct,
+            "incorrect_count": incorrect,
+            "unanswered_count": unanswered,
+            "total_questions": total or exam.questions.count(),
+            "class_avg": class_avg,
+            "class_max": class_max,
+            "class_min": class_min,
+            "history_data": history_data,
+            "best_exam": best_exam,
+            "worst_exam": worst_exam,
+            "question_details": question_details,
+        })
         return ctx
 
 @method_decorator(login_required, name="dispatch")
@@ -859,7 +1190,10 @@ def instructor_results_list_view(request):
     is_instructor = (getattr(getattr(u, 'role', None), 'code', '') == 'instructor')
     if not is_instructor:
         return redirect('dashboard')
-    exams = Exam.objects.filter(created_by=u).order_by('-created_at')
+    exams = list(Exam.objects.filter(created_by=u).order_by('-created_at'))
+    for e in exams:
+        e.total_assigned = e.students.count()
+        e.participant_count = ExamAssignment.objects.filter(exam=e, completed_at__isnull=False).count()
     return render(request, 'accounts/instructor_results_list.html', {'exams': exams})
 
 @login_required
@@ -868,5 +1202,41 @@ def student_class_list_view(request):
     is_student = (getattr(getattr(u, 'role', None), 'code', '') == 'student')
     if not is_student:
         return redirect('dashboard')
+    
     classes = Classroom.objects.filter(students__in=[u]).order_by('-id')
-    return render(request, 'accounts/student_classes_list.html', {'classes': classes})
+    classes_data = []
+    now = timezone.now()
+    
+    for cls in classes:
+        # Get assignments for this student in this class
+        assignments = ExamAssignment.objects.filter(student=u, exam__classroom=cls).select_related('exam')
+        
+        cls_exams = []
+        for asm in assignments:
+            exam = asm.exam
+            
+            status = 'pending'
+            if asm.completed_at:
+                status = 'completed'
+            # If start_time passed and not completed?
+            
+            is_active = True
+            if exam.start_time and now < exam.start_time:
+                is_active = False
+            if exam.end_time and now > exam.end_time:
+                is_active = False
+            
+            # If expired and not completed -> what?
+            
+            cls_exams.append({
+                'exam': exam,
+                'status': status,
+                'is_active': is_active
+            })
+            
+        classes_data.append({
+            'classroom': cls,
+            'exams': cls_exams
+        })
+        
+    return render(request, 'accounts/student_classes_list.html', {'classes_data': classes_data})

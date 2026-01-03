@@ -8,7 +8,7 @@
   .wrap{max-width:980px;margin:20px auto;padding:0 16px}
   .card{background:#fff;border:1.6px solid #c8d2ff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);padding:16px}
   .row{display:flex;gap:12px;flex-wrap:wrap}
-  .row .col{flex:1 1 260px}
+  .col{flex:1 1 260px}
   .input, select, textarea{width:100%;height:40px;border:1.6px solid #c8d2ff;border-radius:10px;padding:8px 10px;outline:none}
   textarea{height:100px}
   .btn{display:inline-block;padding:8px 14px;border-radius:10px;font-size:14px;text-decoration:none;cursor:pointer}
@@ -34,6 +34,23 @@
   .mcq-grid .cell2{order:1}
   .mcq-grid .cell3{order:4}
   .mcq-grid .cell4{order:3}
+  .img-trigger {
+    cursor: pointer;
+    color: #888;
+    transition: color 0.3s;
+    margin-right: -30px; /* Pull into input */
+    position: relative;
+    z-index: 10;
+  }
+  .img-trigger:hover { color: #3d66ff; }
+  .img-trigger svg { width: 20px; height: 20px; vertical-align: middle; }
+  .input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
+  .input-wrapper .input { flex: 1; }
+  .hidden-file { display: none !important; }
+  .mini-preview { width: 30px; height: 30px; object-fit: cover; border-radius: 4px; margin-right: 5px; display: none; }
+  .mini-preview.show { display: block; }
+  .q-img-preview { max-width: 100%; max-height: 150px; display: block; margin: 10px auto; border-radius: 8px; object-fit: contain; }
+  .img-preview { max-width: 50px; max-height: 50px; object-fit: cover; border-radius: 4px; }
 </style>
 {% endblock %}
 
@@ -43,46 +60,76 @@
 <section class="hero"><div class="title">بانک سوال جدید</div></section>
 <div class="wrap">
   <div class="card">
-    <form method="post" action="{% url 'question_bank_create' %}" id="createForm">
+    <form id="createForm" onsubmit="return false;">
       {% csrf_token %}
-      <input type="hidden" name="questions_data" id="questionsData">
-    <div class="row">
-      <div class="col"><label>نام بانک سوال</label><input id="bankName" name="name" class="input" type="text" placeholder="مثلاً: بانک فصل ۱"></div>
-      <div class="col"><label>نوع سوال</label>
-        <div class="kind-row">
-          <label class="opt-wrap"><input class="kind-radio" type="radio" name="questionKind" value="des" checked> تشریحی</label>
-          <label class="opt-wrap"><input class="kind-radio" type="radio" name="questionKind" value="mcq"> تستی</label>
+      <div class="row">
+        <div class="col"><label>نام بانک سوال</label><input id="bankName" name="name" class="input" type="text" placeholder="مثلاً: بانک فصل ۱"></div>
+        <div class="col"><label>نوع سوال</label>
+          <div class="kind-row">
+            <label class="opt-wrap"><input class="kind-radio" type="radio" name="questionKind" value="des" checked> تشریحی</label>
+            <label class="opt-wrap"><input class="kind-radio" type="radio" name="questionKind" value="mcq"> تستی</label>
+          </div>
         </div>
       </div>
-    </div>
-    <hr>
-    <div id="formDes">
-      <label>متن سوال</label>
-      <textarea id="desText" class="input" placeholder="متن سوال"></textarea>
-      <label>متن جواب</label>
-      <textarea id="desAnswer" class="input" placeholder="متن پاسخ"></textarea>
-    </div>
-    <div id="formMcq" style="display:none">
-      <div class="blue-card">
+      <hr>
+      
+      <!-- Descriptive Form -->
+      <div id="formDes">
         <label>متن سوال</label>
-        <textarea id="mcqText" class="input" placeholder="متن سوال تستی"></textarea>
-        <div id="mcqOptions" class="mcq-grid">
-          <div class="cell cell1"><div class="opt-wrap"><input class="radio-green" type="radio" name="mcqCorrect" value="0" checked><input class="input opt" type="text" placeholder="گزینه اول"></div></div>
-          <div class="cell cell2"><div class="opt-wrap"><input class="radio-green" type="radio" name="mcqCorrect" value="1"><input class="input opt" type="text" placeholder="گزینه دوم"></div></div>
-          <div class="cell cell3"><div class="opt-wrap"><input class="radio-green" type="radio" name="mcqCorrect" value="2"><input class="input opt" type="text" placeholder="گزینه سوم"></div></div>
-          <div class="cell cell4"><div class="opt-wrap"><input class="radio-green" type="radio" name="mcqCorrect" value="3"><input class="input opt" type="text" placeholder="گزینه چهارم"></div></div>
+        <div class="input-wrapper">
+            <textarea id="desText" class="input" placeholder="متن سوال"></textarea>
+            <label for="desImg" class="img-trigger" title="افزودن تصویر" style="position:absolute; left:10px; top:10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </label>
+            <input type="file" id="desImg" class="hidden-file" accept="image/*" onchange="previewImage(this, 'desImgPrev')">
+            <img id="desImgPrev" class="mini-preview" style="position:absolute; left:40px; top:5px;">
         </div>
+        
+        <label>متن جواب</label>
+        <textarea id="desAnswer" class="input" placeholder="متن پاسخ"></textarea>
       </div>
-      <div style="margin-top:10px"></div>
-    </div>
 
-    <div class="action-bar">
-      <button id="btnAddAny" class="btn btn-outline" type="button">افزودن سوال</button>
-      <button id="btnClear" class="btn btn-danger" type="button">پاک کردن</button>
-    </div>
+      <!-- MCQ Form -->
+      <div id="formMcq" style="display:none">
+        <div class="blue-card">
+          <label>متن سوال</label>
+          <div class="input-wrapper">
+              <textarea id="mcqText" class="input" placeholder="متن سوال تستی"></textarea>
+              <label for="mcqImg" class="img-trigger" title="افزودن تصویر" style="position:absolute; left:10px; top:10px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              </label>
+              <input type="file" id="mcqImg" class="hidden-file" accept="image/*" onchange="previewImage(this, 'mcqImgPrev')">
+              <img id="mcqImgPrev" class="mini-preview" style="position:absolute; left:40px; top:5px;">
+          </div>
+          
+          <div id="mcqOptions" class="mcq-grid" style="margin-top:15px">
+            {% for i in "0123"|make_list %}
+            <div class="cell cell{{ forloop.counter }}">
+              <div class="opt-wrap">
+                <input class="radio-green" type="radio" name="mcqCorrect" value="{{ i }}" {% if i == "0" %}checked{% endif %}>
+                <div class="input-wrapper">
+                    <input class="input opt" type="text" placeholder="گزینه {{ forloop.counter }}">
+                    <label for="optImg{{ i }}" class="img-trigger" style="position:absolute; left:10px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </label>
+                    <input type="file" id="optImg{{ i }}" class="hidden-file opt-img-file" data-idx="{{ i }}" accept="image/*" onchange="previewImage(this, 'optPrev{{ i }}')">
+                    <img id="optPrev{{ i }}" class="mini-preview" style="position:absolute; left:35px;">
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div style="margin-top:10px"></div>
+      </div>
 
-    <div class="grid" id="preview"></div>
-    <button class="btn btn-primary big-submit" type="submit">ثبت</button>
+      <div class="action-bar">
+        <button id="btnAddAny" class="btn btn-outline" type="button">افزودن سوال</button>
+        <button id="btnClear" class="btn btn-danger" type="button">پاک کردن</button>
+      </div>
+
+      <div class="grid" id="preview"></div>
+      <button id="btnSubmitAll" class="btn btn-primary big-submit" type="button">ثبت نهایی</button>
     </form>
   </div>
 </div>
@@ -92,7 +139,7 @@
   const formDes=document.getElementById('formDes');
   const formMcq=document.getElementById('formMcq');
   const preview=document.getElementById('preview');
-  const questions=[];
+  const questions=[]; // Array of objects {kind, text, imageFile, ...}
 
   function getCSRF(){
     const m=document.cookie.match(/csrftoken=([^;]+)/); return m?m[1]:'';
@@ -105,55 +152,225 @@
   kindRadios.forEach(r=>r.addEventListener('change', updateForms));
   updateForms();
 
+  window.previewImage = function(input, imgId) {
+      const img = document.getElementById(imgId);
+      if (input.files && input.files[0]) {
+          img.src = URL.createObjectURL(input.files[0]);
+          img.classList.add('show');
+          // Change icon color to indicate selection
+          const label = document.querySelector(`label[for="${input.id}"]`);
+          if(label) label.style.color = '#3d66ff';
+      } else {
+          img.classList.remove('show');
+          const label = document.querySelector(`label[for="${input.id}"]`);
+          if(label) label.style.color = '#888';
+      }
+  }
+
   function clearCurrent(){
     if(getKind()==='des'){
       document.getElementById('desText').value='';
+      document.getElementById('desImg').value='';
+      document.getElementById('desImgPrev').classList.remove('show');
+      document.querySelector('label[for="desImg"]').style.color = '#888';
       document.getElementById('desAnswer').value='';
     } else {
       document.getElementById('mcqText').value='';
+      document.getElementById('mcqImg').value='';
+      document.getElementById('mcqImgPrev').classList.remove('show');
+      document.querySelector('label[for="mcqImg"]').style.color = '#888';
+      
       document.querySelectorAll('#mcqOptions .opt').forEach(i=>i.value='');
+      document.querySelectorAll('#mcqOptions .opt-img-file').forEach(i=>{
+          i.value='';
+          const prevId = i.getAttribute('onchange').match(/'([^']+)'/)[1];
+          document.getElementById(prevId).classList.remove('show');
+          document.querySelector(`label[for="${i.id}"]`).style.color = '#888';
+      });
       const def=document.querySelector('input[name="mcqCorrect"][value="0"]'); if(def) def.checked=true;
     }
   }
+
   function addCurrent(){
     if(getKind()==='des'){
       const text=document.getElementById('desText').value.trim();
       const ans=document.getElementById('desAnswer').value.trim();
-      if(!text){ alert('متن سوال الزامی است'); return; }
-      questions.push({kind:'des', text, answer_text:ans});
+      const imgFile=document.getElementById('desImg').files[0];
+      
+      if(!text && !imgFile){ alert('متن سوال یا تصویر الزامی است'); return; }
+      
+      questions.push({
+          kind:'des', 
+          text, 
+          answer_text:ans,
+          image: imgFile
+      });
       renderPreview(); clearCurrent();
     } else {
       const text=document.getElementById('mcqText').value.trim();
-      const opts=Array.from(document.querySelectorAll('#mcqOptions .opt')).map(i=>i.value.trim()).filter(Boolean);
+      const imgFile=document.getElementById('mcqImg').files[0];
+      const optInputs=Array.from(document.querySelectorAll('#mcqOptions .opt'));
+      const opts=optInputs.map(i=>i.value.trim()); // Keep all to maintain index
+      
+      // Validation: need text OR image for question, AND at least 2 valid options (text or image)
+      if(!text && !imgFile) { alert('متن سوال یا تصویر الزامی است'); return; }
+      
+      let validOpts = 0;
+      opts.forEach((o, i) => {
+          const hasImg = document.querySelector(`.opt-img-file[data-idx="${i}"]`).files[0];
+          if(o || hasImg) validOpts++;
+      });
+      
+      if(validOpts < 2){ alert('حداقل دو گزینه (متن یا تصویر) الزامی است'); return; }
+      
       const rc=document.querySelector('input[name="mcqCorrect"]:checked');
       const correct=rc?parseInt(rc.value,10):0;
-      if(!text||opts.length<2||correct<0||correct>=opts.length){ alert('اطلاعات تستی معتبر نیست'); return; }
-      questions.push({kind:'mcq', text, options:opts, correct_index:correct});
+      
+      if(correct < 0 || correct >= opts.length){ alert('گزینه صحیح نامعتبر است'); return; }
+
+      // Collect option images
+      const optImages = {};
+      document.querySelectorAll('#mcqOptions .opt-img-file').forEach((fileInput, idx) => {
+          if(fileInput.files[0]) {
+              optImages[idx] = fileInput.files[0];
+          }
+      });
+
+      questions.push({
+          kind:'mcq', 
+          text, 
+          options: opts, 
+          correct_index: correct,
+          image: imgFile,
+          option_images: optImages
+      });
       renderPreview(); clearCurrent();
     }
   }
+
   document.getElementById('btnAddAny').addEventListener('click', addCurrent);
   document.getElementById('btnClear').addEventListener('click', clearCurrent);
+
   function renderPreview(){
     preview.innerHTML='';
     questions.forEach((q,idx)=>{
       const el=document.createElement('div'); el.className='q-card';
-      el.innerHTML=`<div><strong>${q.kind==='mcq'?'تستی':'تشریحی'}</strong></div>
-        <div>${q.text}</div>
-        <div class='meta'><div>${q.kind==='mcq'?('گزینه‌ها: '+q.options.join(' | ')):(q.answer_text?('پاسخ: '+q.answer_text):'')}</div>
-        <div><button class='btn btn-outline' data-del='${idx}'>حذف</button></div></div>`;
+      
+      let imgHtml = '';
+      if(q.image) {
+          imgHtml = `<img src="${URL.createObjectURL(q.image)}" class="q-img-preview">`;
+      }
+      
+      let content = '';
+      if(q.kind === 'mcq') {
+          content = '<div><strong>گزینه‌ها:</strong></div>';
+          content += '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;">';
+          q.options.forEach((opt, i) => {
+              if(!opt && !q.option_images[i]) return;
+              let optImg = '';
+              if(q.option_images[i]) {
+                  optImg = `<img src="${URL.createObjectURL(q.option_images[i])}" class="img-preview">`;
+              }
+              const isCorrect = i === q.correct_index ? '✅' : '';
+              content += `<div style="border:1px solid #eee; padding:5px; border-radius:5px;">${isCorrect} ${opt} ${optImg}</div>`;
+          });
+          content += '</div>';
+      } else {
+          content = q.answer_text ? `<div><strong>پاسخ:</strong> ${q.answer_text}</div>` : '';
+      }
+
+      el.innerHTML=`
+        <div><strong>${q.kind==='mcq'?'تستی':'تشریحی'}</strong></div>
+        ${imgHtml}
+        <div style="margin:10px 0; font-weight:bold;">${q.text}</div>
+        ${content}
+        <div class='meta'>
+          <div><button class='btn btn-outline btn-danger' data-del='${idx}'>حذف</button></div>
+        </div>`;
       preview.appendChild(el);
     });
   }
+
   preview.addEventListener('click',(e)=>{
     const d=e.target.getAttribute('data-del');
     if(d!=null){ questions.splice(parseInt(d,10),1); renderPreview(); }
   });
 
-  document.getElementById('createForm').addEventListener('submit', function(e) {
-    document.getElementById('questionsData').value = JSON.stringify(questions);
+  // Final Submission
+  document.getElementById('btnSubmitAll').addEventListener('click', async function() {
+      const bankName = document.getElementById('bankName').value.trim();
+      if(!bankName) { alert('نام بانک سوال را وارد کنید'); return; }
+      
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'در حال ثبت...';
+      
+      try {
+          await ensureCSRF();
+          const csrf = getCSRF();
+          
+          // 1. Create Exam
+          const formData = new FormData();
+          formData.append('name', bankName);
+          
+          const createResp = await fetch('{% url "api_create_exam" %}', {
+              method: 'POST',
+              headers: {'X-CSRFToken': csrf},
+              body: formData
+          });
+          
+          if(!createResp.ok) throw new Error('خطا در ایجاد بانک سوال');
+          const createData = await createResp.json();
+          if(createData.error) throw new Error(createData.error);
+          
+          const examId = createData.exam.id;
+          
+          // 2. Add Questions
+          for(const q of questions) {
+              const qFd = new FormData();
+              qFd.append('kind', q.kind);
+              qFd.append('text', q.text);
+              if(q.image) qFd.append('image', q.image);
+              
+              if(q.kind === 'des') {
+                  qFd.append('answer_text', q.answer_text);
+              } else {
+                  const cleanOpts = [];
+                  let newIdx = 0;
+                  
+                  q.options.forEach((opt, oldIdx) => {
+                      if(opt || q.option_images[oldIdx]) {
+                          cleanOpts.push(opt || ""); 
+                          if(q.option_images[oldIdx]) {
+                              qFd.append(`option_image_${newIdx}`, q.option_images[oldIdx]);
+                          }
+                          if(oldIdx === q.correct_index) {
+                              qFd.append('correct_index', newIdx);
+                          }
+                          newIdx++;
+                      }
+                  });
+                  
+                  qFd.append('options', JSON.stringify(cleanOpts));
+                  if(!qFd.has('correct_index')) qFd.append('correct_index', 0);
+              }
+              
+              const qResp = await fetch(`/accounts/api/exams/${examId}/add-question/`, {
+                  method: 'POST',
+                  headers: {'X-CSRFToken': csrf},
+                  body: qFd
+              });
+              
+              if(!qResp.ok) console.error('Failed to add question', q);
+          }
+          
+          window.location.href = '{% url "question_bank" %}';
+          
+      } catch(e) {
+          alert('خطا: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = 'ثبت نهایی';
+      }
   });
-  
 </script>
 {% endblock %}
-

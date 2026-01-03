@@ -82,6 +82,7 @@ class Question(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
     kind = models.CharField(max_length=4, choices=KIND_CHOICES)
     text = models.TextField()
+    image = models.ImageField(upload_to='questions/', blank=True, null=True)
     # For descriptive
     answer_text = models.TextField(blank=True)
     # For MCQ
@@ -95,11 +96,20 @@ class Question(models.Model):
 
     def __str__(self):
         return f"سوال {self.exam.name} - {self.kind}"
+
+class QuestionOptionImage(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='option_images')
+    image = models.ImageField(upload_to='options/')
+    option_index = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ('question', 'option_index')
+
 class ExamAssignment(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='assignments')
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='exam_assignments')
     selected_question_ids = models.JSONField()
-    score = models.FloatField(null=True, blank=True)
+    score = models.FloatField(default=0, null=True, blank=True)
     student_answers = models.JSONField(default=dict, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

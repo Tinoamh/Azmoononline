@@ -80,7 +80,7 @@ urlpatterns = [
     path('exam-define/', ExamDefineView.as_view(), name='exam_define'),
     path('classes/', ClassesListView.as_view(), name='classes_list'),
     path('my-classes/', student_class_list_view, name='student_classes_list'),
-    path('exams/', ExamsListView.as_view(), name='exams_list'),
+    path('exams/', ExamsListView.as_view(), name='exam_list'),
     
     path('admin/exams/', admin_exam_list_view, name='admin_exam_list'),
     path('admin/exams/<int:pk>/edit/', admin_exam_edit_view, name='admin_exam_edit'),

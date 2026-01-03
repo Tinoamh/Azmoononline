@@ -29,6 +29,8 @@
   .mcq-grid .cell2{order:1}
   .mcq-grid .cell3{order:4}
   .mcq-grid .cell4{order:3}
+  .file-input { margin-top: 5px; font-size: 12px; }
+  .img-preview { max-width: 100px; max-height: 100px; display: block; margin: 5px 0; border-radius: 4px; }
 </style>
 {% endblock %}
 
@@ -51,15 +53,41 @@
     </div>
     <div id="newDes">
       <label>متن سوال</label><textarea id="newDesText" class="input"></textarea>
+      <label>تصویر سوال</label><input type="file" id="newDesImg" class="file-input" accept="image/*">
       <label>پاسخ</label><textarea id="newDesAns" class="input"></textarea>
     </div>
     <div id="newMcq" style="display:none">
       <label>متن سوال تستی</label><textarea id="newMcqText" class="input"></textarea>
+      <label>تصویر سوال</label><input type="file" id="newMcqImg" class="file-input" accept="image/*">
       <div id="newMcqGrid" class="mcq-grid">
-        <div class="cell cell1"><div class="opt-wrap"><input class="radio-green" type="radio" name="newMcqCorrect" value="0" checked><input class="input opt" type="text" placeholder="گزینه اول"></div></div>
-        <div class="cell cell2"><div class="opt-wrap"><input class="radio-green" type="radio" name="newMcqCorrect" value="1"><input class="input opt" type="text" placeholder="گزینه دوم"></div></div>
-        <div class="cell cell3"><div class="opt-wrap"><input class="radio-green" type="radio" name="newMcqCorrect" value="2"><input class="input opt" type="text" placeholder="گزینه سوم"></div></div>
-        <div class="cell cell4"><div class="opt-wrap"><input class="radio-green" type="radio" name="newMcqCorrect" value="3"><input class="input opt" type="text" placeholder="گزینه چهارم"></div></div>
+        <div class="cell cell1">
+          <div class="opt-wrap">
+            <input class="radio-green" type="radio" name="newMcqCorrect" value="0" checked>
+            <input class="input opt" type="text" placeholder="گزینه اول">
+            <input type="file" class="file-input opt-img" accept="image/*">
+          </div>
+        </div>
+        <div class="cell cell2">
+          <div class="opt-wrap">
+            <input class="radio-green" type="radio" name="newMcqCorrect" value="1">
+            <input class="input opt" type="text" placeholder="گزینه دوم">
+            <input type="file" class="file-input opt-img" accept="image/*">
+          </div>
+        </div>
+        <div class="cell cell3">
+          <div class="opt-wrap">
+            <input class="radio-green" type="radio" name="newMcqCorrect" value="2">
+            <input class="input opt" type="text" placeholder="گزینه سوم">
+            <input type="file" class="file-input opt-img" accept="image/*">
+          </div>
+        </div>
+        <div class="cell cell4">
+          <div class="opt-wrap">
+            <input class="radio-green" type="radio" name="newMcqCorrect" value="3">
+            <input class="input opt" type="text" placeholder="گزینه چهارم">
+            <input type="file" class="file-input opt-img" accept="image/*">
+          </div>
+        </div>
       </div>
     </div>
     <div class="action-bar"><button id="btnAddAny" class="btn btn-outline" type="button">افزودن سوال</button><button id="btnClearNew" class="btn btn-danger" type="button">پاک کردن</button></div>
@@ -82,15 +110,31 @@
     items.forEach((q)=>{
       const el=document.createElement('div'); el.className='q-card';
       let body='';
+      
+      const imgHTML = q.image ? `<img src="${q.image}" class="img-preview">` : '';
+      const imgInput = `<label>تصویر سوال</label><input type="file" class="file-input q-img" accept="image/*">`;
+      
       if(q.kind==='des'){
         body=`<label>متن سوال</label><textarea class='input q-text'>${q.text}</textarea>
+              ${imgHTML}${imgInput}
               <label>پاسخ</label><textarea class='input q-ans'>${q.answer_text||''}</textarea>`;
       } else {
         const opts=(q.options||[]);
         const group=`correct_${q.id}`;
+        const optImages = q.option_images || {};
+        
         body=`<label>متن سوال تستی</label><textarea class='input q-text'>${q.text}</textarea>
+              ${imgHTML}${imgInput}
               <div class='row'>
-                ${(opts.map((o,i)=>`<div class='col'><div class='opt-wrap'><input class='radio-green' type='radio' name='${group}' value='${i}' ${i===q.correct_index?'checked':''}><input class='input q-opt' data-idx='${i}' value='${o||''}'></div></div>`)).join('')}
+                ${(opts.map((o,i)=>`
+                  <div class='col'>
+                    <div class='opt-wrap'>
+                      <input class='radio-green' type='radio' name='${group}' value='${i}' ${i===q.correct_index?'checked':''}>
+                      <input class='input q-opt' data-idx='${i}' value='${o||''}'>
+                      ${optImages[i] ? `<img src="${optImages[i]}" class="img-preview">` : ''}
+                      <input type="file" class="file-input q-opt-img" data-idx='${i}' accept="image/*">
+                    </div>
+                  </div>`)).join('')}
               </div>`;
       }
       el.innerHTML=`<div><strong>${q.kind==='mcq'?'تستی':'تشریحی'}</strong></div>${body}
@@ -110,15 +154,74 @@
       const card=e.target.closest('.q-card');
       const fd=new FormData();
       const text=card.querySelector('.q-text').value.trim(); fd.append('text', text);
+      
+      const qImg = card.querySelector('.q-img').files[0];
+      if(qImg) fd.append('image', qImg);
+      
       const kind=card.querySelector('strong').textContent==='تستی'?'mcq':'des';
       if(kind==='des'){
         fd.append('answer_text', (card.querySelector('.q-ans').value||'').trim());
       } else {
-        const opts=Array.from(card.querySelectorAll('.q-opt')).map(i=>i.value.trim()).filter(Boolean);
+        const opts=Array.from(card.querySelectorAll('.q-opt')).map(i=>i.value.trim());
+        // Since backend validates length against provided options, we must send all options
+        // Filter empty only if you want to remove them, but for fixed 4 options usually we keep empty strings if not filled?
+        // Let's filter Boolean to match original logic, but be careful if user empties a middle one.
+        const filteredOpts = opts.filter(Boolean);
+        
         const r=card.querySelector('input[type="radio"][name^="correct_"]:checked');
         const correct=r?r.value:'0';
-        fd.append('options', JSON.stringify(opts));
+        fd.append('options', JSON.stringify(filteredOpts));
         fd.append('correct_index', correct);
+        
+        // Option images
+        card.querySelectorAll('.q-opt-img').forEach((input, idx) => {
+            if(input.files[0]) {
+                // If we filtered options, the index might not match!
+                // Actually, the backend logic: `for idx in range(len(options_list))`
+                // If we filter, indices shift.
+                // It is better NOT to filter options if we want to support editing specific indices securely, 
+                // OR we must ensure image inputs align with filtered options.
+                // The original code `filter(Boolean)` removes empty options.
+                // So if I have Opt1, "", Opt3, "" -> [Opt1, Opt3].
+                // If I upload image for Opt3 (index 2 in UI), it should be index 1 in backend.
+                // This is complex. 
+                // Simplified approach: For now, assume users fill options sequentially or we map by UI index if we didn't filter.
+                // Let's stick to `filter(Boolean)` as per original code, but this means images might be mismatched if an option is empty.
+                // Ideally we should send empty strings for empty options to preserve index.
+                // Let's change `filter(Boolean)` to keeping them if we want to support "Option 2 is empty but has image"? No, that's weird.
+                
+                // Better: Just loop through UI elements and if the text exists (included in filtered list), include the image.
+                // But `q-opt-img` has `data-idx`.
+                
+                // Let's try to match by value? No.
+                
+                // Correct logic:
+                // We construct the list of options that will be sent.
+                // We need to send images corresponding to those options.
+                // If `opts` has 4 items and we filter empty ones...
+                
+                // Let's just send ALL options (even empty strings) to backend if we want to preserve indices?
+                // But backend checks `if not options_list`.
+                
+                // Let's stick to: we iterate the UI inputs. If the text input corresponding to this image input has value, we append the image with the NEW index.
+                
+                // However, `data-idx` in UI is 0,1,2,3.
+                // If user fills 0 and 2. Result options: [Val0, Val2].
+                // Image for 0 -> index 0. Image for 2 -> index 1.
+                
+                // Let's implement this mapping:
+                let newIndex = 0;
+                card.querySelectorAll('.q-opt').forEach((optInput, originalIndex) => {
+                    if(optInput.value.trim()) {
+                        const imgInput = card.querySelector(`.q-opt-img[data-idx="${originalIndex}"]`);
+                        if(imgInput && imgInput.files[0]) {
+                            fd.append(`option_image_${newIndex}`, imgInput.files[0]);
+                        }
+                        newIndex++;
+                    }
+                });
+            }
+        });
       }
       await fetch(`{% url 'api_question_update' 0 %}`.replace('/0/','/'+id+'/'), {method:'POST', headers:{'X-CSRFToken':csrf}, body:fd});
       await fetchQuestions();
@@ -138,18 +241,54 @@
   function updateNewForms(){ const v=getNewKind(); newDes.style.display=v==='des'?'block':'none'; newMcq.style.display=v==='mcq'?'block':'none'; }
   newKindRadios.forEach(r=>r.addEventListener('change', updateNewForms));
   updateNewForms();
+  
   async function addNewQuestion(){
     await ensureCSRF(); const csrf=getCSRF();
     const v=getNewKind(); const fd=new FormData(); fd.append('kind', v);
     if(v==='des'){
       fd.append('text', document.getElementById('newDesText').value.trim());
+      const img = document.getElementById('newDesImg').files[0];
+      if(img) fd.append('image', img);
       fd.append('answer_text', document.getElementById('newDesAns').value.trim());
     } else {
       fd.append('text', document.getElementById('newMcqText').value.trim());
-      const opts=Array.from(document.querySelectorAll('#newMcq .opt')).map(i=>i.value.trim()).filter(Boolean);
+      const img = document.getElementById('newMcqImg').files[0];
+      if(img) fd.append('image', img);
+      
+      const optInputs = Array.from(document.querySelectorAll('#newMcq .opt'));
+      const opts = optInputs.map(i=>i.value.trim()).filter(Boolean);
       fd.append('options', JSON.stringify(opts));
+      
       const rc=document.querySelector('input[name="newMcqCorrect"]:checked');
       fd.append('correct_index', rc?rc.value:'0');
+      
+      // Option Images
+      // Similar logic: map original index to new index
+      let newIndex = 0;
+      const allOptWraps = document.querySelectorAll('#newMcq .opt-wrap'); // Contains radio, text, file
+      // Note: In newMcqGrid, .opt-wrap is inside .cell.
+      // We need to iterate in order.
+      // The cells have classes cell1, cell2, cell3, cell4 with order css property.
+      // querySelectorAll follows DOM order, so we need to be careful if DOM order differs from visual order.
+      // The HTML structure is: cell1 (order 2), cell2 (order 1)...
+      // Wait, querySelectorAll returns in Document order.
+      // In HTML:
+      // cell1 (radio val 0)
+      // cell2 (radio val 1)
+      // ...
+      // So document order matches value order (0, 1, 2, 3).
+      
+      document.querySelectorAll('#newMcq .opt').forEach((optInput, originalIndex) => {
+          if(optInput.value.trim()) {
+               // Find the sibling file input
+               const wrap = optInput.closest('.opt-wrap');
+               const fInput = wrap.querySelector('.opt-img');
+               if(fInput && fInput.files[0]) {
+                   fd.append(`option_image_${newIndex}`, fInput.files[0]);
+               }
+               newIndex++;
+          }
+      });
     }
     await fetch(`/accounts/api/exams/{{ exam.id }}/add-question/`, {method:'POST', headers:{'X-CSRFToken':csrf}, body:fd});
     clearNewForm();
@@ -157,9 +296,14 @@
   }
   function clearNewForm(){
     if(getNewKind()==='des'){
-      document.getElementById('newDesText').value=''; document.getElementById('newDesAns').value='';
+      document.getElementById('newDesText').value=''; 
+      document.getElementById('newDesImg').value='';
+      document.getElementById('newDesAns').value='';
     } else {
-      document.getElementById('newMcqText').value=''; document.querySelectorAll('#newMcq .opt').forEach(i=>i.value='');
+      document.getElementById('newMcqText').value=''; 
+      document.getElementById('newMcqImg').value='';
+      document.querySelectorAll('#newMcq .opt').forEach(i=>i.value='');
+      document.querySelectorAll('#newMcq .opt-img').forEach(i=>i.value='');
       const def=document.querySelector('input[name="newMcqCorrect"][value="0"]'); if(def) def.checked=true;
     }
   }
@@ -170,4 +314,3 @@
   fetchQuestions();
 </script>
 {% endblock %}
-

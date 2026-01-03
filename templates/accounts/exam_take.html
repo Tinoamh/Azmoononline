@@ -610,7 +610,13 @@
                 number: {{ forloop.counter }},
                 text: `{{ q.text|escapejs }}`,
                 kind: '{{ q.kind }}',
+                image: '{% if q.image %}{{ q.image.url }}{% endif %}',
                 options: {{ q.options|default:"[]"|safe }},
+                option_images: {
+                    {% for oi in q.option_images.all %}
+                    {{ oi.option_index }}: '{{ oi.image.url }}',
+                    {% endfor %}
+                },
                 answer: '' // Store answer here
             },
             {% endfor %}
@@ -789,16 +795,25 @@
                 card.className = 'question-card';
                 card.id = 'q-card-' + q.id;
                 
+                let qImageHtml = '';
+                if (q.image) {
+                    qImageHtml = `<img src="${q.image}" style="max-width:100%;max-height:300px;display:block;margin:10px auto;border-radius:8px;">`;
+                }
+
                 let inputHtml = '';
                 if (q.kind === 'mcq') {
                     inputHtml = `<div class="mcq-options">`;
                     q.options.forEach((opt, i) => {
                         // Only check if q.answer matches i (and q.answer is not empty string)
                         const checked = (q.answer !== '' && q.answer == i) ? 'checked' : '';
+                        const optImg = (q.option_images && q.option_images[i]) ? `<img src="${q.option_images[i]}" style="max-width:100px;max-height:100px;display:block;margin-top:5px;border-radius:4px;">` : '';
                         inputHtml += `
                             <label class="mcq-option">
                                 <input type="radio" name="q_${q.id}" value="${i}" ${checked} onchange="updateAnswer(${q.id}, '${i}')">
-                                <span>${opt}</span>
+                                <div>
+                                    <span>${opt}</span>
+                                    ${optImg}
+                                </div>
                             </label>
                         `;
                     });
@@ -816,6 +831,7 @@
                 card.innerHTML = `
                     <div class="question-number">سوال ${q.number}</div>
                     <div class="question-text">${q.text}</div>
+                    ${qImageHtml}
                     ${inputHtml}
                 `;
                 questionsSection.appendChild(card);

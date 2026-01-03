@@ -16,11 +16,11 @@
     <ul class="menu">
       <li><a href="/">خانه</a></li>
       {% if role.code == 'student' %}
-        <li><a href="{% url 'exams_list' %}">لیست آزمون‌ها</a></li>
+        <li><a href="{% url 'exam_list' %}">لیست آزمون‌ها</a></li>
         <li><a href="{% url 'student_scores' %}">لیست نمرات</a></li>
       {% elif role.code == 'instructor' %}
         <li><a href="{% url 'question_bank' %}">بانک سوالات</a></li>
-        <li><a href="{% url 'exams_list' %}">آزمون‌های فعال</a></li>
+        <li><a href="{% url 'exam_list' %}">آزمون‌های فعال</a></li>
         <li><a href="{% url 'students' %}">لیست دانشجویان</a></li>
       {% elif role.code == 'admin' %}
         <li><a href="{% url 'users' %}">مدیریت کاربران</a></li>
