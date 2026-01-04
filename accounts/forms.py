@@ -198,3 +198,46 @@ class RecoveryCodeResetForm(SetPasswordForm):
         self.user = user
         self.cleaned_data['recovery_code_obj'] = match
         return cleaned
+
+class ExamProfileForm(forms.Form):
+    first_name = forms.CharField(max_length=150, required=True, label="نام")
+    last_name = forms.CharField(max_length=150, required=True, label="نام خانوادگی")
+    email = forms.EmailField(required=True, label="ایمیل")
+    phone = forms.CharField(max_length=20, required=False, label="شماره تماس")
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if self.user is not None:
+            self.fields['first_name'].initial = getattr(self.user, 'first_name', '')
+            self.fields['last_name'].initial = getattr(self.user, 'last_name', '')
+            self.fields['email'].initial = getattr(self.user, 'email', '')
+            profile = getattr(self.user, 'profile', None)
+            self.fields['phone'].initial = getattr(profile, 'phone', '') if profile else ''
+        self.fields['first_name'].widget.attrs.update({'placeholder': 'نام', 'class': 'input'})
+        self.fields['last_name'].widget.attrs.update({'placeholder': 'نام خانوادگی', 'class': 'input'})
+        self.fields['email'].widget.attrs.update({'placeholder': 'ایمیل', 'class': 'input'})
+        self.fields['phone'].widget.attrs.update({'placeholder': 'شماره تماس', 'class': 'input'})
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            return email
+        from .models import User
+        qs = User.objects.filter(email=email)
+        if self.user is not None:
+            qs = qs.exclude(pk=self.user.pk)
+        if qs.exists():
+            raise forms.ValidationError("این ایمیل قبلاً ثبت شده است.")
+        return email
+
+    def save(self, user):
+        from .models import Profile
+        user.first_name = self.cleaned_data.get('first_name', user.first_name)
+        user.last_name = self.cleaned_data.get('last_name', user.last_name)
+        user.email = self.cleaned_data.get('email', user.email)
+        user.save()
+        Profile.objects.update_or_create(user=user, defaults={
+            'phone': self.cleaned_data.get('phone', ''),
+        })
+        return user

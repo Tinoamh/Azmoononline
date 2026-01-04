@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}بانک سوالات{% endblock %}
+{% block body_class %}question-bank{% endblock %}
+{% block extra_css %}
+<style>
+  body.question-bank{background:linear-gradient(180deg,#f5f8ff 0%, #eef3ff 100%)}
+  .wrap{max-width:980px;margin:24px auto;padding:0 16px}
+  .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .title{font-weight:800;color:#3A6CF4}
+  .new-btn{display:inline-block;padding:8px 14px;border-radius:10px;background:#3A6CF4;color:#fff;text-decoration:none;font-weight:700}
+  .new-btn:hover{background:#2E56D0}
+  .card{background:#fff;border:1px solid #dfe6fb;border-radius:16px;box-shadow:0 16px 28px rgba(58,108,244,0.12);padding:16px}
+  .meta{display:flex;gap:12px;color:#6b7aa6;font-size:12px;margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .item{border:1px solid #eaf1ff;border-radius:12px;padding:12px;background: rgba(255,255,255,0.6);}
+  .item .name{font-weight:700;color:#333;margin-bottom:6px}
+  .item .stats{display:flex;gap:10px;color:#6b7aa6;font-size:12px;margin-bottom:10px}
+  .actions{display:flex;gap:8px}
+  .btn{display:inline-block;padding:6px 10px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px; transition: all .2s ease}
+  .btn-edit{background:#3A6CF4;color:#fff}
+  .btn-edit:hover{background:#2E56D0}
+  .btn-del{background:#ff4757;color:#fff;border:none;cursor:pointer}
+  .btn-del:hover{opacity:.9}
+  .btn:hover{ transform: translateY(-1px) scale(1.03); }
+  .new-btn{ transition: all .2s ease }
+  .new-btn:hover{ transform: translateY(-1px) scale(1.03); }
+  body.question-bank .site-footer{margin-top:auto}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="head">
+    <h2 class="title">بانک سوالات</h2>
+    <a href="{% url 'question_bank_new' %}" class="new-btn">ایجاد بانک جدید</a>
+  </div>
+  <div class="card">
+    <div class="meta">
+      <span>کل سوالات: {{ total_questions }}</span>
+      <span>تشریحی: {{ des_count }}</span>
+      <span>تستی: {{ mcq_count }}</span>
+    </div>
+    <div class="grid">
+      {% for b in banks %}
+      <div class="item">
+        <div class="name">{{ b.name }}</div>
+        <div class="stats">
+          <span>تعداد سوالات: {{ b.q_count }}</span>
+          <span>ایجاد: {{ b.created_at|date:"Y/m/d H:i" }}</span>
+        </div>
+        <div class="actions">
+          <a class="btn btn-edit" href="{% url 'question_bank_edit' b.id %}">ویرایش</a>
+          <form action="{% url 'question_bank_delete' b.id %}" method="post" onsubmit="return confirm('بانک سوال حذف شود؟')" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-del">حذف</button>
+          </form>
+        </div>
+      </div>
+      {% empty %}
+      <div class="item">هنوز بانکی ایجاد نشده است</div>
+      {% endfor %}
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <p style="color:#6b7aa6;font-size:12px;">بانک سوالات فقط برای طراحی آزمون استفاده می‌شود و دانشجو به آن دسترسی ندارد.</p>
+  </div>
+  </div>
+{% endblock %}
