@@ -42,6 +42,7 @@ from .views import (
     student_class_list_view,
 )
 from .instructor_calendar_view import instructor_calendar_view
+from .student_calendar_view import student_calendar_view
 from .admin_views_temp import admin_exam_list_view, admin_exam_edit_view
 from .admin_report_view_temp import admin_exam_report_view
 from .admin_class_views_temp import admin_class_list_view, admin_class_edit_view
@@ -96,6 +97,7 @@ urlpatterns = [
     path('exams/<int:exam_id>/submit/', ExamSubmitView.as_view(), name='exam_submit'),
     path('exams/<int:exam_id>/result/', ExamResultView.as_view(), name='exam_result'),
     path('student/scores/', StudentScoresView.as_view(), name='student_scores'),
+    path('student/calendar/', student_calendar_view, name='student_calendar'),
     path('classroom/toggle-member/', classroom_toggle_member, name='classroom_toggle_member'),
     path('classroom/<int:class_id>/remove-student/<int:student_id>/', classroom_remove_student, name='classroom_remove_student'),
     path('users/<int:pk>/role/', user_update_role, name='user_update_role'),

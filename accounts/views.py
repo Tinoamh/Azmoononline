@@ -40,9 +40,59 @@ class RegisterView(FormView):
         return reverse_lazy("home")
 
 
+def student_dashboard_context(request, u):
+    # Check if there are any upcoming exams (active or pending) to show in the countdown
+    upcoming_exam = None
+    assignments = ExamAssignment.objects.filter(student=u).select_related('exam')
+    now = timezone.now()
+    
+    # Find the earliest upcoming exam (or currently active) that is not completed
+    # Priority: 
+    # 1. Active exams (start_time < now < end_time) and not completed
+    # 2. Pending exams (start_time > now)
+    
+    candidates = []
+    for asm in assignments:
+        if asm.completed_at:
+            continue
+        exam = asm.exam
+        if not exam.start_time:
+            continue
+            
+        if exam.end_time and exam.end_time < now:
+            continue
+            
+        # It's either active or pending
+        candidates.append(asm)
+        
+    # Sort candidates by start_time
+    candidates.sort(key=lambda x: x.exam.start_time)
+    
+    if candidates:
+        upcoming_exam = candidates[0].exam
+        
+    return render(request, 'landing/home.html', {'upcoming_exam': upcoming_exam})
+
+def home_view(request):
+    if request.user.is_authenticated and getattr(getattr(request.user, 'role', None), 'code', '') == 'student':
+        return student_dashboard_context(request, request.user)
+    return render(request, 'landing/home.html')
+
 @method_decorator(login_required, name="dispatch")
 class DashboardView(TemplateView):
     template_name = "dashboard/dashboard.html"
+
+    def get(self, request, *args, **kwargs):
+        # If landing page logic is needed here or if 'home' uses this view?
+        # Actually 'home' usually points to a TemplateView or similar in urls.
+        # But if the user is authenticated, we might want to inject 'upcoming_exam' into the context of the landing page if they visit '/'
+        # The landing page is likely rendered by a simple TemplateView in the main urls.py (not shown here fully).
+        # We need to ensure the landing page context gets this data.
+        
+        # Let's assume the user visits '/' which maps to 'home'.
+        # If 'home' is just a TemplateView, we can't easily inject data without subclassing.
+        # However, the RegisterView/LoginView redirect to 'home'.
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

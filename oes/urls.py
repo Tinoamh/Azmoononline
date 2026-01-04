@@ -22,7 +22,12 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name='landing/home.html'), name='home'),
+    # Use DashboardView for home page to inject dynamic context if needed, or update TemplateView logic
+    # For now, let's keep it simple but point to a custom view if we want to pass context.
+    # Actually, we can use a simple function view or class view in accounts/views.py for the home page.
+    # But since it was TemplateView, we can switch it to our enhanced view if we move it to views.py or just use it here.
+    # Let's import a home_view from accounts.views
+    path('', include('accounts.home_urls')), # Delegating home to an app url or view
     path('accounts/', include('accounts.urls')),
 ]
 

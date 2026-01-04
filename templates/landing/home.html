@@ -216,7 +216,7 @@
   body.landing.student .hero-section {
      text-align: center;
      padding: 60px 20px;
-     margin: 40px auto;
+     margin: 0 auto 20px auto;
      max-width: 1000px;
      background: #ffe0f0;
      border-radius: 30px;
@@ -240,6 +240,8 @@
      position: relative;
      overflow: hidden;
      cursor: pointer;
+     display: block; /* Ensure anchor works as block */
+     text-decoration: none; /* Remove underline */
   }
   body.landing.student .card-item::before {
      content: "";
@@ -312,46 +314,150 @@
 
 {% block content %}
   {% if user.is_authenticated and user.role and user.role.code == 'student' %}
-    <div style="height: 100px;"></div>
+    <!-- removed excessive spacer -->
+    
+
+
     <div class="stars" id="stars"></div>
     <div class="confetti" id="confetti"></div>
 
-    <div class="hero-section">
+    {% if upcoming_exam %}
+    <div class="mini-timer-wrap" style="max-width:1000px;margin: 128px auto 64px auto;">
+        <div class="mini-timer-card">
+            <div class="mini-left">
+                <span class="mini-badge">
+                    {% if upcoming_exam.start_time > now %}آزمون پیش‌رو{% else %}در حال برگزاری{% endif %}
+                </span>
+                <span class="mini-title">{{ upcoming_exam.name }}</span>
+            </div>
+            <div class="mini-right">
+                <span id="mini-timer-text">00:00:00</span>
+                <a href="{% url 'exam_start' upcoming_exam.id %}" id="mini-start-btn" class="mini-btn {% if upcoming_exam.start_time > now %}disabled{% endif %}" style="{% if upcoming_exam.start_time > now %}display:none{% endif %}">
+                    {% if upcoming_exam.start_time > now %}هنوز شروع نشده{% else %}شروع آزمون{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="hero-section" style="{% if not upcoming_exam %}margin-top:160px;{% endif %}">
         <h2>🌟 یادگیری و آزمون با دنیای رنگارنگ 🌈</h2>
         <p> آزمون تستی و تشریحی   دریافت کارنامه   ارسال تکالیف   تجربه محیط جذاب رنگارنگ مخصوص دانش‌آموزان</p>
     </div>
 
-    <!-- Spacer (4 lines approx) -->
-    <div style="height: 60px;"></div>
-    
     <!-- Cloud Line -->
-    <div class="cloud-line-container">
+    <div class="cloud-line-container" style="margin-bottom: 48px; margin-top: 0;">
         {% for i in "12345678901234" %}
         <span class="cloud-item" style="animation-delay: -{{ forloop.counter }}s;">☁️</span>
         {% endfor %}
     </div>
- <div style="height: 60px;"></div>
+
+    <script>
+    (function(){
+        var startTime = new Date("{{ upcoming_exam.start_time.isoformat }}").getTime();
+        var endTime = {% if upcoming_exam.end_time %}new Date("{{ upcoming_exam.end_time.isoformat }}").getTime(){% else %}null{% endif %};
+        var btn = document.getElementById('mini-start-btn');
+        var timerText = document.getElementById('mini-timer-text');
+        
+        function updateTimer() {
+            var now = new Date().getTime();
+            var dist = startTime - now;
+            
+            if (dist < 0) {
+                if (endTime && now > endTime) {
+                    timerText.innerText = "پایان یافته";
+                    btn.classList.add('disabled');
+                    btn.innerText = "پایان مهلت";
+                    btn.style.display = 'none';
+                } else {
+                    timerText.innerText = "در حال برگزاری";
+                    btn.classList.remove('disabled');
+                    btn.innerText = "شروع آزمون";
+                    btn.style.display = 'inline-block';
+                }
+                return;
+            }
+            
+            var h = Math.floor(dist / (1000 * 60 * 60));
+            var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+            var s = Math.floor((dist % (1000 * 60)) / 1000);
+            var hh = h < 10 ? '0'+h : h;
+            var mm = m < 10 ? '0'+m : m;
+            var ss = s < 10 ? '0'+s : s;
+            timerText.innerText = hh + ":" + mm + ":" + ss;
+            btn.style.display = 'none';
+            btn.classList.add('disabled');
+        }
+        
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    })();
+    </script>
+    <style>
+        .mini-timer-card {
+            background: #fff;
+            border: 2px solid #bfd7ff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(58,108,244,0.12);
+            height: 3em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 12px;
+            direction: rtl;
+        }
+        .mini-left { display:flex; align-items:center; gap:8px; }
+        .mini-badge {
+            background: #e0e7ff; color: #3A6CF4;
+            padding: 2px 8px; border-radius: 8px;
+            font-size: 12px; font-weight: 700;
+        }
+        .mini-title { font-size: 14px; color:#1e293b; font-weight:700; }
+        .mini-right { display:flex; align-items:center; gap:10px; direction:ltr; }
+        #mini-timer-text { font-size: 14px; font-weight:800; color:#3A6CF4; }
+        .mini-btn {
+            display:inline-block; background:#22c55e; color:#fff;
+            padding:6px 14px; border-radius:8px; font-weight:700;
+            text-decoration:none; font-size:13px; white-space:nowrap;
+        }
+        .mini-btn.disabled { background:#94a3b8; pointer-events:none; }
+        .mini-report-card {
+            background: #fff;
+            border: 2px solid #bfd7ff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(58,108,244,0.12);
+            height: 3em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 12px;
+            direction: rtl;
+        }
+        .mini-score { font-size: 14px; font-weight:800; color:#1e293b; }
+    </style>
+    {% comment %} keep student block open for admin/instructor elifs {% endcomment %}
+
     <div class="cards-grid">
-        <div class="card-item">
+        <a href="{% url 'exam_list' %}" class="card-item">
             <h3>📝 آزمون ساز هوشمند</h3>
-            <p>ساخت و مدیریت آزمون‌ها با چند کلیک ساده</p>
-            <a href="#" class="btn-action">شروع آزمون</a>
-        </div>
-        <div class="card-item">
+            <p>لیست آزمون‌های فعال و شرکت در آزمون</p>
+            <span class="btn-action">شروع آزمون</span>
+        </a>
+        <a href="{% url 'student_scores' %}" class="card-item">
             <h3>📚 بانک سوال و کارنامه</h3>
-            <p>دسترسی به بانک سوالات و مشاهده انواع کارنامه‌ها</p>
-            <a href="#" class="btn-action">مشاهده بانک سوال</a>
-        </div>
-        <div class="card-item">
-            <h3>✅ آزمون تشریحی و تستی</h3>
-            <p>برگزاری آنلاین یا حضوری هر نوع آزمون</p>
-            <a href="#" class="btn-action">ایجاد آزمون</a>
-        </div>
-        <div class="card-item">
-            <h3>💰 یادگیری سریع و آسان</h3>
-            <p>با آزمون‌های آزمایشی توانایی خود را افزایش دهید</p>
-            <a href="#" class="btn-action">بیشتر بدانید</a>
-        </div>
+            <p>مشاهده نمرات و کارنامه‌های آزمون</p>
+            <span class="btn-action">مشاهده کارنامه</span>
+        </a>
+        <a href="{% url 'student_classes_list' %}" class="card-item">
+            <h3>✅ کلاس‌های من</h3>
+            <p>لیست کلاس‌هایی که در آن عضو هستید</p>
+            <span class="btn-action">مشاهده کلاس‌ها</span>
+        </a>
+        <a href="{% url 'student_calendar' %}" class="card-item">
+            <h3>� تقویم آموزشی</h3>
+            <p>برنامه زمانی آزمون‌های آینده</p>
+            <span class="btn-action">مشاهده تقویم</span>
+        </a>
         
     </div>
     
