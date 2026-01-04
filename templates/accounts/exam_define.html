@@ -50,6 +50,7 @@
     </div>
     <div class="section">
       <h2 class="title">دانشجویان</h2>
+      <input id="studentSearch" class="input" type="text" placeholder="جستجوی نام یا نام خانوادگی">
       <table class="table">
         <thead>
           <tr>
@@ -65,7 +66,7 @@
         </thead>
         <tbody>
           {% for s in students %}
-          <tr>
+          <tr class="student-row">
             <td>{{ s.first_name }}</td>
             <td>{{ s.last_name }}</td>
             <td class="chk"><input type="checkbox" name="student_ids" value="{{ s.id }}" /></td>
@@ -163,6 +164,18 @@
     if(startEl2) startEl2.addEventListener('input', computeEndTime);
     // Initialize once in case defaults exist
     computeEndTime();
+
+    var search = document.getElementById('studentSearch');
+    if(search){
+      var rows = Array.prototype.slice.call(document.querySelectorAll('.student-row'));
+      search.addEventListener('input', function(){
+        var q = search.value.trim().toLowerCase();
+        rows.forEach(function(r){
+          var t = (r.cells[0].textContent + ' ' + r.cells[1].textContent).toLowerCase();
+          r.style.display = q === '' || t.indexOf(q) !== -1 ? '' : 'none';
+        });
+      });
+    }
   })();
 </script>
 {% endblock %}

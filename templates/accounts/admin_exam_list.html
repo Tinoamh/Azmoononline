@@ -286,6 +286,19 @@
         }
     }
     
+    function _execScripts(container) {
+        const scripts = container.querySelectorAll('script');
+        scripts.forEach(sc => {
+            const s = document.createElement('script');
+            if (sc.src) {
+                s.src = sc.src;
+            } else {
+                s.textContent = sc.textContent;
+            }
+            document.body.appendChild(s);
+            sc.parentNode.removeChild(sc);
+        });
+    }
     function showReport(examId) {
         document.getElementById('reportModal').style.display = 'flex';
         document.getElementById('modalBody').innerHTML = '<p style="text-align:center;">در حال بارگذاری...</p>';
@@ -296,7 +309,9 @@
                 return response.text();
             })
             .then(html => {
-                document.getElementById('modalBody').innerHTML = html;
+                const container = document.getElementById('modalBody');
+                container.innerHTML = html;
+                _execScripts(container);
             })
             .catch(err => {
                 document.getElementById('modalBody').innerHTML = '<p style="text-align:center;color:red;">خطا در دریافت اطلاعات</p>';

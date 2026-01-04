@@ -9,6 +9,15 @@
 <style>
   /* Landing page hero styles aligned to the provided mock */
   body.landing { background: linear-gradient(180deg, #f5f8ff 0%, #eef3ff 100%); }
+  body.landing {
+    --footer-bg: #0e1a40;
+    --footer-fg: #f0f4ff;
+    --footer-link: #c7d2ff;
+    --footer-link-hover: #ffffff;
+    --footer-divider: rgba(255,255,255,0.12);
+    --footer-ico: #c7d2ff;
+    --footer-head-color: #ffffff;
+  }
 
   /* INSTRUCTOR STYLES */
   body.landing.instructor .landing-brand, body.landing.instructor .landing-actions { display: block; } 
@@ -305,6 +314,7 @@
   @keyframes bounce { 0%,100%{transform:translateY(-10px) scale(1.05);}50%{transform:translateY(-20px) scale(1.08);} }
 </style>
 {% endblock %}
+{% block footer %}{% include "partials/footer.html" %}{% endblock %}
 
 {% block header %}
 <header class="landing-header">
@@ -313,7 +323,10 @@
       <a class="pill" href="/accounts/register/">ثبت‌نام</a>
     {% endif %}
   </div>
-  <div class="landing-brand"><img src="{% static 'images/sam-azmoon-logo.svg' %}" alt="صام آزمون" style="height:42px"></div>
+  <div class="fixed-logo">
+    <span class="logo-text">صام آزمون</span>
+    <img src="{% static 'sam.png' %}" alt="صام آزمون" style="height: 65px; width: auto;">
+  </div>
   {% if user.is_authenticated %}
     {% if user.role and user.role.code == 'admin' %}
       <div id="adminHamburger" class="hamburger" aria-label="Admin menu" title="Admin menu">
@@ -650,10 +663,10 @@
     <div class="instructor-slider-section">
       <div class="slideshow-container">
         <div class="mySlides fade">
-          <img src="{% static 'image.jpg' %}" alt="Slide 1">
+          <img src="{% static '1.jpg' %}" alt="Slide 1">
         </div>
         <div class="mySlides fade">
-          <img src="{% static 'image.jpg' %}" alt="Slide 2">
+          <img src="{% static '2.jpg' %}" alt="Slide 2">
         </div>
         <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
         <a class="next" onclick="plusSlides(1)">&#10095;</a>
@@ -759,10 +772,10 @@
     <div class="instructor-slider-section">
       <div class="slideshow-container">
         <div class="mySlides fade">
-          <img src="{% static 'image/1.png' %}" alt="Slide 1" onerror="this.onerror=null;this.src='{% static 'images/1.jpg' %}'">
+          <img src="{% static '1.jpg' %}" alt="Slide 1">
         </div>
         <div class="mySlides fade">
-          <img src="{% static 'image/2.png' %}" alt="Slide 2" onerror="this.onerror=null;this.src='{% static 'images/2.jpg' %}'">
+          <img src="{% static '2.jpg' %}" alt="Slide 2">
         </div>
         <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
         <a class="next" onclick="plusSlides(1)">&#10095;</a>
@@ -818,6 +831,13 @@
              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M5 4h14v16H5V4zm2 2v12h10V6H7zm1 1h8v2H8V7zm0 3h8v2H8v-2zm0 3h8v2H8v-2z"/></svg>
            </div>
            <h3>لیست آزمون‌های فعال</h3>
+        </a>
+
+        <a href="{% url 'instructor_calendar' %}" class="inst-card">
+           <div class="icon-box">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+           </div>
+           <h3>تقویم آموزشی</h3>
         </a>
       </div>
     </div>

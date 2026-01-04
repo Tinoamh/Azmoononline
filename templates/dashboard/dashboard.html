@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block title %}داشبورد{% endblock %}
+{% load static %}
+{% block header %}
+  {{ block.super }}
+  <div class="fixed-logo">
+    <span class="logo-text">صام آزمون</span>
+    <img src="{% static 'sam.png' %}" alt="صام آزمون" style="height: 65px; width: auto;">
+  </div>
+{% endblock %}
 {% block content %}
 <section class="dashboard">
   <div class="dash-left">
@@ -32,3 +40,4 @@
   </div>
 </section>
 {% endblock %}
+{% block footer %}{% include "partials/footer.html" %}{% endblock %}

@@ -41,6 +41,7 @@ from .views import (
     instructor_results_list_view,
     student_class_list_view,
 )
+from .instructor_calendar_view import instructor_calendar_view
 from .admin_views_temp import admin_exam_list_view, admin_exam_edit_view
 from .admin_report_view_temp import admin_exam_report_view
 from .admin_class_views_temp import admin_class_list_view, admin_class_edit_view
@@ -109,6 +110,7 @@ urlpatterns = [
     path('api/questions/<int:question_id>/delete/', api_question_delete, name='api_question_delete'),
     path('api/questions/<int:question_id>/update/', api_question_update, name='api_question_update'),
     path('instructor/results/', instructor_results_list_view, name='instructor_results_list'),
+    path('instructor/calendar/', instructor_calendar_view, name='instructor_calendar'),
     path('instructor/exams/<int:exam_id>/report/', instructor_exam_report_view, name='instructor_exam_report'),
     path('question-bank/', question_bank, name='question_bank'),
     path('question-bank/new/', question_bank_new, name='question_bank_new'),

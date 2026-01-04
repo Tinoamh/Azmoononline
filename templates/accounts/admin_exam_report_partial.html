@@ -28,4 +28,26 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div style="height: 24px;"></div>
+
+    <h4 style="font-weight: 700; margin-bottom: 15px;">تحلیل جامع آزمون</h4>
+    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:20px;">
+      <div style="background:#1e3a8a; color:#fff; border-radius:12px; padding:16px; text-align:center;">
+        <div style="font-size:12px; opacity:0.9;">میانگین (از ۲۰)</div>
+        <div style="font-size:24px; font-weight:800;">{{ avg_score_20 }}</div>
+      </div>
+      <div style="background:#312e81; color:#fff; border-radius:12px; padding:16px; text-align:center;">
+        <div style="font-size:12px; opacity:0.9;">میانه</div>
+        <div style="font-size:24px; font-weight:800;">{{ median_20 }}</div>
+      </div>
+      <div style="background:#4c1d95; color:#fff; border-radius:12px; padding:16px; text-align:center;">
+        <div style="font-size:12px; opacity:0.9;">بیشینه</div>
+        <div style="font-size:24px; font-weight:800;">{{ max_score_20 }}</div>
+      </div>
+      <div style="background:#1f2937; color:#fff; border-radius:12px; padding:16px; text-align:center;">
+        <div style="font-size:12px; opacity:0.9;">شرکت‌کنندگان</div>
+        <div style="font-size:24px; font-weight:800;">{{ participants_count }}</div>
+      </div>
+    </div>
 </div>
