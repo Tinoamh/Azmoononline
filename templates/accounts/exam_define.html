@@ -112,12 +112,24 @@
 </div>
 <script>
   (function(){
+    // Prefill exam name from URL param if present
+    var nameElInit = document.querySelector('input[name="exam_name"]');
+    if(nameElInit){
+      var params = new URLSearchParams(window.location.search);
+      var prefill = params.get('exam_name');
+      if(prefill && !nameElInit.value){
+        nameElInit.value = prefill;
+      }
+    }
     var sel = document.getElementById('classSelect');
     if(sel){
       sel.addEventListener('change', function(){
         var v = sel.value;
         var url = new URL(window.location.href);
+        var nameEl = document.querySelector('input[name="exam_name"]');
+        var nameVal = nameEl ? nameEl.value : '';
         if(v) url.searchParams.set('class_id', v); else url.searchParams.delete('class_id');
+        if(nameVal) url.searchParams.set('exam_name', nameVal); else url.searchParams.delete('exam_name');
         window.location.href = url.toString();
       });
     }
