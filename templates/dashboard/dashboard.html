@@ -24,6 +24,8 @@
         <li><a href="{% url 'students' %}">لیست دانشجویان</a></li>
       {% elif role.code == 'admin' %}
         <li><a href="{% url 'users' %}">مدیریت کاربران</a></li>
+        <li><a href="{% url 'admin_exam_list' %}">مدیریت آزمون‌ها</a></li>
+        <li><a href="{% url 'admin_class_list' %}">مدیریت کلاس‌ها</a></li>
       {% endif %}
       <li><a href="{% url 'logout' %}">خروج</a></li>
     </ul>

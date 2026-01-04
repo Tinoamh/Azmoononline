@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}صفحه اصلی | سامانه آزمون‌یار{% endblock %}
-{% block body_class %}{% if user.is_authenticated and user.role and user.role.code == 'student' %}landing student{% elif user.is_authenticated and user.role and user.role.code == 'instructor' %}landing instructor{% else %}landing{% endif %}{% endblock %}
+{% block body_class %}{% if user.is_authenticated and user.role and user.role.code == 'student' %}landing student{% elif user.is_authenticated and user.role and user.role.code == 'instructor' %}landing instructor{% elif user.is_authenticated and user.role and user.role.code == 'admin' %}landing instructor{% else %}landing{% endif %}{% endblock %}
 
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
@@ -630,6 +630,111 @@
             }
         }
     });
+    </script>
+  {% elif user.is_authenticated and user.role and user.role.code == 'admin' %}
+    <section class="hero">
+      <div class="hero-card">
+        <h1 class="hero-title" style="font-size: 3rem;">خوش آمدید مدیر محترم {{ user.first_name|default:user.username }}! 👋</h1>
+        <h2 class="hero-sub">پنل مدیریت سامانه آزمون</h2>
+        <p class="hero-desc">از طریق کارت‌های زیر می‌توانید به بخش‌های مدیریتی دسترسی پیدا کنید.</p>
+      </div>
+      <div class="hero-illustration">
+        <img class="hero-img" src="{% static 'Online test-rafiki.svg' %}" alt="Admin illustration" />
+      </div>
+    </section>
+
+    <!-- Spacer -->
+    <div style="height: 50px;"></div>
+
+    <!-- Slider Section -->
+    <div class="instructor-slider-section">
+      <div class="slideshow-container">
+        <div class="mySlides fade">
+          <img src="{% static 'image.jpg' %}" alt="Slide 1">
+        </div>
+        <div class="mySlides fade">
+          <img src="{% static 'image.jpg' %}" alt="Slide 2">
+        </div>
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+      </div>
+      <div class="dot-container">
+        <span class="dot" onclick="currentSlide(1)"></span>
+        <span class="dot" onclick="currentSlide(2)"></span>
+      </div>
+    </div>
+
+    <!-- Spacer -->
+    <div style="height: 50px;"></div>
+
+    <div class="instructor-container">
+      <div class="instructor-cards">
+        <a href="{% url 'users' %}" class="inst-card">
+          <div class="icon-box">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M16 11a4 4 0 10-8 0 4 4 0 008 0zm-6 5a6 6 0 00-6 6h16a6 6 0 00-6-6H10z"/></svg>
+          </div>
+          <h3>مدیریت کاربران</h3>
+        </a>
+        
+        <a href="{% url 'admin_class_list' %}" class="inst-card">
+          <div class="icon-box">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M4 6h16v12H4V6zm2 2v8h12V8H6z"/></svg>
+          </div>
+          <h3>مدیریت کلاس‌ها</h3>
+        </a>
+
+        <a href="{% url 'admin_exam_list' %}" class="inst-card">
+           <div class="icon-box">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M5 4h14v16H5V4zm2 2v12h10V6H7zm1 1h8v2H8V7zm0 3h8v2H8v-2zm0 3h8v2H8v-2z"/></svg>
+           </div>
+           <h3>مدیریت آزمون‌ها</h3>
+        </a>
+      </div>
+    </div>
+
+    <script>
+      let slideIndex = 1;
+      showSlides(slideIndex);
+      
+      // Auto slide
+      let slideInterval = setInterval(() => {
+          plusSlides(1);
+      }, 5000); // Change image every 5 seconds
+
+      function plusSlides(n) {
+        showSlides(slideIndex += n);
+        resetTimer();
+      }
+
+      function currentSlide(n) {
+        showSlides(slideIndex = n);
+        resetTimer();
+      }
+
+      function showSlides(n) {
+        let i;
+        let slides = document.getElementsByClassName("mySlides");
+        let dots = document.getElementsByClassName("dot");
+        if (n > slides.length) {slideIndex = 1}    
+        if (n < 1) {slideIndex = slides.length}
+        for (i = 0; i < slides.length; i++) {
+          slides[i].style.display = "none";  
+        }
+        for (i = 0; i < dots.length; i++) {
+          dots[i].className = dots[i].className.replace(" active", "");
+        }
+        if (slides.length > 0) {
+            slides[slideIndex-1].style.display = "block";  
+            dots[slideIndex-1].className += " active";
+        }
+      }
+      
+      function resetTimer() {
+          clearInterval(slideInterval);
+          slideInterval = setInterval(() => {
+              plusSlides(1);
+          }, 5000);
+      }
     </script>
   {% elif user.is_authenticated and user.role and user.role.code == 'instructor' %}
     <section class="hero">
