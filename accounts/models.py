@@ -112,6 +112,7 @@ class ExamAssignment(models.Model):
     score = models.FloatField(default=0, null=True, blank=True)
     student_answers = models.JSONField(default=dict, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    is_cheated = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

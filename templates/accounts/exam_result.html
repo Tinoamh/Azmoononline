@@ -232,6 +232,15 @@
 
   <!-- Tab Content: Main Report -->
   <div id="tab-main" class="tab-content main-card">
+    {% if assignment.is_cheated %}
+    <div style="background:#fee2e2;color:#991b1b;padding:16px;border-radius:12px;margin-bottom:24px;border:1px solid #fecaca;display:flex;align-items:center;gap:12px;">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <div>
+            <div style="font-weight:800;font-size:18px;">آزمون به دلیل تخلف (تقلب) بسته شد</div>
+            <div style="font-size:14px;">شما از محیط آزمون خارج شدید یا قوانین برگزاری را نقض کردید. نمره شما صفر منظور گردید.</div>
+        </div>
+    </div>
+    {% endif %}
     <div class="exam-name">نتیجه آزمون: {{ exam.name }}</div>
     
     <div class="score-section">

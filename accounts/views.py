@@ -952,6 +952,17 @@ class ExamSubmitView(TemplateView):
         assignment = ExamAssignment.objects.filter(exam=exam, student=request.user).first()
         if not assignment:
             assignment = ExamAssignment.objects.create(exam=exam, student=request.user, selected_question_ids=list(exam.questions.values_list("id", flat=True)))
+        
+        # Check for cheating flag
+        is_cheated = request.POST.get('is_cheated') == 'true'
+        if is_cheated:
+            assignment.is_cheated = True
+            assignment.score = 0
+            assignment.completed_at = timezone.now()
+            assignment.student_answers = {}
+            assignment.save()
+            return redirect("exam_result", exam_id=exam.id)
+
         now = timezone.now()
         if assignment.completed_at:
             return redirect("exam_result", exam_id=exam.id)
@@ -1047,6 +1058,7 @@ class ExamSubmitView(TemplateView):
             "best_exam": best_exam,
             "worst_exam": worst_exam,
             "question_details": question_details,
+            "assignment": assignment,
         }
         return render(request, "accounts/exam_result.html", ctx)
 
@@ -1149,6 +1161,7 @@ class ExamResultView(TemplateView):
             "best_exam": best_exam,
             "worst_exam": worst_exam,
             "question_details": question_details,
+            "assignment": assignment,
         })
         return ctx
 

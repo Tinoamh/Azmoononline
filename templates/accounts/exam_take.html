@@ -502,6 +502,7 @@
     <!-- Hidden Form for Submission -->
     <form id="examForm" method="post" action="{% url 'exam_submit' exam.id %}" style="display:none;">
         {% csrf_token %}
+        <input type="hidden" name="is_cheated" id="is_cheated" value="false">
     </form>
 
     <!-- Sidebar -->
@@ -529,14 +530,7 @@
         <button class="btn btn-primary" onclick="startExamSecurity()" style="font-size:18px;padding:15px 40px;">شروع آزمون و قفل صفحه</button>
     </div>
 
-    <div id="securityViolationOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,0,0,0.95);z-index:10000;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;">
-        <h1 style="font-size:32px;margin-bottom:20px;">⛔ خطای امنیتی!</h1>
-        <p style="font-size:18px;margin-bottom:30px;">
-            شما از محیط آزمون خارج شدید یا حالت تمام‌صفحه را غیرفعال کردید.<br>
-            لطفاً سریعاً به آزمون بازگردید.
-        </p>
-        <button class="btn" onclick="returnToExam()" style="background:white;color:red;font-size:16px;padding:12px 30px;border:none;">بازگشت به آزمون</button>
-    </div>
+
 
     <div class="exam-container">
         <!-- Header -->
@@ -673,13 +667,7 @@
             document.body.style.userSelect = 'none';
         }
 
-        window.returnToExam = function() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(() => {});
-            }
-            document.getElementById('securityViolationOverlay').style.display = 'none';
-        };
+
 
         function preventDefaultHandler(e) {
             e.preventDefault();
@@ -725,8 +713,16 @@
 
         function showViolation() {
             if (!isExamActive) return;
-            securityViolations++;
-            document.getElementById('securityViolationOverlay').style.display = 'flex';
+            // Prevent multiple triggers
+            isExamActive = false;
+            
+            alert("به دلیل خروج از حالت تمام‌صفحه یا تغییر پنجره، این رفتار به منزله تقلب شناسایی شد. نمره شما صفر در نظر گرفته می‌شود و آزمون بسته خواهد شد.");
+            
+            // Set cheating flag
+            document.getElementById('is_cheated').value = 'true';
+            
+            // Submit exam immediately
+            confirmSubmit();
         }
 
         function disableSecurity() {

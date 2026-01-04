@@ -128,7 +128,12 @@
             <div style="color:#6b7aa6;font-size:12px;">تاریخ شرکت: {{ a.completed_at|date:"Y/m/d H:i" }}</div>
         </div>
         <div style="text-align:left;">
-            <div style="font-weight:bold;color:#3A6CF4;">نمره: {{ a.score|floatformat:1 }}%</div>
+            {% if a.is_cheated %}
+                <div style="font-weight:bold;color:#dc3545;margin-bottom:4px;">تقلب شده</div>
+                <div style="font-weight:bold;color:#3A6CF4;font-size:12px;">نمره: ۰</div>
+            {% else %}
+                <div style="font-weight:bold;color:#3A6CF4;">نمره: {{ a.score|floatformat:1 }}%</div>
+            {% endif %}
             <a href="{% url 'exam_result' a.exam.id %}" class="btn-report">مشاهده کارنامه</a>
         </div>
       </div>

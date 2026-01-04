@@ -73,12 +73,14 @@ form input { width: 100%; height: 44px; padding: 0 12px; }
 /* Global Footer */
 .site-footer { background: var(--footer-bg); color: var(--footer-fg); margin-top: 40px; }
 .footer-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
-.footer-top { display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 20px; align-items: start; }
+.footer-top { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; }
+.footer-brand { flex: 1 1 300px; }
 .footer-brand .brand-title { font-weight: 800; font-size: 20px; color: var(--footer-head-color); }
 .footer-brand .brand-sub { font-size: 13px; color: var(--footer-link); margin-top: 6px; }
-.footer-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.footer-cols { flex: 2 1 400px; display: flex; flex-wrap: wrap; gap: 20px; }
+.footer-col { flex: 1 1 120px; }
 .footer-head { font-size: 14px; color: var(--footer-head-color); margin: 0 0 8px 0; }
-.footer-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.footer-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .footer-link { color: var(--footer-link); text-decoration: none; font-size: 13px; }
 .footer-link:hover { color: var(--footer-link-hover); }
 .footer-divider { height: 1px; background: var(--footer-divider); margin: 14px 0; }
@@ -87,24 +89,20 @@ form input { width: 100%; height: 44px; padding: 0 12px; }
 .footer-ico { display: inline-flex; align-items: center; justify-content: center; color: var(--footer-ico); }
 .footer-ico:hover { color: var(--footer-link-hover); }
 .copyright { font-size: 12px; color: var(--footer-link); }
-@media (max-width: 900px){
-  .footer-top { grid-template-columns: 1fr; }
-  .footer-cols { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 600px){
-  .footer-cols { grid-template-columns: 1fr; }
+
+@media (max-width: 768px){
   .footer-bottom { flex-direction: column; align-items: flex-start; }
 }
-}
+
 /* Footer theme variables */
 body.student-theme {
-  --footer-bg: #6b4cff;
-  --footer-fg: #ffffff;
-  --footer-link: #e9d5ff;
-  --footer-link-hover: #ffffff;
-  --footer-divider: rgba(255,255,255,0.2);
-  --footer-ico: #e9d5ff;
-  --footer-head-color: #ffffff;
+  --footer-bg: #bfd7ff;
+  --footer-fg: #333333;
+  --footer-link: #3F59CF;
+  --footer-link-hover: #000000;
+  --footer-divider: rgba(0,0,0,0.1);
+  --footer-ico: #3F59CF;
+  --footer-head-color: #3F59CF;
 }
 body.auth-body {
   --footer-bg: #0d1a3d;
