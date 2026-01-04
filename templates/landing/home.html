@@ -313,7 +313,7 @@
       <a class="pill" href="/accounts/register/">ثبت‌نام</a>
     {% endif %}
   </div>
-  <div class="landing-brand">samsamian</div>
+  <div class="landing-brand"><img src="{% static 'images/sam-azmoon-logo.svg' %}" alt="صام آزمون" style="height:42px"></div>
   {% if user.is_authenticated %}
     {% if user.role and user.role.code == 'admin' %}
       <div id="adminHamburger" class="hamburger" aria-label="Admin menu" title="Admin menu">
